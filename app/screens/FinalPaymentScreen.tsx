@@ -15,7 +15,7 @@ import { useServiceBookingMutation } from '../redux/service/ServiceBookingServic
 
 const FinalPaymentScreen = ({ navigation, route, showHeader = true }: any) => {
     const { selectedTests = [], selectedDate, selectedTime } = route?.params || [];
-    const [serviceBookingAPIReq, { data: serviceBookingAPIRes, error }] = useServiceBookingMutation();  
+    const [serviceBookingAPIReq, { data: serviceBookingAPIRes, error }] = useServiceBookingMutation();
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -104,7 +104,7 @@ const FinalPaymentScreen = ({ navigation, route, showHeader = true }: any) => {
             {showHeader && (
                 <>
                     <NavigationBar title="Book Test" />
-                    <BookTestHeader selectValue = {3}/>
+                    <BookTestHeader selectValue={3} />
                 </>
             )}
             <ScrollView style={{ paddingHorizontal: 10 }}>
@@ -159,7 +159,7 @@ const FinalPaymentScreen = ({ navigation, route, showHeader = true }: any) => {
                     <View style={styles.patientDetailsRow}>
                         <Text style={styles.patientDetailsLabel}>Collect Date & Time: {selectedDate}  {selectedTime}
                             {/* {serviceBookingAPIRes?.Sample_Collection_Date} {serviceBookingAPIRes?.Sample_Collection_Time} */}
-                            </Text>
+                        </Text>
                     </View>
                 </View>
 

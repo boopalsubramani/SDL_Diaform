@@ -45,7 +45,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             {showHeader && (
                 <>
                     <NavigationBar title="Book Test" />
-                    <BookTestHeader selectValue = {3} />
+                    <BookTestHeader selectValue={3} />
                 </>
             )}
             <ScrollView style={{ paddingHorizontal: 10 }}>
@@ -119,7 +119,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                     <ButtonBack />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleNext}>
-                    <ButtonNext/>
+                    <ButtonNext />
                 </TouchableOpacity>
             </View>
         </View>
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: '#FBFBFB',
         justifyContent: 'space-between',
-      },
+    },
 });
 
 export default PaymentDetailScreen;
