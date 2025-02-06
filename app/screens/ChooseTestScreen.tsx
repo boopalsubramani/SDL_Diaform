@@ -100,7 +100,7 @@ const ChooseTestScreen = ({ route, showHeader = true }) => {
         if (cartItems.length === 0) {
             return (
                 <View style={styles.emptyCartContainer}>
-                    <Text style={styles.emptyCartText}>Cart is Empty</Text>
+                    <Text style={styles.emptyCartText}>Cart is Emptyyyyyyyyyyyyy</Text>
                 </View>
             );
         }
