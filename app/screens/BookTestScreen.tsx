@@ -164,92 +164,152 @@
 
 
 
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import NavigationBar from '../common/NavigationBar';
-import BookTestHeader from './BookTestHeader';
+// import React, { useState } from 'react';
+// import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+// import NavigationBar from '../common/NavigationBar';
+// import BookTestHeader from './BookTestHeader';
+// import ChoosePatientScreen from './ChoosePatientScreen';
+// import ChooseTestScreen from './ChooseTestScreen';
+// import BookTestSearchScreen from './BookTestSearchScree';
+// import CalendarScreen from './CalendarScreen';
+// import PaymentDetailScreen from './PaymentDetailScreen';
+// import FinalPaymentScreen from './FinalPaymentScreen';
+// import ButtonNext from '../common/NextButton';
+// import ButtonBack from '../common/BackButton';
+
+// const BookTestScreen = ({ navigation }: any) => {
+//   const [selectedPatientDetails, setSelectedPatientDetails] = useState(null);
+//   const [selectedPhysicianDetails, setSelectedPhysicianDetails] = useState(null);
+//   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+//   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+//   const [paymentDetails, setPaymentDetails] = useState(null);
+
+//   const handleNext = () => {
+//     if (!selectedPatientDetails || !selectedPhysicianDetails) {
+//       Alert.alert('Please select both patient and physician details.');
+//       return;
+//     }
+
+//     if (!selectedDate || !selectedTime) {
+//       Alert.alert('Please select a date and time.');
+//       return;
+//     }
+
+//     // Proceed to next section (payment or finalization)
+//     setPaymentDetails({});  // Just a placeholder for the final step
+//   };
+
+//   const handleBack = () => {
+//     // Handle going back (could go back to patient/physician selection)
+//     setPaymentDetails(null);  // Go back to previous step
+//   };
+
+//   return (
+//     <View style={styles.MainContainer}>
+//       <ScrollView contentContainerStyle={styles.scrollViewContent}>
+//         {/* Patient & Physician Selection */}
+//         {!selectedPatientDetails || !selectedPhysicianDetails ? (
+//           <ChoosePatientScreen
+//             selectedPatientDetails={selectedPatientDetails}
+//             setSelectedPatientDetails={setSelectedPatientDetails}
+//             selectedPhysicianDetails={selectedPhysicianDetails}
+//             setSelectedPhysicianDetails={setSelectedPhysicianDetails}
+//           />
+//         ) : (
+//           // Test Selection
+//           !selectedDate || !selectedTime ? (
+//             <ChooseTestScreen navigation={navigation} />
+//           ) : (
+//             // Calendar & Time Selection
+//             <CalendarScreen
+//               onDateTimeSelect={(date: string, time: string) => {
+//                 setSelectedDate(date);
+//                 setSelectedTime(time);
+//               }}
+//             />
+//           )
+//         )}
+
+//         {/* Payment Details */}
+//         {selectedDate && selectedTime && (
+//           <PaymentDetailScreen navigation={navigation} />
+//         )}
+
+//         {/* Final Payment Confirmation */}
+//         {paymentDetails && <FinalPaymentScreen navigation={navigation} />}
+//       </ScrollView>
+
+//       {/* Navigation Buttons */}
+//       {/* <View style={styles.navigationContainer}>
+//         {paymentDetails && (
+//           <TouchableOpacity onPress={handleBack}>
+//             <ButtonBack />
+//           </TouchableOpacity>
+//         )}
+//         <TouchableOpacity onPress={handleNext}>
+//           <ButtonNext />
+//         </TouchableOpacity>
+//       </View> */}
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   MainContainer: {
+//     flex: 1,
+//     backgroundColor: '#FBFBFB',
+//   },
+//   scrollViewContent: {
+//     flexGrow: 1,
+//     paddingBottom: 20,
+//   },
+//   navigationContainer: {
+//     flexDirection: 'row',
+//     position: 'absolute',
+//     bottom: 0,
+//     width: '100%',
+//     backgroundColor: '#FBFBFB',
+//     justifyContent: 'flex-end',
+   
+//   },
+// });
+
+// export default BookTestScreen;
+
+
+
+
+
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+
 import ChoosePatientScreen from './ChoosePatientScreen';
-import ChooseTestScreen from './ChooseTestScreen';
-import BookTestSearchScreen from './BookTestSearchScree';
 import CalendarScreen from './CalendarScreen';
 import PaymentDetailScreen from './PaymentDetailScreen';
 import FinalPaymentScreen from './FinalPaymentScreen';
-import ButtonNext from '../common/NextButton';
-import ButtonBack from '../common/BackButton';
 
-const BookTestScreen = ({ navigation }: any) => {
-  const [selectedPatientDetails, setSelectedPatientDetails] = useState(null);
-  const [selectedPhysicianDetails, setSelectedPhysicianDetails] = useState(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [paymentDetails, setPaymentDetails] = useState(null);
+const BookTestScreen = ({ navigation, route }: any) => {
+  const [step, setStep] = useState(1);
 
-  const handleNext = () => {
-    if (!selectedPatientDetails || !selectedPhysicianDetails) {
-      Alert.alert('Please select both patient and physician details.');
-      return;
-    }
-
-    if (!selectedDate || !selectedTime) {
-      Alert.alert('Please select a date and time.');
-      return;
-    }
-
-    // Proceed to next section (payment or finalization)
-    setPaymentDetails({});  // Just a placeholder for the final step
-  };
-
-  const handleBack = () => {
-    // Handle going back (could go back to patient/physician selection)
-    setPaymentDetails(null);  // Go back to previous step
-  };
+  // Maintain step state when navigating back
+  useFocusEffect(
+    useCallback(() => {
+      if (route?.params?.step) {
+        setStep(route.params.step);
+      }
+    }, [route?.params?.step])
+  );
 
   return (
     <View style={styles.MainContainer}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {/* Patient & Physician Selection */}
-        {!selectedPatientDetails || !selectedPhysicianDetails ? (
-          <ChoosePatientScreen
-            selectedPatientDetails={selectedPatientDetails}
-            setSelectedPatientDetails={setSelectedPatientDetails}
-            selectedPhysicianDetails={selectedPhysicianDetails}
-            setSelectedPhysicianDetails={setSelectedPhysicianDetails}
-          />
-        ) : (
-          // Test Selection
-          !selectedDate || !selectedTime ? (
-            <ChooseTestScreen navigation={navigation} />
-          ) : (
-            // Calendar & Time Selection
-            <CalendarScreen
-              onDateTimeSelect={(date: string, time: string) => {
-                setSelectedDate(date);
-                setSelectedTime(time);
-              }}
-            />
-          )
-        )}
-
-        {/* Payment Details */}
-        {selectedDate && selectedTime && (
-          <PaymentDetailScreen navigation={navigation} />
-        )}
-
-        {/* Final Payment Confirmation */}
-        {paymentDetails && <FinalPaymentScreen navigation={navigation} />}
+        {/* {step === 1 && <ChoosePatientScreen navigation={navigation} />}
+        {step === 2 && <CalendarScreen navigation={navigation} />}
+        {step === 3 && <PaymentDetailScreen navigation={navigation} />}
+        {step === 4 && <FinalPaymentScreen navigation={navigation} />} */}
+        <ChoosePatientScreen/>
       </ScrollView>
-
-      {/* Navigation Buttons */}
-      {/* <View style={styles.navigationContainer}>
-        {paymentDetails && (
-          <TouchableOpacity onPress={handleBack}>
-            <ButtonBack />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity onPress={handleNext}>
-          <ButtonNext />
-        </TouchableOpacity>
-      </View> */}
     </View>
   );
 };
@@ -263,17 +323,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20,
   },
-  navigationContainer: {
-    flexDirection: 'row',
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: '#FBFBFB',
-    justifyContent: 'flex-end',
-   
-  },
 });
 
 export default BookTestScreen;
-
 

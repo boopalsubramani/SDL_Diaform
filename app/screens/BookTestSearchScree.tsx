@@ -1,33 +1,21 @@
-
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    TextInput,
-    TouchableOpacity,
-    FlatList,
-    Modal,
-    Alert,
-    Dimensions,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, TextInput, Image, Modal, Alert, StyleSheet, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import Constants from '../util/Constants';
 import { useBookTestSearchMutation } from '../redux/service/BookTestSearchService';
 import Spinner from 'react-native-spinkit';
 import { useCart } from '../common/CartContext';
 import { useNavigation } from '@react-navigation/native';
 
-
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get('window').width;
 
-const BookTestSearchScreen = () => {
+const BookTestSearchScreen = ({ route }: any) => {
     const navigation = useNavigation();
+    const { selectedPatientDetails, selectedTests } = route.params;
     const [searchText, setSearchText] = useState('');
     const [testData, setTestData] = useState<any[]>([]);
-    const [isModalVisible, setModalVisible] = useState(false);
-    const { cartItems, setCartItems } = useCart();
+    const [errorMessage, setErrorMessage] = useState('');
+    const { cartItems, setCartItems, totalCartValue, setTotalCartValue, isModalVisible, setModalVisible } = useCart();
 
     // API request hook
     const [searchTestAPIReq, { data: searchTestAPIRes, isLoading }] = useBookTestSearchMutation();
@@ -47,12 +35,18 @@ const BookTestSearchScreen = () => {
             searchTestAPIReq(requestBody);
         } else {
             setTestData([]);
+            setErrorMessage('');
         }
     }, [searchText]);
 
     useEffect(() => {
         if (searchTestAPIRes?.SuccessFlag === "true" && searchTestAPIRes?.Message) {
-            setTestData(searchTestAPIRes.Message);
+            if (searchTestAPIRes.Message.length > 0) {
+                setTestData(searchTestAPIRes.Message);
+                setErrorMessage('');
+            } else {
+                setErrorMessage('No data found.');
+            }
         } else if (searchTestAPIRes?.SuccessFlag === "false") {
             Alert.alert('Error', searchTestAPIRes?.ErrorMessage || 'Failed to fetch tests.');
         }
@@ -62,7 +56,6 @@ const BookTestSearchScreen = () => {
 
     const handleProceedClick = () => {
         if (cartItems.length > 0) {
-            setModalVisible(true);
             const selectedTests = cartItems.map(itemName => {
                 const item = testData.find(test => test.Service_Name === itemName);
                 return {
@@ -70,14 +63,13 @@ const BookTestSearchScreen = () => {
                     Amount: item?.Amount,
                 };
             });
-            navigation.navigate('Calender', { selectedTests });
-            // navigation.navigate('FinalPayment', { selectedTests });
-
+            console.log("Selected Tests:", selectedTests);
+            navigation.navigate('ChooseTest', { selectedTests, selectedPatientDetails, totalCartValue, shouldNavigateToCalender: true, });
         } else {
             Alert.alert('Empty Cart', 'Please add items to the cart before proceeding.');
         }
     };
-    
+
     const handleToggleCart = (itemName: string) => {
         setCartItems(prevCartItems =>
             prevCartItems.includes(itemName)
@@ -86,10 +78,21 @@ const BookTestSearchScreen = () => {
         );
     };
 
-    const totalCartValue = cartItems.reduce((total, itemName) => {
-        const item = testData.find(test => test.Service_Name === itemName);
-        return total + (item?.Amount || 0);
-    }, 0);
+    const calculateTotalCartValue = () => {
+        const total = cartItems.reduce((total, itemName) => {
+            const item = testData.find(test => test.Service_Name === itemName);
+            return total + (item?.Amount || 0);
+        }, 0);
+        setTotalCartValue(total);  // Update totalCartValue in the context
+    };
+
+    useEffect(() => {
+        calculateTotalCartValue();  // Recalculate total cart value whenever cartItems change
+    }, [cartItems]);
+
+    const handleCartIconClick = () => {
+        setModalVisible(true);
+    };
 
     const renderItem = ({ item }: any) => {
         const isItemInCart = cartItems.includes(item.Service_Name);
@@ -139,7 +142,7 @@ const BookTestSearchScreen = () => {
                         />
                     </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={handleProceedClick}>
+                <TouchableOpacity onPress={handleCartIconClick}>
                     <Image source={require('../images/addCart.png')} style={styles.CartIconTop} />
                 </TouchableOpacity>
                 {cartItems.length > 0 && (
@@ -155,57 +158,61 @@ const BookTestSearchScreen = () => {
                 visible={isModalVisible}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContent}>
-                            {cartItems.length === 0 ? (
-                                <View style={styles.emptyCartContainer}>
-                                    <Text style={styles.emptyCartText}>Cart is Empty</Text>
-                                </View>
-                            ) : (
-                                cartItems.map((item, index) => {
-                                    const itemData = testData.find(
-                                        test => test.Service_Name === item
-                                    );
-                                    return (
-                                        <View style={styles.testItemContainer} key={index}>
-                                            <Text style={styles.testName}>{item}</Text>
-                                            <Text style={styles.testPrice}>
-                                                {itemData?.Amount} INR
-                                            </Text>
-                                            <TouchableOpacity
-                                                onPress={() => handleToggleCart(item)}
-                                            >
-                                                <View style={styles.addToCartContainer}>
-                                                    <Image
-                                                        source={require('../images/addCart.png')}
-                                                        style={styles.CartIcon}
-                                                    />
-                                                    <Text>Remove</Text>
-                                                </View>
-                                            </TouchableOpacity>
+                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                    <View style={styles.modalContainer}>
+                        <TouchableWithoutFeedback>
+                            <View style={styles.modalBackground}>
+                                <View style={styles.modalContent}>
+                                    {cartItems.length === 0 ? (
+                                        <View style={styles.emptyCartContainer}>
+                                            <Text style={styles.emptyCartText}>Cart is Empty</Text>
                                         </View>
-                                    );
-                                })
-                            )}
-                            <Text style={styles.bottomText}>
-                                Total Cart Value INR {totalCartValue}
-                            </Text>
-                            {cartItems.length > 0 && (
-                                <TouchableOpacity onPress={handleProceedClick}>
-                                    <View style={styles.SubmitButtonView}>
-                                        <Text style={styles.ButtonText}>Proceed</Text>
+                                    ) : (
+                                        cartItems.map((item, index) => {
+                                            const itemData = testData.find(
+                                                test => test.Service_Name === item
+                                            );
+                                            return (
+                                                <View style={styles.testItemContainer} key={index}>
+                                                    <Text style={styles.testName}>{item}</Text>
+                                                    <Text style={styles.testPrice}>
+                                                        {itemData?.Amount} INR
+                                                    </Text>
+                                                    <TouchableOpacity
+                                                        onPress={() => handleToggleCart(item)}
+                                                    >
+                                                        <View style={styles.addToCartContainer}>
+                                                            <Image
+                                                                source={require('../images/addCart.png')}
+                                                                style={styles.CartIcon}
+                                                            />
+                                                            <Text>Remove</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            );
+                                        })
+                                    )}
+                                    <Text style={styles.bottomText}>
+                                        Total Cart Value INR {totalCartValue}
+                                    </Text>
+                                    {cartItems.length > 0 && (
+                                        <TouchableOpacity onPress={handleProceedClick}>
+                                            <View style={styles.SubmitButtonView}>
+                                                <Text style={styles.ButtonText}>Proceed</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    )}
+                                    <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
+                                        <Text style={{ color: '#fd1a1b' }}>
+                                            Note: *Indicates Non Discounted Test
+                                        </Text>
                                     </View>
-                                </TouchableOpacity>
-                            )}
-                            <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
-                                <Text style={{ color: '#fd1a1b' }}>
-                                    Note: *Indicates Non Discounted Test
-                                </Text>
+                                </View>
                             </View>
-                        </View>
+                        </TouchableWithoutFeedback>
                     </View>
-                </View>
+                </TouchableWithoutFeedback>
             </Modal>
 
             {isLoading && (
@@ -219,38 +226,44 @@ const BookTestSearchScreen = () => {
                 </View>
             )}
 
-            <FlatList
-                data={testData}
-                keyExtractor={item => `${item.RowNumber || item.Service_Name}`}
-                renderItem={renderItem}
-                contentContainerStyle={styles.flatListContainer}
-                ListEmptyComponent={() => (
-                    <Text
-                        style={{
-                            textAlign: 'center',
-                            marginTop: 20,
-                            color: 'gray',
-                            fontSize: Constants.FONT_SIZE.M,
-                        }}
-                    >
-                        No tests found. Please try again.
-                    </Text>
-                )}
-            />
+            {errorMessage ? (
+                <Text style={{ textAlign: 'center', marginTop: 20, color: 'red', fontSize: Constants.FONT_SIZE.M }}>
+                    {errorMessage}
+                </Text>
+            ) : (
+                <FlatList
+                    data={testData}
+                    keyExtractor={item => `${item.RowNumber || item.Service_Name}`}
+                    renderItem={renderItem}
+                    contentContainerStyle={styles.flatListContainer}
+                    ListEmptyComponent={() => (
+                        <Text
+                            style={{
+                                textAlign: 'center',
+                                marginTop: 20,
+                                color: 'gray',
+                                fontSize: Constants.FONT_SIZE.M,
+                            }}
+                        >
+                            No tests found. Please try again.
+                        </Text>
+                    )}
+                />
+            )}
 
             {searchText.trim().length > 0 && (
                 <View>
                     <Text style={styles.bottomText}>
                         Total Cart Value INR {totalCartValue}
                     </Text>
-                    <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <TouchableOpacity onPress={handleProceedClick}>
                         <View style={styles.SubmitButtonView}>
                             <Text style={styles.ButtonText}>Proceed</Text>
                         </View>
                     </TouchableOpacity>
                     <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
                         <Text style={{ color: '#fd1a1b' }}>
-                            Note:*-Indicates Non Discounted Test
+                            Note: *Indicates Non Discounted Test
                         </Text>
                     </View>
                 </View>
@@ -261,8 +274,6 @@ const BookTestSearchScreen = () => {
 
 export default BookTestSearchScreen;
 
-
-// Stylesheet
 const styles = StyleSheet.create({
     MainContainer:
     {
@@ -366,9 +377,9 @@ const styles = StyleSheet.create({
     modalContent: {
         paddingVertical: 20,
         paddingHorizontal: 15,
-        borderTopLeftRadius: 30,
+        // borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
-        backgroundColor: 'white',
+        // backgroundColor: 'white',
     },
     emptyCartContainer: {
         alignItems: 'center',

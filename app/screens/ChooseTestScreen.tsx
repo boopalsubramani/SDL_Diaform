@@ -1,46 +1,124 @@
-
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Image, Modal, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Image, Modal, Alert, TouchableWithoutFeedback } from 'react-native';
 import Constants from '../util/Constants';
 import { useCart } from '../common/CartContext';
 import { useNavigation } from '@react-navigation/native';
 import NavigationBar from '../common/NavigationBar';
 import BookTestHeader from './BookTestHeader';
+import NetInfo from '@react-native-community/netinfo';
 import ButtonBack from '../common/BackButton';
 import ButtonNext from '../common/NextButton';
 
 const deviceHeight = Dimensions.get('window').height;
+const deviceWidth = Dimensions.get('window').width;
 
-const ChooseTestScreen = (showHeader = true) => {
+const ChooseTestScreen = ({ route, showHeader = true }) => {
+    const { selectedPatientDetails, totalCartValue: initialTotalCartValue, selectedTests, shouldNavigateToCalender } = route.params;
     const navigation = useNavigation();
+    const [testData, setTestData] = useState(selectedTests || []);
     const { cartItems, setCartItems } = useCart();
-    const badgeCount = cartItems.length;
+    const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
+    const [isModalVisible, setModalVisible] = useState(false);
 
-    // Modal visibility state
-    const [modalVisible, setModalVisible] = useState(false);
+    useEffect(() => {
+        if (shouldNavigateToCalender) {
+            const timer = setTimeout(() => {
+                handleProceedClick();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [shouldNavigateToCalender]);
 
     const handleUploadPrescription = () => {
         navigation.navigate('UploadPrescription');
     };
 
     const handleSearchTest = () => {
-        navigation.navigate('BookTestSearch');
+        navigation.navigate('BookTestSearch', { selectedPatientDetails });
     };
 
     const handleCartClick = () => {
-        if (badgeCount > 0) {
+        if (cartItems.length > 0) {
             setModalVisible(true);
         } else {
             Alert.alert('Cart', 'Cart is Empty');
         }
     };
 
-    const handleBack = () => {
+    const calculateTotalCartValue = (updatedCartItems) => {
+        const total = updatedCartItems.reduce((acc, itemName) => {
+            const item = testData.find(test => test.Service_Name === itemName);
+            return acc + (item?.Amount || 0);
+        }, 0);
+        setTotalCartValue(total);
+    };
+
+    const handleToggleCart = (itemName) => {
+        setCartItems(prevCartItems => {
+            const updatedCartItems = prevCartItems.includes(itemName)
+                ? prevCartItems.filter(item => item !== itemName)
+                : [...prevCartItems, itemName];
+            calculateTotalCartValue(updatedCartItems);
+            return updatedCartItems;
+        });
+    };
+
+    const handleBack = async () => {
+        const state = await NetInfo.fetch();
+        if (!state.isConnected) {
+            Alert.alert(Constants.ALERT.TITLE.ERROR, Constants.VALIDATION_MSG.NO_INTERNET);
+            return;
+        }
         navigation.goBack();
     };
 
-    const handleNext = () => {
-        navigation.navigate('BookTestSearch');
+    const handleNext = async () => {
+        const state = await NetInfo.fetch();
+        if (!state.isConnected) {
+            Alert.alert(Constants.ALERT.TITLE.ERROR, Constants.VALIDATION_MSG.NO_INTERNET);
+            return;
+        }
+        navigation.navigate('BookTestSearch', { selectedPatientDetails });
+    };
+
+    const handleProceedClick = () => {
+        if (cartItems.length > 0) {
+            const selectedTests = cartItems.map(itemName => {
+                const item = testData.find(test => test.Service_Name === itemName);
+                return {
+                    Service_Name: item?.Service_Name,
+                    Amount: item?.Amount,
+                };
+            });
+            navigation.navigate('Calender', { selectedTests, selectedPatientDetails, totalCartValue });
+        } else {
+            Alert.alert('Empty Cart', 'Please add items to the cart before proceeding.');
+        }
+    };
+
+    const renderCartItems = () => {
+        if (cartItems.length === 0) {
+            return (
+                <View style={styles.emptyCartContainer}>
+                    <Text style={styles.emptyCartText}>Cart is Empty</Text>
+                </View>
+            );
+        }
+        return cartItems.map((item, index) => {
+            const itemData = testData.find(test => test.Service_Name === item);
+            return (
+                <View style={styles.testItemContainer} key={index}>
+                    <Text style={styles.testName}>{item}</Text>
+                    <Text style={styles.testPrice}>{itemData?.Amount} INR</Text>
+                    <TouchableOpacity onPress={() => handleToggleCart(item)}>
+                        <View style={styles.addToCartContainer}>
+                            <Image source={require('../images/addCart.png')} style={styles.CartIcon} />
+                            <Text>Remove</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            );
+        });
     };
 
     return (
@@ -57,62 +135,55 @@ const ChooseTestScreen = (showHeader = true) => {
                         <Text style={styles.chooseTestText}>Choose test</Text>
                         <View style={styles.cartValueView}>
                             <Text style={styles.cartValueLabel}>Cart value</Text>
-                            <Text style={styles.cartValue}>INR 0</Text>
+                            <Text style={styles.cartValue}>{totalCartValue} INR</Text>
                         </View>
                     </View>
-
                     <View style={styles.searchCartView}>
                         <TouchableOpacity onPress={handleSearchTest}>
-                            <Image
-                                source={require('../images/search.png')}
-                                style={styles.searchIcon}
-                            />
+                            <Image source={require('../images/search.png')} style={styles.searchIcon} />
                         </TouchableOpacity>
                         <Text style={styles.searchLabel}>Select Test</Text>
                         <TouchableOpacity onPress={handleCartClick} style={styles.searchCartRightView}>
-                            <Image
-                                source={require('../images/addCart.png')}
-                                style={styles.CartIcon}
-                            />
+                            <Image source={require('../images/addCart.png')} style={styles.CartIcon} />
                         </TouchableOpacity>
-                        {badgeCount > 0 && (
+                        {cartItems.length > 0 && (
                             <View style={styles.notificationBadge}>
-                                <Text style={styles.notificationBadgeText}>{badgeCount}</Text>
+                                <Text style={styles.notificationBadgeText}>{cartItems.length}</Text>
                             </View>
                         )}
                     </View>
-
                     <View style={styles.uploadContainer}>
-                        <TouchableOpacity
-                            style={styles.uploadButtonView}
-                            onPress={handleUploadPrescription}>
-                            <Image
-                                source={require('../images/up_arrow.png')}
-                                style={styles.uploadImage}
-                            />
+                        <TouchableOpacity style={styles.uploadButtonView} onPress={handleUploadPrescription}>
+                            <Image source={require('../images/up_arrow.png')} style={styles.uploadImage} />
                             <Text style={styles.uploadText}>Upload Prescription</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
-
-            {/* Modal for cart */}
-            {modalVisible && (
-                <Modal
-                    transparent={true}
-                    animationType="slide"
-                    visible={modalVisible}
-                    onRequestClose={() => setModalVisible(false)}
-                >
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContent}>
-                            <Text>Cart Details Here</Text>
-                            {/* You can add your cart modal content here */}
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Text>Close Modal</Text>
-                            </TouchableOpacity>
+            {isModalVisible && (
+                <Modal animationType="slide" transparent={true} visible={isModalVisible} onRequestClose={() => setModalVisible(false)}>
+                    <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                        <View style={styles.modalContainer}>
+                            <TouchableWithoutFeedback>
+                                <View style={styles.modalBackground}>
+                                    <View style={styles.modalContent}>
+                                        {renderCartItems()}
+                                        <Text style={styles.bottomText}>Total Cart Value INR {totalCartValue}</Text>
+                                        {cartItems.length > 0 && (
+                                            <TouchableOpacity onPress={handleProceedClick}>
+                                                <View style={styles.SubmitButtonView}>
+                                                    <Text style={styles.ButtonText}>Proceed</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        )}
+                                        <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
+                                            <Text style={{ color: '#fd1a1b' }}>Note: *Indicates Non Discounted Test</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </TouchableWithoutFeedback>
                         </View>
-                    </View>
+                    </TouchableWithoutFeedback>
                 </Modal>
             )}
             <View style={styles.navigationContainer}>
@@ -239,16 +310,65 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         fontSize: Constants.FONT_SIZE.SM,
     },
-    modalBackground: {
+    modalContainer: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
-    modalContent: {
-        backgroundColor: 'white',
-        padding: 20,
+    modalBackground: {
+        width: '100%',
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
+        backgroundColor: 'white',
+    },
+    modalContent: {
+        paddingVertical: 20,
+        paddingHorizontal: 15,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        backgroundColor: 'white',
+    },
+    emptyCartContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyCartText: { fontSize: Constants.FONT_SIZE.M, color: 'gray' },
+    testItemContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+    },
+    testName: {
+        width: '40%',
+        color: '#686868',
+    },
+    testPrice: { fontWeight: 'bold', width: '20%' },
+    bottomText: {
+        fontSize: Constants.FONT_SIZE.L,
+        color: Constants.COLOR.BLACK_COLOR,
+        alignSelf: 'center',
+    },
+    SubmitButtonView: {
+        borderRadius: 20,
+        width: deviceWidth / 1.2,
+        backgroundColor: Constants.COLOR.THEME_COLOR,
+        marginTop: 16,
+        alignSelf: 'center',
+    },
+    ButtonText: {
+        color: Constants.COLOR.WHITE_COLOR,
+        padding: 12,
+        alignSelf: 'center',
+    },
+    addToCartContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 5,
+        borderColor: '#bcc0c7',
+        marginVertical: 10,
+        padding: 4,
+        borderRadius: 5,
     },
     navigationContainer: {
         flexDirection: 'row',
@@ -257,8 +377,5 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: '#FBFBFB',
         justifyContent: 'space-between',
-      },
+    },
 });
-
-
-

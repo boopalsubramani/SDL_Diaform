@@ -39,7 +39,7 @@ const LoginScreen = ({ navigation }: any) => {
     const [userNameError, setUserNameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [isError, setIsError] = useState(false);
-    const [userDetails] = useState<any>();
+    const [userDetails, setUserDetails] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
     const [appSettingsAPIReq, appSettingsAPIRes] = useRefAppSettingMutation();
@@ -53,7 +53,6 @@ const LoginScreen = ({ navigation }: any) => {
         return labels[key]?.defaultMessage || '';
     };
 
-
     // API call for app settings
     useEffect(() => {
         if (!appSettingsAPIRes.isLoading && !appSettingsAPIRes.data) {
@@ -66,7 +65,10 @@ const LoginScreen = ({ navigation }: any) => {
     useEffect(() => {
         setLoading(LoginAPIRes.isLoading);
 
-        if (LoginAPIRes.isSuccess) {
+        if (LoginAPIRes.isSuccess && LoginAPIRes.data.SuccessFlag === "true" && LoginAPIRes.data.Code === 200) {
+            const userData = LoginAPIRes.data.Message[0]; 
+            AsyncStorage.setItem('userData', JSON.stringify(userData));
+            setUserDetails(userData);
             navigation.navigate('Bottom');
         } else if (LoginAPIRes.isError && LoginAPIRes?.data?.Message) {
             const errorMessage = LoginAPIRes?.data?.Message[0]?.Message || 'An error occurred';
@@ -76,46 +78,23 @@ const LoginScreen = ({ navigation }: any) => {
         }
     }, [LoginAPIRes, navigation]);
 
+    // Retrieve user data from AsyncStorage
+    useEffect(() => {
+        const retrieveUserData = async () => {
+            const userData = await AsyncStorage.getItem('userData');
+            if (userData) {
+                setUserDetails(JSON.parse(userData));
+            }
+        };
+        retrieveUserData();
+    }, []);
+
     // Alert function
     const showAlert = (title: string, message: string) => {
         Alert.alert(title, message, [], { cancelable: false });
     };
 
     // Validate inputs for login
-    // const validateInputs = async () => {
-    //     setUserNameError('');
-    //     setPasswordError('');
-    //     setIsError(false);
-
-    //     // Validate Username
-    //     if (!userName || userName.length === 0) {
-    //         setUserNameError('Mobile Number is required');
-    //     } else if (userName.length < 10) {
-    //         setUserNameError('Mobile Number should not be empty and must contain minimum 10 characters');
-    //     }
-
-    //     // Validate Password
-    //     else if (!password || password.length === 0) {
-    //         setPasswordError(passwordPolicyMessages[0]);
-    //     } else if (password.length < 8) {
-    //         setPasswordError(passwordPolicyMessages[1]);
-    //     } else if (!/[A-Z]/.test(password)) {
-    //         setPasswordError(passwordPolicyMessages[2]);
-    //     } else if (!/[a-z]/.test(password)) {
-    //         setPasswordError(passwordPolicyMessages[3]);
-    //     } else if (!/[0-9]/.test(password)) {
-    //         setPasswordError(passwordPolicyMessages[4]);
-    //     } else if (!/[!@#$%^*()_+=\[\]{};:/?\\|]/.test(password)) {
-    //         setPasswordError(passwordPolicyMessages[5]);
-    //     } else {
-    //         let loginReqObj = {
-    //             UserName: userName,
-    //             Password: password,
-    //         };
-    //         loginAPIReq(loginReqObj);
-    //     }
-    //     AsyncStorage.clear();
-    // };
     const validateInputs = async () => {
         setUserNameError('');
         setPasswordError('');
@@ -123,7 +102,7 @@ const LoginScreen = ({ navigation }: any) => {
         // Validate Username
         if (!userName || userName.length === 0) {
             setUserNameError('Mobile Number is required');
-        } 
+        }
         else if (userName.length < 9) {
             setUserNameError('Mobile Number should not be empty and must contain minimum 10 characters');
         }
@@ -131,17 +110,18 @@ const LoginScreen = ({ navigation }: any) => {
         else if (!password || password.length === 0) {
             setPasswordError(passwordPolicyMessages[0]);
         }
-         else if (password.length < 8) {
+        else if (password.length < 8) {
             setPasswordError(passwordPolicyMessages[1]);
-        } 
+        }
         else {
             let loginReqObj = {
                 UserName: userName,
                 Password: password,
             };
             const response = await loginAPIReq(loginReqObj);
+            console.log("Login API Request:", loginReqObj);
+            console.log("Login API Response:", response);
         }
-        AsyncStorage.clear();
     };
 
     const forgotPassword = () => {
@@ -237,7 +217,6 @@ const LoginScreen = ({ navigation }: any) => {
                     </View>
                 </View>
 
-
                 <View style={styles.bodyContainerBottom} />
                 <View style={styles.registerContainer}>
                     <View style={styles.registerInnerView}>
@@ -267,7 +246,6 @@ const LoginScreen = ({ navigation }: any) => {
                                 <Text style={styles.errorText}>{userNameError}</Text>
                             ) : null}
 
-
                             <Text style={[styles.placeholder, { textAlign: language === 'Arabic' ? 'right' : 'left' }]}
                             >{getLabel('loginsrc_3')}</Text>
                             <View style={styles.inputContainer}>
@@ -295,7 +273,6 @@ const LoginScreen = ({ navigation }: any) => {
                             {passwordError ? (
                                 <Text style={styles.errorText}>{passwordError}</Text>
                             ) : null}
-
 
                             <TouchableOpacity
                                 style={styles.linkView}
@@ -369,6 +346,9 @@ const LoginScreen = ({ navigation }: any) => {
         </SafeAreaView>
     );
 };
+
+export default LoginScreen;
+
 
 const styles = StyleSheet.create({
     mainContainer: {
@@ -588,6 +568,5 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginScreen;
 
 

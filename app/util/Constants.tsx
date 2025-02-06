@@ -480,6 +480,7 @@ module.exports = {
     CHECK_TERMS_CONDITION: 'Kindly select Terms and Condition',
     NO_TEST_SELECTED: 'Kindly choose test or upload prescription to proceed',
     NO_DATE_TIME_SELECTED: 'Kindly select Date and Time',
+    NO_PAYMENT_MSG:'Please select payment mode',
     NO_PATIENT_SELECTED: 'Kindly select the patient to proceed',
     NO_PATIENT_ADDRESS_SELECTED:
       'Kindly select the patient and Address to proceed',

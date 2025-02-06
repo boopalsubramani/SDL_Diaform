@@ -55,7 +55,7 @@ const baseQueryWithInterceptor: BaseQueryFn<
     // }
     let result = await baseQuery(args, api, extraOptions);
     // .log("API <----> Result", result);
-    console.log("(((((((((arg))))))))",args)
+    // console.log("(((((((((arg))))))))",args)
 
     if (result.error && result.error.status === 401) {
         // try to get a new token for unauthorised access

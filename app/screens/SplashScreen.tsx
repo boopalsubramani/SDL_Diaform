@@ -35,8 +35,8 @@ const SplashScreen = () => {
       if (!state.isConnected) {
         setIsConnected(false);
         Alert.alert(
-          'No Internet Connection',
-          'Please check your internet connection and try again.',
+          Constants.ALERT.TITLE.ERROR,
+          Constants.VALIDATION_MSG.NO_INTERNET,
           [{ text: 'OK', onPress: () => console.log('Alert closed') }]
         );
       } else {
@@ -63,7 +63,7 @@ const SplashScreen = () => {
       <View style={styles.imageContainer}>
         <Image
           resizeMode="contain"
-          source={{ uri: appSettingsAPIRes?.data?.Message[0].Flash_Logo}}
+          source={{ uri: appSettingsAPIRes?.data?.Message[0].Flash_Logo }}
           style={styles.image}
         />
       </View>
@@ -109,97 +109,27 @@ export default SplashScreen;
 
 
 
-// import React, { useState, useEffect } from 'react';
-// import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 
-// const SplashScreen = () => {
-//   const [users, setUsers] = useState([]); // State to store user data
-//   const [loading, setLoading] = useState(true); // State to manage loading
 
-//   // Fetch data from the API
-//   useEffect(() => {
-//     const fetchUsers = async () => {
-//       try {
-//         const response = await fetch('https://gorest.co.in/public/v2/users');
-//         const data = await response.json();
-//         setUsers(data); // Update the user state with the fetched data
-//         setLoading(false); // Stop the loading indicator
-//       } catch (error) {
-//         console.error('Error fetching users:', error);
-//         setLoading(false); // Stop loading even if there's an error
-//       }
-//     };
 
-//     fetchUsers();
-//   }, []);
 
-//   // Render each user item
-//   const renderUser = ({ item }) => (
-//     <View style={styles.userCard}>
-//       <Text style={styles.name}>{item.name}</Text>
-//       <Text style={styles.email}>{item.email}</Text>
-//       <Text style={styles.info}>Gender: {item.gender}</Text>
-//       <Text style={styles.info}>Status: {item.status}</Text>
-//     </View>
-//   );
 
-//   // If loading, show a loading spinner
-//   if (loading) {
-//     return (
-//       <View style={styles.loadingContainer}>
-//         <ActivityIndicator size="large" color="#0000ff" />
-//       </View>
-//     );
-//   }
 
-//   return (
-//     <View style={styles.container}>
-//       <FlatList
-//         data={users}
-//         renderItem={renderUser}
-//         keyExtractor={(item) => item.id.toString()}
-//         contentContainerStyle={styles.listContainer}
-//       />
-//     </View>
-//   );
-// };
 
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#f8f9fa',
-//   },
-//   listContainer: {
-//     padding: 16,
-//   },
-//   userCard: {
-//     backgroundColor: '#fff',
-//     padding: 16,
-//     borderRadius: 8,
-//     marginBottom: 12,
-//     elevation: 3,
-//   },
-//   name: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: '#333',
-//   },
-//   email: {
-//     fontSize: 14,
-//     color: '#555',
-//     marginVertical: 4,
-//   },
-//   info: {
-//     fontSize: 12,
-//     color: '#777',
-//   },
-//   loadingContainer: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-// });
 
-// export default SplashScreen;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

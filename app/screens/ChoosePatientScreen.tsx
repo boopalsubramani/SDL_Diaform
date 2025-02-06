@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, ScrollView, Image, Alert } from 'react-native';
 import Constants from '../util/Constants';
 import { useNavigation } from '@react-navigation/native';
+import NetInfo from '@react-native-community/netinfo';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import Spinner from 'react-native-spinkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NavigationBar from '../common/NavigationBar';
 import BookTestHeader from './BookTestHeader';
 import ButtonNext from '../common/NextButton';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -26,7 +28,6 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const [selectedPhysicianDetails, setSelectedPhysicianDetails] = useState(null);
     const [isPhysicianSelected, setIsPhysicianSelected] = useState(false);
     const [patientData, setPatientData] = useState(null);
-
 
     // Fetch API hook
     const [fetchAPIReq] = useFetchApiMutation();
@@ -142,7 +143,6 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         setIsPatientLoading(true);
         try {
             const response = await fetchAPIReq(fetchObj);
-            console.log('API Response for patient details:', response);
             if (response?.data?.TableData?.data1) {
                 const patientData = response.data.TableData.data1.find((item) => item.PtCode === code);
                 if (patientData) {
@@ -214,15 +214,26 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         navigation.navigate('AddPatient');
     };
 
-
-    const handleNext = () => {
-        if (selectedPatientDetails && selectedPhysicianDetails) {
-            navigation.navigate('ChooseTest');
+    const handleNext = async () => {
+        const state = await NetInfo.fetch();
+        if (!state.isConnected) {
+            Alert.alert(
+                Constants.ALERT.TITLE.ERROR,
+                Constants.VALIDATION_MSG.NO_INTERNET,
+            );
+            return;
+        }
+        if ((patientData || selectedPatientDetails) && selectedPhysicianDetails) {
+            navigation.navigate('ChooseTest', {
+                selectedPatientDetails: selectedPatientDetails || patientData,
+            });
         } else {
-            Alert.alert('Please select both patient and physician details before proceeding.');
+            Alert.alert(
+                Constants.ALERT.TITLE.INFO, 
+                Constants.VALIDATION_MSG.NO_PATIENT_SELECTED,  
+            );
         }
     };
-
 
     useEffect(() => {
         const fetchPatientData = async () => {
@@ -247,7 +258,12 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     <BookTestHeader selectValue={1} />
                 </>
             )}
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <KeyboardAwareScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                enableOnAndroid
+                keyboardOpeningTime={0}
+                extraScrollHeight={10}
+            >
                 <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.LAB_SEARCH_SCREEN_BG }}>
                     {/* Header */}
                     <View style={styles.header}>
@@ -423,7 +439,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                         </View>
                     )}
                 </View>
-            </ScrollView >
+            </KeyboardAwareScrollView>
             <View style={styles.navigationContainer}>
                 <TouchableOpacity onPress={handleNext}>
                     <ButtonNext />
@@ -456,14 +472,7 @@ const styles = StyleSheet.create({
         color: '#00A3FF',
         fontWeight: '500',
     },
-    navigationContainer: {
-        flexDirection: 'row',
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        backgroundColor: '#FBFBFB',
-        justifyContent: 'flex-end',
-    },
+
     section: {
         marginBottom: 24,
     },
@@ -536,6 +545,14 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#000',
         marginBottom: 8,
+    },
+    navigationContainer: {
+        flexDirection: 'row',
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        backgroundColor: '#FBFBFB',
+        justifyContent: 'flex-end',
     },
 });
 
