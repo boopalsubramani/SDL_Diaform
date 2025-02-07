@@ -12,7 +12,7 @@
  * Returns all the constants used in the application
  * Separate constants according to the category and usage
  */
-module.exports = {
+const Constants = {
   SCREEN_SIZE: {
     PLUS_SIZE: 667,
   },
@@ -526,3 +526,5 @@ module.exports = {
     ASYNC_BRANCH_LONGITUDE: '@user_branch_longitude',
   },
 };
+
+export default Constants;

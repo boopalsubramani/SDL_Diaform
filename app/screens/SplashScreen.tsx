@@ -1,35 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, Alert, Dimensions } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import { StackNavigationProp } from "@react-navigation/stack";
 import { useNavigation } from '@react-navigation/native';
+import NetInfo from '@react-native-community/netinfo';
 import Constants from "../util/Constants";
-import Spinner from 'react-native-spinkit';
 import DeviceInfo from 'react-native-device-info';
-import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
+import { useAppSettings } from '../common/AppSettingContext';
+import SpinnerIndicator from '../common/SpinnerIndicator';
+import { RootStackParamList } from '../routes/Types';
 
 const deviceHeight = Dimensions.get('window').height;
-const deviceWidth = Dimensions.get("window").width;
+
+type NavigationProp = StackNavigationProp<RootStackParamList, "SplashScreen">;
 
 const SplashScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [isConnected, setIsConnected] = useState(true);
   const [appVersion, setAppVersion] = useState('');
-
-  const [appSettingsAPIReq, appSettingsAPIRes] =
-    useRefAppSettingMutation();
-
-  //useeffect for Logo
-  useEffect(() => {
-    const appSettingsObj = {
-
-    };
-    appSettingsAPIReq(appSettingsObj);
-  }, []);
-
+  const { settings } = useAppSettings();
 
   useEffect(() => {
-    const version = DeviceInfo.getVersion();
-    setAppVersion(version);
+    setAppVersion(DeviceInfo.getVersion());
 
     const unsubscribe = NetInfo.addEventListener(state => {
       if (!state.isConnected) {
@@ -45,39 +36,29 @@ const SplashScreen = () => {
     });
 
     const timeout = setTimeout(() => {
-      if (isConnected) {
-        navigation.navigate('Login');
-      } else {
+      if (isConnected && settings) {
+        navigation.navigate("Login");
       }
-    }, 5000);
+    }, 3000);
 
-    // Cleanup listeners and timeout
     return () => {
       unsubscribe();
       clearTimeout(timeout);
     };
-  }, [isConnected, navigation]);
+  }, [isConnected, settings, navigation]);
 
   return (
     <View style={styles.container}>
       <View style={styles.imageContainer}>
-        <Image
-          resizeMode="contain"
-          source={{ uri: appSettingsAPIRes?.data?.Message[0].Flash_Logo }}
-          style={styles.image}
-        />
+        {settings?.Message?.[0]?.Flash_Logo && (
+          <Image
+            resizeMode="contain"
+            source={{ uri: settings.Message[0].Flash_Logo }}
+            style={styles.image}
+          />
+        )}
       </View>
-      <Spinner
-        style={{
-          marginTop: deviceHeight / 10,
-          alignItems: 'center',
-          alignSelf: 'center',
-        }}
-        isVisible={true}
-        size={40}
-        type={'Wave'}
-        color={Constants.COLOR.THEME_COLOR}
-      />
+      <SpinnerIndicator />
       <Text style={styles.versionText}>App Version: {appVersion}</Text>
     </View>
   );
@@ -105,31 +86,3 @@ const styles = StyleSheet.create({
 });
 
 export default SplashScreen;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

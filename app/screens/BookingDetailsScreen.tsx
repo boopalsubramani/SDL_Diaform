@@ -1,21 +1,54 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Dimensions } from 'react-native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import NavigationBar from '../common/NavigationBar';
 import ButtonBack from '../common/BackButton';
 import Constants from "../util/Constants";
 import { useBookingDetailMutation } from '../redux/service/BookingDetailService';
 import Spinner from 'react-native-spinkit';
+import SpinnerIndicator from '../common/SpinnerIndicator';
 
+// Device dimensions
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
 
+// Define the type for booking details
+interface ServiceDetail {
+    Service_Name: string;
+    Service_Amount: string;
+}
+
+interface BookingDetails {
+    Booking_No: string;
+    Pt_Code: string;
+    Visit_Date_Desc: string;
+    Pt_Name: string;
+    First_Age: string;
+    First_Age_Period: string;
+    Gender_Code: string;
+    Pt_Mobile_No: string;
+    Report_Status_Desc: string;
+    Booking_Status_Desc: string;
+    Service_Detail: ServiceDetail[];
+}
+
+// Define the type for the booking prop passed to the screen
+interface Booking {
+    Booking_No: string;
+    Booking_Date: string; // Ensure this property exists on the booking object
+}
+
+type BookingDetailsScreenRouteProp = RouteProp<{
+    BookingDetails: { booking: Booking }; // Define the booking type here
+}, 'BookingDetails'>;
+
 const BookingDetailsScreen = ({ navigation }: any) => {
-    const route = useRoute();
+    const route = useRoute<BookingDetailsScreenRouteProp>();
     const { booking } = route.params;
+    
     const [reviewText, setReviewText] = useState('');
-    const [bookingDetails, setBookingDetails] = useState(null);
-    const [bookingDetailAPIReq, bookingDetailAPIRes] = useBookingDetailMutation();
+    const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
+    const [bookingDetailAPIReq] = useBookingDetailMutation();
 
     useEffect(() => {
         const fetchBookingDetails = async () => {
@@ -24,8 +57,8 @@ const BookingDetailsScreen = ({ navigation }: any) => {
                 Username: "01000104",
                 Booking_Type: "R",
                 Firm_No: "01",
-                Booking_Date: booking.Booking_Date,
-                Booking_No: booking.Booking_No
+                Booking_Date: booking.Booking_Date, // Ensure this property exists on `booking`
+                Booking_No: booking.Booking_No // Ensure this property exists on `booking`
             };
 
             const response = await bookingDetailAPIReq(requestBody);
@@ -35,7 +68,7 @@ const BookingDetailsScreen = ({ navigation }: any) => {
         };
 
         fetchBookingDetails();
-    }, [bookingDetailAPIReq, booking]);
+    }, [booking, bookingDetailAPIReq]); // Watch for changes in `booking` or `bookingDetailAPIReq`
 
     const handleButtonPress = () => {
         navigation.goBack();
@@ -44,27 +77,15 @@ const BookingDetailsScreen = ({ navigation }: any) => {
     if (!bookingDetails) {
         return (
             <View style={styles.loadingContainer}>
-                <Spinner
-                    style={{
-                        marginTop: deviceHeight / 10,
-                        alignItems: 'center',
-                        alignSelf: 'center',
-                    }}
-                    isVisible={true}
-                    size={40}
-                    type={'Wave'}
-                    color={Constants.COLOR.THEME_COLOR}
-                />
-                <Text style={styles.loadingText}>Loading booking details, please wait...</Text>
+               <SpinnerIndicator/>
             </View>
         );
     }
 
-
     return (
         <View style={{ flex: 1, backgroundColor: Constants.COLOR.WHITE_COLOR }}>
-            <NavigationBar title={`Booking ID: ${bookingDetails.Booking_No}`} />     
-                   <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <NavigationBar title={`Booking ID: ${bookingDetails.Booking_No}`} />
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.bookingIdView}>
                     <View style={styles.section}>
                         <Text style={styles.subHeading}>Booking ID: {bookingDetails.Booking_No}</Text>
@@ -146,10 +167,11 @@ const BookingDetailsScreen = ({ navigation }: any) => {
 };
 
 export default BookingDetailsScreen;
+
 const styles = StyleSheet.create({
     scrollContainer: {
         flex: 1,
-        padding: deviceWidth * 0.05,
+        paddingHorizontal: 10,
     },
     bookingIdView: { flexDirection: 'row' },
     section: {
@@ -298,12 +320,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#F9F9F9',
-    },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 16,
-        color: '#555',
-        textAlign: 'center',
     },
 });
 

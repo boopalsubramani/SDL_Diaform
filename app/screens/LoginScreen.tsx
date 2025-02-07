@@ -11,12 +11,14 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Constants from '../util/Constants';
 import DeviceInfo from 'react-native-device-info';
-import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
+// import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
+import { useAppSettings } from '../common/AppSettingContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRefAppLoginMutation } from '../redux/service/LoginService';
 
@@ -26,47 +28,40 @@ const deviceWidth = Dimensions.get("window").width;
 
 const LoginScreen = ({ navigation }: any) => {
     const [isPasswordVisible, setPasswordVisible] = useState(false);
-    const passwordRef = useRef(null);
+    const passwordRef = useRef<TextInput>(null);
     const [isModalVisible, setModalVisible] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState("Language");
+    const [selectedLanguage, setSelectedLanguage] = useState("Select Language");
     const [isOtpModalVisible, setOtpModalVisible] = useState(false);
     const [otp, setOtp] = useState(["", "", "", ""]);
     const otpRefs = useRef<(TextInput | null)[]>([]);
-
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [userNameError, setUserNameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [isError, setIsError] = useState(false);
     const [userDetails, setUserDetails] = useState<any>(null);
     const [loading, setLoading] = useState(false);
-
-    const [appSettingsAPIReq, appSettingsAPIRes] = useRefAppSettingMutation();
+    const { settings } = useAppSettings();
     const [loginAPIReq, LoginAPIRes] = useRefAppLoginMutation();
 
-    const passwordPolicyMessages = appSettingsAPIRes?.data?.Message[0]?.Password_Policy_Message;
-    const language = appSettingsAPIRes?.data?.Message[0]?.Languages;
-    const labels = appSettingsAPIRes?.data?.Message[0]?.Labels || {};
+    const passwordPolicyMessages = settings?.Message?.[0]?.Password_Policy_Message ?? [];
+    const language: { Code: string; Description: string }[] =
+        Array.isArray(settings?.Message?.[0]?.Languages)
+            ? settings?.Message?.[0]?.Languages.map(lang =>
+                typeof lang === "object" && lang !== null ? lang : { Code: "", Description: "" })
+            : [];
+    const labels = settings?.Message?.[0]?.Labels || {};
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
     };
-
-    // API call for app settings
-    useEffect(() => {
-        if (!appSettingsAPIRes.isLoading && !appSettingsAPIRes.data) {
-            const appSettingsObj = {};
-            appSettingsAPIReq(appSettingsObj);
-        }
-    }, [appSettingsAPIRes.isLoading, appSettingsAPIRes.data]);
 
     // Handle login API response
     useEffect(() => {
         setLoading(LoginAPIRes.isLoading);
 
         if (LoginAPIRes.isSuccess && LoginAPIRes.data.SuccessFlag === "true" && LoginAPIRes.data.Code === 200) {
-            const userData = LoginAPIRes.data.Message[0]; 
+            const userData = LoginAPIRes.data.Message[0];
             AsyncStorage.setItem('userData', JSON.stringify(userData));
             setUserDetails(userData);
             navigation.navigate('Bottom');
@@ -133,8 +128,8 @@ const LoginScreen = ({ navigation }: any) => {
     };
 
     // Handle language selection
-    const handleSelectLanguage = (language: { label: string }) => {
-        setSelectedLanguage(language.label);
+    const handleSelectLanguage = (language: { Code: string; Description: string }) => {
+        setSelectedLanguage(language.Description);
         setModalVisible(false);
     };
 
@@ -189,30 +184,32 @@ const LoginScreen = ({ navigation }: any) => {
                                     source={require('../images/arrowDown.png')}
                                 />
                             </TouchableOpacity>
-
                             <Modal
                                 transparent={true}
                                 visible={isModalVisible}
                                 animationType="fade"
                                 onRequestClose={() => setModalVisible(false)}
                             >
-                                <View style={styles.modalOverlay}>
-                                    <View style={styles.modalContainer}>
-                                        <FlatList
-                                            data={language}
-                                            renderItem={({ item }) => (
-                                                <TouchableOpacity
-                                                    style={styles.modalItem}
-                                                    onPress={() => handleSelectLanguage({ label: item.Description })}
-                                                >
-                                                    <Text style={styles.modalItemText}>{item.Description}</Text>
-                                                </TouchableOpacity>
-                                            )}
-                                            keyExtractor={(item) => item.Code}
-                                        />
+                                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                                    <View style={styles.modalOverlay}>
+                                        <View style={styles.modalContainer}>
+                                            <FlatList
+                                                data={language}
+                                                renderItem={({ item }) => (
+                                                    <TouchableOpacity
+                                                        style={styles.modalItem}
+                                                        onPress={() => handleSelectLanguage(item)}
+                                                    >
+                                                        <Text style={styles.modalItemText}>{item.Description}</Text>
+                                                    </TouchableOpacity>
+                                                )}
+                                                keyExtractor={(item, index) => item.Code || index.toString()}
+                                            />
+                                        </View>
                                     </View>
-                                </View>
+                                </TouchableWithoutFeedback>
                             </Modal>
+
                         </View>
                     </View>
                 </View>
@@ -223,10 +220,12 @@ const LoginScreen = ({ navigation }: any) => {
                         <View style={{ marginHorizontal: 10 }}>
                             <Image
                                 resizeMode="contain"
-                                source={{ uri: appSettingsAPIRes?.data?.Message[0].Flash_Logo }}
+                                source={{ uri: settings?.Message?.[0].Flash_Logo }}
                                 style={styles.image}
                             />
-                            <Text style={[styles.placeholder, { textAlign: language === 'Arabic' ? 'right' : 'left' }]}
+                            <Text style={[styles.placeholder, {
+                                textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                            }]}
                             >{getLabel('loginsrc_2')}</Text>
                             <View style={styles.inputContainer}>
                                 <TextInput
@@ -246,12 +245,16 @@ const LoginScreen = ({ navigation }: any) => {
                                 <Text style={styles.errorText}>{userNameError}</Text>
                             ) : null}
 
-                            <Text style={[styles.placeholder, { textAlign: language === 'Arabic' ? 'right' : 'left' }]}
+                            <Text style={[styles.placeholder, {
+                                textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                            }]}
                             >{getLabel('loginsrc_3')}</Text>
                             <View style={styles.inputContainer}>
                                 <TextInput
                                     ref={passwordRef}
-                                    style={[styles.inputs, { textAlign: language === 'Arabic' ? 'right' : 'left' }]}
+                                    style={[styles.inputs, {
+                                        textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                                    }]}
                                     value={password}
                                     placeholder='Enter Password'
                                     placeholderTextColor={Constants.COLOR.FONT_HINT}
@@ -297,35 +300,35 @@ const LoginScreen = ({ navigation }: any) => {
                                 animationType="slide"
                                 onRequestClose={() => setOtpModalVisible(false)}
                             >
-                                <View style={styles.modalOverlay}>
-                                    <View style={styles.otpModalContainer}>
-                                        <Text style={styles.otpHeading}>Enter OTP</Text>
-                                        <View style={styles.otpInputContainer}>
-                                            {otp.map((digit, index) => (
-                                                <TextInput
-                                                    key={index}
-                                                    style={styles.otpInput}
-                                                    keyboardType="numeric"
-                                                    maxLength={1}
-                                                    value={digit}
-                                                    onChangeText={(value) => handleOtpChange(value, index)}
-                                                    ref={(ref) => (otpRefs.current[index] = ref)}
-                                                    onKeyPress={({ nativeEvent }) => {
-                                                        if (nativeEvent.key === "Backspace" && !digit && index > 0) {
-                                                            otpRefs.current[index - 1]?.focus();
-                                                        }
-                                                    }}
-                                                />
-                                            ))}
+                                <TouchableWithoutFeedback onPress={() => setOtpModalVisible(false)}>
+                                    <View style={styles.modalOverlay}>
+                                        <View style={styles.otpModalContainer}>
+                                            <Text style={styles.otpHeading}>Enter OTP</Text>
+                                            <View style={styles.otpInputContainer}>
+                                                {otp.map((digit, index) => (
+                                                    <TextInput
+                                                        key={index}
+                                                        style={styles.otpInput}
+                                                        keyboardType="numeric"
+                                                        maxLength={1}
+                                                        value={digit}
+                                                        onChangeText={(value) => handleOtpChange(value, index)}
+                                                        ref={(ref) => (otpRefs.current[index] = ref)}
+                                                        onKeyPress={({ nativeEvent }) => {
+                                                            if (nativeEvent.key === "Backspace" && !digit && index > 0) {
+                                                                otpRefs.current[index - 1]?.focus();
+                                                            }
+                                                        }}
+                                                    />
+                                                ))}
+                                            </View>
+                                            <TouchableOpacity onPress={handleSubmitOtp}>
+                                                <Text style={styles.button}>Submit OTP</Text>
+                                            </TouchableOpacity>
                                         </View>
-                                        <TouchableOpacity
-                                            onPress={handleSubmitOtp}>
-                                            <Text style={styles.button}>Submit OTP</Text>
-                                        </TouchableOpacity>
                                     </View>
-                                </View>
+                                </TouchableWithoutFeedback>
                             </Modal>
-
                             <View
                                 style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <Text style={styles.version}>

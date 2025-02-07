@@ -1,15 +1,16 @@
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, ScrollView, Image, Alert } from 'react-native';
 import Constants from '../util/Constants';
 import { useNavigation } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
-import Spinner from 'react-native-spinkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NavigationBar from '../common/NavigationBar';
 import BookTestHeader from './BookTestHeader';
 import ButtonNext from '../common/NextButton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import SpinnerIndicator from '../common/SpinnerIndicator';
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -28,6 +29,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const [selectedPhysicianDetails, setSelectedPhysicianDetails] = useState(null);
     const [isPhysicianSelected, setIsPhysicianSelected] = useState(false);
     const [patientData, setPatientData] = useState(null);
+
+    console.log('patientdata',patientData)
 
     // Fetch API hook
     const [fetchAPIReq] = useFetchApiMutation();
@@ -144,7 +147,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         try {
             const response = await fetchAPIReq(fetchObj);
             if (response?.data?.TableData?.data1) {
-                const patientData = response.data.TableData.data1.find((item) => item.PtCode === code);
+                const patientData = response.data.TableData.data1.find((item: { PtCode: string; }) => item.PtCode === code);
                 if (patientData) {
                     setSelectedPatientDetails(patientData);
                     console.log('Updated Selected Patient Details:', patientData);
@@ -177,7 +180,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
 
             if (response?.data?.TableData?.data1) {
                 // Assuming the physician data is in response.data.TableData.data1
-                const physicianData = response.data.TableData.data1.find((item) => item.Ref_Code === code);
+                const physicianData = response.data.TableData.data1.find((item: { Ref_Code: string; }) => item.Ref_Code === code);
                 if (physicianData) {
                     setSelectedPhysicianDetails(physicianData);
                     console.log('Updated Selected Physician Details:', physicianData);
@@ -229,8 +232,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
             });
         } else {
             Alert.alert(
-                Constants.ALERT.TITLE.INFO, 
-                Constants.VALIDATION_MSG.NO_PATIENT_SELECTED,  
+                Constants.ALERT.TITLE.INFO,
+                Constants.VALIDATION_MSG.NO_PATIENT_SELECTED,
             );
         }
     };
@@ -268,9 +271,11 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>Choose Patient</Text>
-                        <TouchableOpacity onPress={handlePressAdd}>
-                            <Text style={styles.addText}>Add</Text>
-                        </TouchableOpacity>
+                        {(patientData === null && selectedPatientDetails === null) && (
+                            <TouchableOpacity onPress={handlePressAdd}>
+                                <Text style={styles.addText}>Add</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     {/* Patient Search Section */}
@@ -310,17 +315,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                 />
                             ) : (
                                 isPatientLoading ? (
-                                    <Spinner
-                                        style={{
-                                            marginTop: '10%',
-                                            alignItems: 'center',
-                                            alignSelf: 'center',
-                                        }}
-                                        isVisible={true}
-                                        size={40}
-                                        type="Wave"
-                                        color={Constants.COLOR.THEME_COLOR}
-                                    />
+                                    <SpinnerIndicator />
                                 ) : !isPatientSelected && (
                                     <Text style={{ marginTop: 10, fontSize: 14, color: 'gray', textAlign: 'center' }}>
                                         No matching patients found
@@ -363,7 +358,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                 </TouchableOpacity>
                                 <Text>Name: {patientData.Pt_Name}</Text>
                                 <Text>Phone: {patientData.Mobile_No}</Text>
-                                <Text>Gender: {patientData.Dob}</Text>
+                                <Text>Dob: {patientData.Dob}</Text>
                             </View>
                         ) : (
                             <></>
@@ -400,17 +395,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                             />
                         ) : (
                             isPhysicianLoading ? (
-                                <Spinner
-                                    style={{
-                                        marginTop: '10%',
-                                        alignItems: 'center',
-                                        alignSelf: 'center',
-                                    }}
-                                    isVisible={true}
-                                    size={40}
-                                    type="Wave"
-                                    color={Constants.COLOR.THEME_COLOR}
-                                />
+                                <SpinnerIndicator />
                             ) : !isPhysicianSelected && (
                                 <Text style={{ marginTop: 10, fontSize: 14, color: 'gray', textAlign: 'center' }}>
                                     No matching patients found

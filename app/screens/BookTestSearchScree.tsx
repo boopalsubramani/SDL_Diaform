@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, TextInput, Image, Modal, Alert, StyleSheet, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import Constants from '../util/Constants';
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from '../routes/Types';
 import { useBookTestSearchMutation } from '../redux/service/BookTestSearchService';
 import Spinner from 'react-native-spinkit';
 import { useCart } from '../common/CartContext';
 import { useNavigation } from '@react-navigation/native';
+import SpinnerIndicator from '../common/SpinnerIndicator';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get('window').width;
+type NavigationProp = StackNavigationProp<RootStackParamList, "BookTestSearchScreen">;
+
 
 const BookTestSearchScreen = ({ route }: any) => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
     const { selectedPatientDetails, selectedTests } = route.params;
     const [searchText, setSearchText] = useState('');
     const [testData, setTestData] = useState<any[]>([]);
@@ -217,12 +222,7 @@ const BookTestSearchScreen = ({ route }: any) => {
 
             {isLoading && (
                 <View style={styles.spinnerContainer}>
-                    <Spinner
-                        isVisible={isLoading}
-                        size={50}
-                        type="Wave"
-                        color={Constants.COLOR.THEME_COLOR}
-                    />
+                   <SpinnerIndicator/>
                 </View>
             )}
 
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    spinnerContainer: { position: 'absolute', top: '20%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }] },
+    spinnerContainer: { position: 'absolute', top: '30%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }] },
     modalContainer: {
         flex: 1,
         justifyContent: 'flex-end',

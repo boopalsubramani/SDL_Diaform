@@ -19,6 +19,22 @@ import { useServiceBookingMutation } from '../redux/service/ServiceBookingServic
 
 const deviceHeight = Dimensions.get('window').height;
 
+interface Test {
+    Service_Name: string;
+    Amount: string;
+    TestType?: string;
+    TestCode?: string;
+    Service_Amount?: string;
+    Service_Discount?: string;
+    Primary_Share?: string;
+    Patient_Share?: string;
+    Test_VAT?: string;
+    Patient_VAT?: string;
+    Discount?: string;
+    VAT_Amount?: string;
+    Patient_Amount?: string;
+}
+
 const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const { selectedTests = [], selectedDate, selectedTime, selectedPatientDetails } = route?.params || [];
     const [paymentMethod, setPaymentMethod] = useState('');
@@ -151,7 +167,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             <ScrollView style={{ paddingHorizontal: 10 }}>
                 <View style={styles.cartSection}>
                     <Text style={styles.cartTitle}>Booking Details</Text>
-                    {selectedTests.map((test, index) => (
+                    {selectedTests.map((test: Test, index: number) => (
                         <View key={index} style={styles.cartItem}>
                             <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
                             <Text style={styles.cartItemPrice}>P {test.Amount}</Text>

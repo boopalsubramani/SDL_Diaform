@@ -1,105 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import Constants from '../util/Constants';
-import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
-
+import { useAppSettings } from '../common/AppSettingContext';
 
 const deviceHeight = Dimensions.get('window').height;
 
 const UploadPrescriptionScreen = ({ navigation }: any) => {
-  const [appSettingsAPIReq, appSettingsAPIRes] = useRefAppSettingMutation();
+  const { settings } = useAppSettings(); 
 
-  useEffect(() => {
-    const appSettingsObj = {};
-    appSettingsAPIReq(appSettingsObj);
-  }, []);
+  const labels = settings?.Message?.[0]?.Labels || {};
 
-  const labels = appSettingsAPIRes?.data?.Message[0]?.Labels || {};
+  const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
-  const getLabel = (key: string) => {
-    return labels[key]?.defaultMessage || '';
-  };
-
-  const handleCross = () => {
-    navigation.goBack();
-  };
+  const handleCross = () => navigation.goBack();
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>{getLabel("uploadpresscr_6")}</Text>
         <TouchableOpacity onPress={handleCross}>
-          <Image style={[styles.closeImageStyle]}
-            source={require('../images/black_cross.png')} />
+          <Image style={styles.closeImageStyle} source={require('../images/black_cross.png')} />
         </TouchableOpacity>
       </View>
 
-      <View
-        style={{
-          borderRadius: 0.5,
-          flex: 1,
-          height: Platform.OS == 'ios' ? deviceHeight + 20 : deviceHeight - 150,
-          borderStyle: 'dashed',
-          borderWidth: 1,
-          top: 10,
-          marginBottom: 30,
-          marginHorizontal: 25,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: Constants.COLOR.UPLOAD_FILES_BG,
-        }}>
+      <View style={styles.uploadContainer}>
         <Image source={require('../images/cloud_upload.png')} />
-        <Text
-          style={{
-            fontSize: Constants.FONT_SIZE.XXL,
-            fontWeight: '500',
-            paddingVertical: 20,
-          }}>
-          {getLabel("uploadpresscr_1")}
-        </Text>
-        <Text
-          style={{
-            textAlign: 'center',
-            fontSize: Constants.FONT_SIZE.M,
-            paddingHorizontal: Platform.OS == 'ios' ? 60 : 40,
-          }}>
-          {getLabel("uploadpresscr_2")}
-        </Text>
-        <TouchableOpacity
-          style={{
-            backgroundColor: Constants.COLOR.CUSTOMER_CALL_BG_COLOR,
-            marginTop: 30,
-            paddingVertical: 10,
-            width: deviceHeight * 0.25,
-            borderRadius: 20,
-          }}>
-          <Text
-            style={{
-              textAlign: 'center',
-              fontSize: Constants.FONT_SIZE.S,
-              color: Constants.COLOR.WHITE_COLOR,
-            }}>
-            {getLabel("uploadpresscr_3")}
-          </Text>
+        <Text style={styles.uploadText}>{getLabel("uploadpresscr_1")}</Text>
+        <Text style={styles.uploadDescription}>{getLabel("uploadpresscr_2")}</Text>
+
+        <TouchableOpacity style={styles.uploadButton}>
+          <Text style={styles.uploadButtonText}>{getLabel("uploadpresscr_3")}</Text>
         </TouchableOpacity>
-        <Text style={{ paddingVertical: 10 }}>{getLabel("uploadpresscr_4")}</Text>
-        <TouchableOpacity
-          style={{
-            backgroundColor: Constants.COLOR.CUSTOMER_CALL_BG_COLOR,
-            paddingVertical: 10,
-            width: deviceHeight * 0.25,
-            borderRadius: 20,
-          }}>
-          <Text
-            style={{
-              fontSize: Constants.FONT_SIZE.S,
-              color: Constants.COLOR.WHITE_COLOR,
-              textAlign: 'center',
-              left: Platform.OS == 'ios' ? 0 : 0,
-              paddingHorizontal: 10,
-            }}>
-            {getLabel("uploadpresscr_5")}
-          </Text>
+
+        <Text style={styles.orText}>{getLabel("uploadpresscr_4")}</Text>
+
+        <TouchableOpacity style={styles.uploadButton}>
+          <Text style={styles.uploadButtonText}>{getLabel("uploadpresscr_5")}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -128,6 +64,41 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     width: deviceHeight / 35,
     height: deviceHeight / 35,
+  },
+  uploadContainer: {
+    flex: 1,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 0.5,
+    margin: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Constants.COLOR.UPLOAD_FILES_BG,
+  },
+  uploadText: {
+    fontSize: Constants.FONT_SIZE.XXL,
+    fontWeight: '500',
+    paddingVertical: 20,
+  },
+  uploadDescription: {
+    textAlign: 'center',
+    fontSize: Constants.FONT_SIZE.M,
+    paddingHorizontal: Platform.OS === 'ios' ? 60 : 40,
+  },
+  uploadButton: {
+    backgroundColor: Constants.COLOR.CUSTOMER_CALL_BG_COLOR,
+    marginTop: 30,
+    paddingVertical: 10,
+    width: deviceHeight * 0.25,
+    borderRadius: 20,
+  },
+  uploadButtonText: {
+    textAlign: 'center',
+    fontSize: Constants.FONT_SIZE.S,
+    color: Constants.COLOR.WHITE_COLOR,
+  },
+  orText: {
+    paddingVertical: 10,
   },
 });
 

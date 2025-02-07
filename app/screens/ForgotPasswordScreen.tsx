@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Constants from '../util/Constants';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
+import { useAppSettings } from '../common/AppSettingContext';
 import { useForgotPasswordMutation } from '../redux/service/ForgotPasswordService';
 
 const deviceHeight = Dimensions.get('window').height;
@@ -21,62 +21,33 @@ const deviceWidth = Dimensions.get("window").width;
 const ForgetPasswordScreen = ({ navigation }: any) => {
     const [userName, setUserName] = useState('');
     const [mobileNumber, setMobileNumber] = useState('');
+    const { settings } = useAppSettings();
 
-    const [appSettingsAPIReq, appSettingsAPIRes] =
-        useRefAppSettingMutation();
 
     const [forgotPasswordAPIReq, forgotPasswordAPIRes] =
         useForgotPasswordMutation();
 
-
-    //useeffect for Logo
-    useEffect(() => {
-        const appSettingsObj = {};
-        appSettingsAPIReq(appSettingsObj);
-    }, []);
 
     const toastStyle = {
         backgroundColor: 'red',
         color: 'white',
     };
 
-    const showToast = (message) => {
+    const showToast = (message: string) => {
         ToastAndroid.showWithGravity(
             message,
             ToastAndroid.LONG,
             ToastAndroid.TOP,
-            toastStyle,
         );
     };
 
-    const handleMobileNumberChange = (text) => {
+    const handleMobileNumberChange = (text: string) => {
         const numericRegex = /^[0-9]*$/;
         if (numericRegex.test(text)) {
             setMobileNumber(text);
         }
     };
 
-   
-
-    // const handleOTP = () => {
-    //     console.log('Requesting OTP for user:', userName);
-
-    //     forgotPasswordAPIReq({
-    //         Username: userName,
-    //     });
-    // };
-
-    // useEffect(() => {
-    //     console.log("Forgot Password API Response:", forgotPasswordAPIRes);
-
-    //     if (forgotPasswordAPIRes.isSuccess) {
-    //         console.log('OTP sent successfully');
-
-    //         showToast('Successfully OTP sent to your mobile number');
-    //     } else if (forgotPasswordAPIRes.isError && forgotPasswordAPIRes?.data?.Message) {
-    //         showToast(forgotPasswordAPIRes?.data?.Message[0]?.Message || 'An error occurred');
-    //     }
-    // }, [forgotPasswordAPIRes]);
 
     const handleOTP = () => {
         // Ensure userName is defined and not empty before sending the request
@@ -85,16 +56,16 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
             showToast('Please enter a valid username');
             return;
         }
-        
+
         console.log('Requesting OTP for user:', userName);
         forgotPasswordAPIReq({
             Username: userName,
         });
     };
-    
+
     useEffect(() => {
         console.log("Forgot Password API Response:", forgotPasswordAPIRes);
-    
+
         if (forgotPasswordAPIRes.isSuccess) {
             console.log('OTP sent successfully');
             showToast('Successfully OTP sent to your mobile number');
@@ -104,13 +75,13 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
             showToast(errorMessage);
         }
     }, [forgotPasswordAPIRes]);
-    
+
     useEffect(() => {
         if (forgotPasswordAPIRes.isLoading) {
             console.log('Loading: OTP request in progress...');
         }
     }, [forgotPasswordAPIRes.isLoading]);
-    
+
 
     const handleBack = () => {
         navigation.goBack('');
@@ -135,11 +106,13 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
                 <View style={styles.bodyContainerBottom} >
                     <View style={styles.registerContainer}>
                         <View style={styles.registerInnerView}>
-                            <Image
-                                source={{ uri: appSettingsAPIRes?.data?.Message[0].Client_Logo }}
-                                style={styles.cardImage}
-                                resizeMode="contain"
-                            />
+                            {settings?.Message?.[0]?.Flash_Logo ? (
+                                <Image
+                                    source={{ uri: settings.Message[0].Flash_Logo }}
+                                    style={styles.cardImage}
+                                    resizeMode="contain"
+                                />
+                            ) : null}
                             <Text style={styles.inputLabel}>Phone Number</Text>
                             <TextInput
                                 style={styles.input}

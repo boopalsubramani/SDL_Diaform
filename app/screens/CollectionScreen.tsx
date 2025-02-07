@@ -10,30 +10,34 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, DateData } from 'react-native-calendars';
 import NavigationBar from '../common/NavigationBar';
 import Constants from '../util/Constants';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import Spinner from 'react-native-spinkit';
 
-
 const deviceHeight = Dimensions.get('window').height;
 
+// Define the type for PayMode
+interface PayMode {
+  PayMode: string;
+  PayDescription: string;
+}
 
 const CollectionScreen = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [selectedPayMode, setSelectedPayMode] = useState({
+  const [selectedPayMode, setSelectedPayMode] = useState<PayMode>({
     PayMode: '',
     PayDescription: 'Pay Mode',
   });
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
-  const [payModes, setPayModes] = useState([]);
+  const [payModes, setPayModes] = useState<PayMode[]>([]); 
   const [isLoading, setIsLoading] = useState(false);
 
   const [fetchAPIReq] = useFetchApiMutation();
 
-  const formatDate = (date) => {
+  const formatDate = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -137,7 +141,7 @@ const CollectionScreen = () => {
         />
         <View style={styles.calendarContainer}>
           <Calendar
-            onDayPress={(day) => {
+            onDayPress={(day: DateData) => {
               setSelectedDate(day.dateString.split('-').reverse().join('/')); // Format: DD/MM/YYYY
               setShowCalendar(false);
             }}
@@ -193,4 +197,5 @@ const styles = StyleSheet.create({
 });
 
 export default CollectionScreen;
+
 

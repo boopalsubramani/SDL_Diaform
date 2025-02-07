@@ -12,13 +12,15 @@ import ButtonNext from '../common/NextButton';
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get('window').width;
 
-const ChooseTestScreen = ({ route, showHeader = true }) => {
+const ChooseTestScreen = ({ route, showHeader = true }:any) => {
     const { selectedPatientDetails, totalCartValue: initialTotalCartValue, selectedTests, shouldNavigateToCalender } = route.params;
     const navigation = useNavigation();
     const [testData, setTestData] = useState(selectedTests || []);
     const { cartItems, setCartItems } = useCart();
     const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
     const [isModalVisible, setModalVisible] = useState(false);
+
+   
 
     useEffect(() => {
         if (shouldNavigateToCalender) {
@@ -45,15 +47,15 @@ const ChooseTestScreen = ({ route, showHeader = true }) => {
         }
     };
 
-    const calculateTotalCartValue = (updatedCartItems) => {
+    const calculateTotalCartValue = (updatedCartItems: any[]) => {
         const total = updatedCartItems.reduce((acc, itemName) => {
-            const item = testData.find(test => test.Service_Name === itemName);
+            const item = testData.find((test: { Service_Name: any; }) => test.Service_Name === itemName);
             return acc + (item?.Amount || 0);
         }, 0);
         setTotalCartValue(total);
     };
 
-    const handleToggleCart = (itemName) => {
+    const handleToggleCart = (itemName: string) => {
         setCartItems(prevCartItems => {
             const updatedCartItems = prevCartItems.includes(itemName)
                 ? prevCartItems.filter(item => item !== itemName)
@@ -69,7 +71,7 @@ const ChooseTestScreen = ({ route, showHeader = true }) => {
             Alert.alert(Constants.ALERT.TITLE.ERROR, Constants.VALIDATION_MSG.NO_INTERNET);
             return;
         }
-        navigation.goBack();
+        navigation.navigate('ChoosePatient');
     };
 
     const handleNext = async () => {
@@ -84,7 +86,7 @@ const ChooseTestScreen = ({ route, showHeader = true }) => {
     const handleProceedClick = () => {
         if (cartItems.length > 0) {
             const selectedTests = cartItems.map(itemName => {
-                const item = testData.find(test => test.Service_Name === itemName);
+                const item = testData.find((test: { Service_Name: string; }) => test.Service_Name === itemName);
                 return {
                     Service_Name: item?.Service_Name,
                     Amount: item?.Amount,
@@ -100,12 +102,12 @@ const ChooseTestScreen = ({ route, showHeader = true }) => {
         if (cartItems.length === 0) {
             return (
                 <View style={styles.emptyCartContainer}>
-                    <Text style={styles.emptyCartText}>Cart is Emptyyyyyyyyyyyyy</Text>
+                    <Text style={styles.emptyCartText}>Cart is Empty</Text>
                 </View>
             );
         }
         return cartItems.map((item, index) => {
-            const itemData = testData.find(test => test.Service_Name === item);
+            const itemData = testData.find((test: { Service_Name: string; }) => test.Service_Name === item);
             return (
                 <View style={styles.testItemContainer} key={index}>
                     <Text style={styles.testName}>{item}</Text>
