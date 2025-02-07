@@ -19,9 +19,17 @@ const AmountCard = ({ title, amount, bgColor, iconColor }: any) => {
   );
 };
 
+interface DashboardItem {
+  id: string;
+  title: string;
+  amount: string;
+  bgColor: string;
+  iconColor: string;
+}
+
 const DashboardScreen = () => {
   const [dashboardApiReq, { isLoading, data, error }] = useRefAppDashboardMutation();
-  const [dashboardData, setDashboardData] = useState([]);
+  const [dashboardData, setDashboardData] = useState<DashboardItem[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -44,9 +52,9 @@ const DashboardScreen = () => {
     fetchDashboardData();
   }, [dashboardApiReq]);
 
-  const parseApiResponse = (response: { Payments: any[] }) => {
+  const parseApiResponse = (response: { Payments: any[] }): DashboardItem[] => {
     return response.Payments.map(
-      (item: { Field: any; Value: any; BgColor: any; IconColor: any }) => ({
+      (item: { Field: string; Value: string; BgColor: string; IconColor: string }) => ({
         id: item.Field,
         title: item.Field,
         amount: item.Value,

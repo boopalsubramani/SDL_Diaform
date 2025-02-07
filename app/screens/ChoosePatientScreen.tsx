@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Dimensions, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Image, Alert } from 'react-native';
 import Constants from '../util/Constants';
 import { useNavigation } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
@@ -11,32 +11,38 @@ import BookTestHeader from './BookTestHeader';
 import ButtonNext from '../common/NextButton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import SpinnerIndicator from '../common/SpinnerIndicator';
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from '../routes/Types';
 
-const deviceHeight = Dimensions.get('window').height;
+
+type NavigationProp = StackNavigationProp<RootStackParamList, "AddPatient">;
+
+type PatientPhysician = {
+    code: string;
+    name: string;
+};
 
 const ChoosePatientScreen = ({ showHeader = true }: any) => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
     const [codeQuery, setCodeQuery] = useState('');
     const [nameQuery, setNameQuery] = useState('');
     const [physicianCodeQuery, setPhysicianCodeQuery] = useState('');
     const [physicianNameQuery, setPhysicianNameQuery] = useState('');
-    const [filteredPatients, setFilteredPatients] = useState([]);
-    const [filteredPhysician, setFilteredPhysician] = useState([]);
+    const [filteredPatients, setFilteredPatients] = useState<PatientPhysician[]>([]);
+    const [filteredPhysician, setFilteredPhysician] = useState<PatientPhysician[]>([]);
     const [isPhysicianLoading, setIsPhysicianLoading] = useState(false);
     const [isPatientLoading, setIsPatientLoading] = useState(false);
     const [isPatientSelected, setIsPatientSelected] = useState(false);
-    const [selectedPatientDetails, setSelectedPatientDetails] = useState(null);
-    const [selectedPhysicianDetails, setSelectedPhysicianDetails] = useState(null);
+    const [selectedPatientDetails, setSelectedPatientDetails] = useState<any>(null);
+    const [selectedPhysicianDetails, setSelectedPhysicianDetails] = useState<any>(null);
     const [isPhysicianSelected, setIsPhysicianSelected] = useState(false);
-    const [patientData, setPatientData] = useState(null);
-
-    console.log('patientdata',patientData)
+    const [patientData, setPatientData] = useState<any>(null);
 
     // Fetch API hook
     const [fetchAPIReq] = useFetchApiMutation();
 
     // Reusable search and fetch logic
-    const fetchData = async (fetchObj: object, filterFunc: (item: any, query: string) => boolean, setFilteredData: React.Dispatch<React.SetStateAction<any[]>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, query: string) => {
+    const fetchData = async (fetchObj: object, filterFunc: (item: any, query: string) => boolean, setFilteredData: React.Dispatch<React.SetStateAction<PatientPhysician[]>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, query: string) => {
         setIsLoading(true);
         try {
             const response = await fetchAPIReq(fetchObj);
@@ -76,15 +82,10 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     searchText: query
                 },
                 (item, query) => {
-                    // Debug log to ensure the values of PtCode and the query
-                    console.log('Searching for code:', query, 'Patient code:', item.PtCode);
-
                     if (type === 'code') {
-                        // Ensure PtCode is treated as a string for comparison
-                        return String(item.PtCode).includes(query);  // Check code
+                        return String(item.PtCode).includes(query);
                     }
                     if (type === 'name') {
-                        // Perform a case-insensitive match for name
                         return item.PtName && item.PtName.toLowerCase().includes(query.toLowerCase());
                     }
                     return true;
@@ -111,18 +112,14 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     refCode: '01000104',
                     searchText: queryPhysician
                 },
-                (response, queryPhysician) => {
-                    const physicians = response.TableData?.data1 || [];
-                    console.log('Searching for physician:', queryPhysician, 'Physicians:', physicians);
-                    return physicians.filter((item: any) => {
-                        if (type === 'code') {
-                            return String(item.Ref_Code).includes(queryPhysician);
-                        }
-                        if (type === 'name') {
-                            return item.Ref_Name && item.Ref_Name.toLowerCase().includes(queryPhysician.toLowerCase());
-                        }
-                        return true;
-                    });
+                (item, queryPhysician) => {
+                    if (type === 'code') {
+                        return String(item.Ref_Code).includes(queryPhysician);
+                    }
+                    if (type === 'name') {
+                        return item.Ref_Name && item.Ref_Name.toLowerCase().includes(queryPhysician.toLowerCase());
+                    }
+                    return true;
                 },
                 setFilteredPhysician,
                 setIsPhysicianLoading,
@@ -142,7 +139,6 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
             refCode: "01000104",
             ptCode: code
         };
-        console.log('Fetching patient details for code:', code);
         setIsPatientLoading(true);
         try {
             const response = await fetchAPIReq(fetchObj);
@@ -150,9 +146,6 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                 const patientData = response.data.TableData.data1.find((item: { PtCode: string; }) => item.PtCode === code);
                 if (patientData) {
                     setSelectedPatientDetails(patientData);
-                    console.log('Updated Selected Patient Details:', patientData);
-                } else {
-                    console.log('Patient not found in response');
                 }
             }
         } catch (error) {
@@ -170,22 +163,13 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
             refType: "D",
             refCode: code
         };
-
-        console.log('Fetching physician details for code:', code);
         setIsPhysicianLoading(true);
-
         try {
             const response = await fetchAPIReq(fetchObj);
-            console.log('API Response for physician details:', response);
-
             if (response?.data?.TableData?.data1) {
-                // Assuming the physician data is in response.data.TableData.data1
                 const physicianData = response.data.TableData.data1.find((item: { Ref_Code: string; }) => item.Ref_Code === code);
                 if (physicianData) {
                     setSelectedPhysicianDetails(physicianData);
-                    console.log('Updated Selected Physician Details:', physicianData);
-                } else {
-                    console.log('Physician not found in response');
                 }
             }
         } catch (error) {
@@ -195,8 +179,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         }
     };
 
-    const handleSelectPatient = (patient: any) => {
-        console.log('Selected Patient Code:', patient.code);
+    const handleSelectPatient = (patient: PatientPhysician) => {
         setCodeQuery(patient.code);
         setNameQuery(patient.name);
         setFilteredPatients([]);
@@ -204,8 +187,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         fetchPatientDetails(patient.code);
     };
 
-    const handleSelectPhysician = (physician: any) => {
-        console.log('Selected physician Code:', physician.code);
+    const handleSelectPhysician = (physician: PatientPhysician) => {
         setPhysicianCodeQuery(physician.code);
         setPhysicianNameQuery(physician.name);
         setFilteredPhysician([]);
@@ -229,6 +211,9 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         if ((patientData || selectedPatientDetails) && selectedPhysicianDetails) {
             navigation.navigate('ChooseTest', {
                 selectedPatientDetails: selectedPatientDetails || patientData,
+                selectedTests: [], // Add any other required parameters here
+                totalCartValue: 0,
+                shouldNavigateToCalender: false,
             });
         } else {
             Alert.alert(
@@ -345,8 +330,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                             </View>
                         )}
 
-                        {patientData ? (
-                            < View style={styles.selectedPatientDetails}>
+                        {patientData && (
+                            <View style={styles.selectedPatientDetails}>
                                 <TouchableOpacity
                                     style={styles.closeButton}
                                     onPress={() => setPatientData(null)}
@@ -360,11 +345,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                 <Text>Phone: {patientData.Mobile_No}</Text>
                                 <Text>Dob: {patientData.Dob}</Text>
                             </View>
-                        ) : (
-                            <></>
                         )}
                     </View>
-
 
                     {/* Physician Search Section */}
                     <View style={styles.physicianSection}>
@@ -374,7 +356,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                             placeholder="Search Physicians"
                             placeholderTextColor="#bab8ba"
                             value={physicianNameQuery}
-                            onChangeText={handlePhysicianSearch}
+                            onChangeText={(query) => handlePhysicianSearch(query, 'name')}
                         />
                     </View>
 
@@ -398,7 +380,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                 <SpinnerIndicator />
                             ) : !isPhysicianSelected && (
                                 <Text style={{ marginTop: 10, fontSize: 14, color: 'gray', textAlign: 'center' }}>
-                                    No matching patients found
+                                    No matching physicians found
                                 </Text>
                             )
                         )
@@ -430,11 +412,13 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     <ButtonNext />
                 </TouchableOpacity>
             </View>
-        </View >
+        </View>
     );
 };
 
 export default ChoosePatientScreen;
+
+
 
 const styles = StyleSheet.create({
     MainContainer: {

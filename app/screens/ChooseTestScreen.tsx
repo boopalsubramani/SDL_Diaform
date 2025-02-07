@@ -8,19 +8,24 @@ import BookTestHeader from './BookTestHeader';
 import NetInfo from '@react-native-community/netinfo';
 import ButtonBack from '../common/BackButton';
 import ButtonNext from '../common/NextButton';
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from '../routes/Types';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get('window').width;
 
-const ChooseTestScreen = ({ route, showHeader = true }:any) => {
+type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
+
+
+const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     const { selectedPatientDetails, totalCartValue: initialTotalCartValue, selectedTests, shouldNavigateToCalender } = route.params;
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
     const [testData, setTestData] = useState(selectedTests || []);
     const { cartItems, setCartItems } = useCart();
     const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
     const [isModalVisible, setModalVisible] = useState(false);
 
-   
+
 
     useEffect(() => {
         if (shouldNavigateToCalender) {

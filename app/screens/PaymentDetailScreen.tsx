@@ -40,7 +40,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const [paymentMethod, setPaymentMethod] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
-    const [remark, setRemark] = useState(''); // State for the remark text
+    const [remark, setRemark] = useState(''); 
 
     const toggleCheckbox = () => {
         setIsChecked(!isChecked);
@@ -51,7 +51,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
 
     const handleUpdate = async () => {
         setIsLoading(true);
-        const selectedTestDetails = selectedTests.map(test => ({
+        const selectedTestDetails = selectedTests.map((test: Test) => ({
             TestType: test.TestType || "T",
             TestCode: test.TestCode,
             Service_Amount: test.Service_Amount || "0.0",
@@ -253,6 +253,8 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     );
 };
 
+export default PaymentDetailScreen;
+
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
@@ -389,4 +391,3 @@ const styles = StyleSheet.create({
     },
 });
 
-export default PaymentDetailScreen;

@@ -14,8 +14,8 @@ const PaymentScreen = () => {
 
   const options = ['With invoice', 'Without invoice', 'Deposit'];
 
-  const handleOptionPress = (option) => {
-    console.log(`Selected Option: ${option}`);  
+  const handleOptionPress = ({ option }: any) => {
+    console.log(`Selected Option: ${option}`);
     setSelectedOption(option);
     setShowInvoice(option === 'With invoice');
     setShowWithoutInvoice(option === 'Without invoice');
@@ -23,9 +23,9 @@ const PaymentScreen = () => {
   };
 
   useEffect(() => {
-    console.log("Component mounted");  
+    console.log("Component mounted");
     return () => {
-      console.log("Component unmounted"); 
+      console.log("Component unmounted");
     };
   }, []);
 
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   invoiceContainer: {
     marginTop: 40,
     padding: 20,
-    backgroundColor:Constants.COLOR.WHITE_COLOR,
+    backgroundColor: Constants.COLOR.WHITE_COLOR,
     borderRadius: 10,
     borderColor: "#dedfde",
     width: '90%',

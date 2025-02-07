@@ -9,15 +9,27 @@ import OthersScreen from '../screens/OthersScreen';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
 
-const deviceHeight = Dimensions.get('window').height;
-const deviceWidth = Dimensions.get('window').width;
 
 const Bottom = createBottomTabNavigator();
 
-const BottomNavigation = () => {
-  const bottomImages = useSelector((state: RootState) => state.appSettings.AppSettingDetails);
+interface MenuItem {
+  Main_Menu_Code: string;
+  Menu_Desc: string;
+  component: React.ComponentType<any>;
+  Selected_Tab_Icon_Url: string;
+  Tab_Icon_url: string;
+}
 
-  const fallbackMenuItems = [
+interface AppSettingDetails {
+  Menu_Items: MenuItem[];
+}
+
+const BottomNavigation = () => {
+  const bottomImages = useSelector(
+    (state: RootState) => state.appSettings.AppSettingDetails as AppSettingDetails[]
+  );
+
+  const fallbackMenuItems: MenuItem[] = [
     { Main_Menu_Code: 'BK', Menu_Desc: 'Bookings', component: BookingScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
     { Main_Menu_Code: 'BT', Menu_Desc: 'Book Test', component: BookTestScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
     { Main_Menu_Code: 'DB', Menu_Desc: 'Offers', component: DashboardScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
@@ -25,7 +37,7 @@ const BottomNavigation = () => {
     { Main_Menu_Code: 'OT', Menu_Desc: 'Others', component: OthersScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
   ];
 
-  const menuItems = bottomImages?.[0]?.Menu_Items || fallbackMenuItems;
+  const menuItems: MenuItem[] = bottomImages?.[0]?.Menu_Items || fallbackMenuItems;
 
   const getComponentByMainMenuCode = (mainMenuCode: string) => {
     switch (mainMenuCode) {
@@ -60,7 +72,7 @@ const BottomNavigation = () => {
         },
       }}
     >
-      {menuItems.map((item: any, index: number) => {
+      {menuItems.map((item: MenuItem, index: number) => {
         const Component = getComponentByMainMenuCode(item.Main_Menu_Code);
 
         if (!Component) {

@@ -298,10 +298,18 @@ import Constants from '../util/Constants';
 import ButtonHome from '../common/HomeButton';
 import { useServiceBookingMutation } from '../redux/service/ServiceBookingService';
 
+interface TestItem {
+    Service_Name: string;
+    Amount: number;
+    Discount: number;
+    VAT_Amount: number;
+    Patient_Amount: number;
+}
+
+
 const FinalPaymentScreen = ({ navigation, route, showHeader = true }: any) => {
     const { selectedTests = [], selectedDate, selectedTime, selectedPatientDetails, } = route?.params || {};
     const [isPaymentInProgress, setIsPaymentInProgress] = useState(false);
-
 
     const calculateTotal = ({ tests }: any) => {
         const validTests = Array.isArray(tests) ? tests : [];
@@ -356,7 +364,7 @@ const FinalPaymentScreen = ({ navigation, route, showHeader = true }: any) => {
                 <View style={styles.selectedTestsSection}>
                     <View style={styles.cartSection}>
                         <Text style={styles.cartTitle}>Booking Details</Text>
-                        {selectedTests.map((test, index) => (
+                        {selectedTests.map((test: TestItem, index: number) => (
                             <View key={index} style={styles.cartItem}>
                                 <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
                                 <Text style={styles.cartItemPrice}>P {test.Amount}</Text>

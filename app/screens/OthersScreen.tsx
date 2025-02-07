@@ -1,148 +1,3 @@
-//Data as Static
-
-// import React, { useState } from 'react';
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   Image,
-//   FlatList,
-//   TouchableOpacity,
-//   Dimensions,
-// } from 'react-native';
-// import NavigationBar from '../common/NavigationBar';
-// import Constants from '../util/Constants';
-// import { useSelector } from 'react-redux';
-// import { RootState } from '../redux/Store';
-
-
-// const deviceHeight = Dimensions.get('window').height;
-
-// const OthersScreen = ({ navigation }: any) => {
-
-//   const bottomImages = useSelector((state: RootState) => state.appSettings.AppSettingDetails);
-
-//   const settingsData = [
-//     {
-//       id: '1',
-//       backgroundColor: '#696A6D',
-//       icon: require('../images/code-branch1.png'),
-//       text: 'Transaction',
-//     },
-//     {
-//       id: '2',
-//       backgroundColor: '#1E564A',
-//       icon: require('../images/user1.png'),
-//       text: 'Collection',
-//     },
-//     {
-//       id: '3',
-//       backgroundColor: '#af794e',
-//       icon: require('../images/location.png'),
-//       text: 'Ledger Details',
-//     },
-//     {
-//       id: '4',
-//       backgroundColor: '#e92e40',
-//       icon: require('../images/sign-out.png'),
-//       text: 'Logout',
-//     },
-//   ];
-
-//   const handleSettingItemPress = (item: any) => {
-//     switch (item.text) {
-//       case 'Transaction':
-//         navigation.navigate('Transaction');
-//         break;
-//       case 'Collection':
-//         navigation.navigate('Collection');
-//         break;
-//       case 'Ledger Details':
-//         navigation.navigate('Login');
-//         break;
-//       case 'Logout':
-//         navigation.navigate('Login');
-//         break;
-//       default:
-//         break;
-//     }
-//   };
-
-
-//   const renderItem = ({ item }: any) => (
-//     <TouchableOpacity onPress={() => handleSettingItemPress(item)}>
-//       <View style={styles.itemContainer}>
-//         <View
-//           style={{
-//             backgroundColor: item.backgroundColor,
-//             paddingVertical: 10,
-//             paddingHorizontal: 10,
-//             borderRadius: 5,
-//             justifyContent: 'center',
-//             alignItems: 'center',
-//           }}>
-//           <Image source={item.icon} style={styles.CodeBranchImg} />
-//         </View>
-//         <Text style={{
-//           flex: 1,
-//           paddingHorizontal: 20,
-//           fontSize: Constants.FONT_SIZE.L,
-//           fontFamily: "Poppins-Regular",
-//         }}>{item.text}</Text>
-//         <Image
-//           source={require('../images/rightArrow.png')}
-//           style={styles.ArrowImg}
-//         />
-//       </View>
-//     </TouchableOpacity>
-//   );
-
-//   return (
-//     <View style={styles.container}>
-//       <NavigationBar title='Others' />
-//       <FlatList
-//         data={settingsData}
-//         renderItem={renderItem}
-//         keyExtractor={item => item.id}
-//       />
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: Constants.COLOR.BACKGROUND_COLOR_SCREEN,
-//   },
-//   itemContainer: {
-//     paddingHorizontal: 25,
-//     paddingVertical: 10,
-//     flex: 1,
-//     flexDirection: 'row',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-
-//   },
-//   CodeBranchImg: {
-//     width: deviceHeight / 35,
-//     height: deviceHeight / 35,
-//     resizeMode: 'contain',
-//     tintColor: Constants.COLOR.BACKGROUND_COLOR_SCREEN
-//   },
-//   ArrowImg: {
-//     width: deviceHeight / 35,
-//     height: deviceHeight / 35,
-//     resizeMode: "contain"
-//   },
-// });
-
-// export default OthersScreen;
-
-
-
-
-//Data from Api
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -158,34 +13,64 @@ import Constants from '../util/Constants';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
 
+// Get device height
 const deviceHeight = Dimensions.get('window').height;
 
+// Define menu item type
+interface MenuItem {
+  Main_Menu_Code: string;
+  Sub_Menu_Code: string;
+  Menu_Desc: string;
+  Menu_Order: number;
+  Tab_Icon_url?: string;
+  Selected_Tab_Icon_Url?: string;
+  Show_Icon?: boolean;
+  Default?: boolean;
+  backgroundColor?: string;
+  id?: number | string;
+}
+
+// Define app settings type
+interface AppSettingDetails {
+  Menu_Items: MenuItem[];
+}
+
+// Component
 const OthersScreen = ({ navigation }: any) => {
-  const [othersSubMenu, setOthersSubMenu] = useState<any[]>([]);
+  // State for submenu items
+  const [othersSubMenu, setOthersSubMenu] = useState<MenuItem[]>([]);
 
-  const bottomImages = useSelector((state: RootState) => state.appSettings.AppSettingDetails);
+  // Fetch settings from Redux store
+  const bottomImages = useSelector(
+    (state: RootState) => state.appSettings.AppSettingDetails as AppSettingDetails[]
+  );
 
+  // Effect to update submenu items based on Main_Menu_Code
   useEffect(() => {
-    const menuItems = bottomImages?.[0]?.Menu_Items || [];
-    const othersMenu = menuItems.find((item: any) => item.Menu_Desc === 'Others');
-    if (othersMenu) {
-      setOthersSubMenu(othersMenu.Sub_Menu_Items);
+    if (bottomImages.length > 0 && bottomImages[0]?.Menu_Items) {
+      const menuItems = bottomImages[0].Menu_Items;
+
+      // Find the menu with "OT" (Others)
+      const othersMenu = menuItems.find((item) => item.Main_Menu_Code === 'OT');
+
+      // Set Sub_Menu_Items if found
+      if (othersMenu && 'Sub_Menu_Items' in othersMenu) {
+        setOthersSubMenu((othersMenu as any).Sub_Menu_Items || []);
+      }
     }
   }, [bottomImages]);
 
-
-    const handleSettingItemPress = (item: any) => {
-    switch (item.Menu_Desc) {
-      case 'Transaction':
+  // Handle navigation based on Sub_Menu_Code
+  const handleSettingItemPress = (item: MenuItem) => {
+    switch (item.Sub_Menu_Code) {
+      case 'TR':
         navigation.navigate('Transaction');
         break;
-      case 'Collection':
+      case 'CC':
         navigation.navigate('Collection');
         break;
-      case 'Ledger Details':
-        navigation.navigate('Login');
-        break;
-      case 'Logout':
+      case 'LD':
+      case 'LO':
         navigation.navigate('Login');
         break;
       default:
@@ -193,28 +78,16 @@ const OthersScreen = ({ navigation }: any) => {
     }
   };
 
-  const renderItem = ({ item }: any) => {
-    // const imageSource = item.Tab_Icon_url ? { uri: item.Tab_Icon_url } : require('../images/sign-out.png');
+  // Render each menu item
+  const renderItem = ({ item }: { item: MenuItem }) => {
     return (
       <TouchableOpacity onPress={() => handleSettingItemPress(item)}>
         <View style={styles.itemContainer}>
-          <View
-            style={{
-              backgroundColor: item.backgroundColor,
-              paddingVertical: 10,
-              paddingHorizontal: 10,
-              borderRadius: 5,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            {/* <Image source={imageSource} style={styles.CodeBranchImg} /> */}
-            <Image source={{ uri: item.Tab_Icon_url }} style={styles.CodeBranchImg} />
+          <View style={[styles.iconContainer, { backgroundColor: item.backgroundColor || '#ccc' }]}>
+            <Image source={{ uri: item.Tab_Icon_url }} style={styles.iconImage} />
           </View>
           <Text style={styles.itemText}>{item.Menu_Desc}</Text>
-          <Image
-            source={require('../images/rightArrow.png')}
-            style={styles.ArrowImg}
-          />
+          <Image source={require('../images/rightArrow.png')} style={styles.arrowImage} />
         </View>
       </TouchableOpacity>
     );
@@ -232,6 +105,7 @@ const OthersScreen = ({ navigation }: any) => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -243,12 +117,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingVertical: 10,
   },
-  CodeBranchImg: {
+  iconContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconImage: {
     width: deviceHeight / 35,
     height: deviceHeight / 35,
     resizeMode: 'contain',
   },
-  ArrowImg: {
+  arrowImage: {
     width: deviceHeight / 35,
     height: deviceHeight / 35,
     resizeMode: 'contain',

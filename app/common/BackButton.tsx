@@ -1,7 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, Dimensions, Image } from 'react-native';
 
-const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 
 const ButtonBack = () => {

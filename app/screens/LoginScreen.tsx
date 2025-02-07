@@ -17,7 +17,6 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Constants from '../util/Constants';
 import DeviceInfo from 'react-native-device-info';
-// import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
 import { useAppSettings } from '../common/AppSettingContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRefAppLoginMutation } from '../redux/service/LoginService';
