@@ -16,7 +16,7 @@ const SpinnerIndicator = () => {
                 type={'Wave'}
                 color={Constants.COLOR.THEME_COLOR}
             />
-            <Text style={styles.text}>Loading...</Text>
+            <Text style={styles.text}>Loading....</Text>
         </View>
     );
 };
