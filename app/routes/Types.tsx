@@ -10,13 +10,19 @@ export type RootStackParamList = {
     selectedTests: { Service_Name: string; Amount: number }[];
     selectedPatientDetails: any;
     totalCartValue: number;
-    shouldNavigateToCalender: boolean
+    shouldNavigateToCalender: boolean;
+    testData: any[];
   };
   Calender: {
     selectedTests: { Service_Name: string; Amount: number }[];
     selectedPatientDetails: any;
     totalCartValue: number;
+    testData: any[];
   };
+  PaymentDetail: {
+    testData: any[];
+  }
+
 
 
   // Add other screens as needed

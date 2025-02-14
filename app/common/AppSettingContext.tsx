@@ -4,6 +4,7 @@ import { useRefAppSettingMutation } from '../redux/service/AppSettingService';
 interface AppSettingsType {
     Message?: {
         Flash_Logo?: string;
+        Client_Logo?:string;
         Labels?: Record<string, { defaultMessage: string }>;
         Password_Policy_Message?: string[];
         Languages?: string[];

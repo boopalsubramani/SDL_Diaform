@@ -14,6 +14,7 @@ import Constants from '../util/Constants';
 import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
+import { useUser } from '../common/UserContext';
 const deviceHeight = Dimensions.get('window').height;
 
 // const AddPatientScreen = ({ navigation }: any) => {
@@ -308,6 +309,7 @@ interface Day {
 }
 
 const AddPatientScreen = ({ navigation }: any) => {
+    const { userData } = useUser();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [title, setTitle] = useState('');
     const [firstName, setFirstName] = useState('');
@@ -328,12 +330,14 @@ const AddPatientScreen = ({ navigation }: any) => {
     // Fetch API for gender and patient_relation
     const [fetchAPIReq, fetchAPIRes] = useFetchApiMutation();
 
+    const branchCode = userData?.Branch_Code;
+
     const fetchData = async (type: 'T' | 'G', setData: Function) => {
         try {
             const requestObj = {
                 Mode: type,
                 Command: 'OLXV65571F',
-                branchNo: '01',
+                branchNo: branchCode,
             };
             const response = await fetchAPIReq(requestObj).unwrap();
             if (response?.TableData?.data1) {
@@ -508,10 +512,10 @@ const AddPatientScreen = ({ navigation }: any) => {
                         <Image source={require('../images/calendar.png')} style={styles.CalenderImg} />
                     </TouchableOpacity>
                     {showCalendar && (
-                          <Calendar
-                            onDayPress={handleDateSelect} 
-                            maxDate={new Date().toISOString().split('T')[0]} 
-                          />
+                        <Calendar
+                            onDayPress={handleDateSelect}
+                            maxDate={new Date().toISOString().split('T')[0]}
+                        />
                     )}
                 </View>
 

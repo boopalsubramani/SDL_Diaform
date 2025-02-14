@@ -5,8 +5,8 @@ import NavigationBar from '../common/NavigationBar';
 import ButtonBack from '../common/BackButton';
 import Constants from "../util/Constants";
 import { useBookingDetailMutation } from '../redux/service/BookingDetailService';
-import Spinner from 'react-native-spinkit';
 import SpinnerIndicator from '../common/SpinnerIndicator';
+
 
 // Device dimensions
 const deviceHeight = Dimensions.get('window').height;
@@ -45,7 +45,7 @@ type BookingDetailsScreenRouteProp = RouteProp<{
 const BookingDetailsScreen = ({ navigation }: any) => {
     const route = useRoute<BookingDetailsScreenRouteProp>();
     const { booking } = route.params;
-    
+
     const [reviewText, setReviewText] = useState('');
     const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
     const [bookingDetailAPIReq] = useBookingDetailMutation();
@@ -57,8 +57,8 @@ const BookingDetailsScreen = ({ navigation }: any) => {
                 Username: "01000104",
                 Booking_Type: "R",
                 Firm_No: "01",
-                Booking_Date: booking.Booking_Date, // Ensure this property exists on `booking`
-                Booking_No: booking.Booking_No // Ensure this property exists on `booking`
+                Booking_Date: booking.Booking_Date,
+                Booking_No: booking.Booking_No
             };
 
             const response = await bookingDetailAPIReq(requestBody);
@@ -68,7 +68,8 @@ const BookingDetailsScreen = ({ navigation }: any) => {
         };
 
         fetchBookingDetails();
-    }, [booking, bookingDetailAPIReq]); // Watch for changes in `booking` or `bookingDetailAPIReq`
+    }, [booking, bookingDetailAPIReq]);
+
 
     const handleButtonPress = () => {
         navigation.goBack();
@@ -77,7 +78,7 @@ const BookingDetailsScreen = ({ navigation }: any) => {
     if (!bookingDetails) {
         return (
             <View style={styles.loadingContainer}>
-               <SpinnerIndicator/>
+                <SpinnerIndicator />
             </View>
         );
     }
@@ -155,13 +156,12 @@ const BookingDetailsScreen = ({ navigation }: any) => {
                         </TouchableOpacity>
                     </View>
                 </View>
-
-                <View>
-                    <TouchableOpacity onPress={handleButtonPress}>
-                        <ButtonBack />
-                    </TouchableOpacity>
-                </View>
             </ScrollView>
+            <View>
+                <TouchableOpacity onPress={handleButtonPress}>
+                    <ButtonBack />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
@@ -321,6 +321,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#F9F9F9',
     },
+   
 });
 
 

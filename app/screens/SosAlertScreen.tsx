@@ -9,6 +9,8 @@ import {
     Dimensions,
 } from 'react-native';
 import Constants from "../util/Constants";
+import { useAppSettings } from '../common/AppSettingContext';
+
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
@@ -17,6 +19,14 @@ const deviceWidth = Dimensions.get("window").width;
 const SosAlertScreen = ({ navigation }: any) => {
     const [showPopup, setShowPopup] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const { settings } = useAppSettings();
+
+    const labels = settings?.Message?.[0]?.Labels || {};
+
+    const getLabel = (key: string) => {
+        return labels[key]?.defaultMessage || '';
+    };
+
 
     const handleYesClick = () => {
         setShowPopup(true);
@@ -48,16 +58,14 @@ const SosAlertScreen = ({ navigation }: any) => {
                 />
             </TouchableOpacity>
             <View style={styles.card}>
-                <Text style={styles.heading}>SOS ALERT</Text>
+                <Text style={styles.heading}>{getLabel('sosssrc_1')}</Text>
 
                 <Text style={styles.MessageText}>
-                    Are you sure you want to send an emergency alert message to our
-                    Customer Service?
+                    {getLabel('sosssrc_2')}
                 </Text>
 
-
                 <TouchableOpacity style={styles.sendButton} onPress={handleYesClick}>
-                    <Text style={styles.sendButtonText}>Yes</Text>
+                    <Text style={styles.sendButtonText}>{getLabel('sosssrc_3')}</Text>
                 </TouchableOpacity>
 
                 {/* Popup Modal */}

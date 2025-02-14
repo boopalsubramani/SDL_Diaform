@@ -22,7 +22,10 @@ import dashboard from "../redux/slice/DashboardSlice";
 import bookTestSearch from "../redux/slice/BookTestSearchSlice";
 import bookingList from "../redux/slice/BookingListSlice";
 import bookingDetail from "../redux/slice/BookingDetailSlice";
-import serviceBooking from "../redux/slice/ServiceBookingSlice"
+import serviceBooking from "../redux/slice/ServiceBookingSlice";
+import otpSend from "../redux/slice/OtpSendSlice";
+import resetPassword from "../redux/slice/ResetPasswordSlice";
+import duplicateServiceBooking from "../redux/slice/DuplicateServiceBookingSlice";
 
 const reducers = combineReducers({
     [api.reducerPath]: api.reducer,
@@ -34,8 +37,10 @@ const reducers = combineReducers({
     bookTestSearch,
     bookingList,
     bookingDetail,
-    serviceBooking
-
+    serviceBooking,
+    otpSend,
+    resetPassword,
+    duplicateServiceBooking
 
 });
 

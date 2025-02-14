@@ -13,6 +13,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import SpinnerIndicator from '../common/SpinnerIndicator';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from '../routes/Types';
+import { useUser } from '../common/UserContext';
 
 
 type NavigationProp = StackNavigationProp<RootStackParamList, "AddPatient">;
@@ -23,6 +24,7 @@ type PatientPhysician = {
 };
 
 const ChoosePatientScreen = ({ showHeader = true }: any) => {
+    const { userData } = useUser();
     const navigation = useNavigation<NavigationProp>();
     const [codeQuery, setCodeQuery] = useState('');
     const [nameQuery, setNameQuery] = useState('');
@@ -38,8 +40,15 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const [isPhysicianSelected, setIsPhysicianSelected] = useState(false);
     const [patientData, setPatientData] = useState<any>(null);
 
+
+    console.log('SelectedPatientDetails', selectedPatientDetails)
+    console.log('selectedPhysicianDetails', selectedPhysicianDetails)
+    console.log('patientData', patientData)
+
     // Fetch API hook
     const [fetchAPIReq] = useFetchApiMutation();
+    const branchCode = userData?.Branch_Code;
+    console.log("============branchCode====", branchCode);
 
     // Reusable search and fetch logic
     const fetchData = async (fetchObj: object, filterFunc: (item: any, query: string) => boolean, setFilteredData: React.Dispatch<React.SetStateAction<PatientPhysician[]>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, query: string) => {
@@ -64,6 +73,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         }
     };
 
+
+
     // Handle patient search
     const handlePatientSearch = (query: string, type: string) => {
         if (type === 'code') {
@@ -76,9 +87,9 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                 {
                     Mode: 'P',
                     Command: 'OLXV65571F',
-                    branchNo: "01",
-                    refType: "C",
-                    refCode: "01000104",
+                    branchNo: branchCode,
+                    refType: selectedPatientDetails?.Ref_Type,
+                    refCode: selectedPatientDetails?.Ref_Code,
                     searchText: query
                 },
                 (item, query) => {
@@ -101,15 +112,16 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
 
     // Handle physician search
     const handlePhysicianSearch = (queryPhysician: string, type: string) => {
+        console.log('type', type)
         setPhysicianNameQuery(queryPhysician);
         if (queryPhysician) {
             fetchData(
                 {
                     Mode: 'O',
                     Command: 'OLXV65571F',
-                    branchNo: '08',
-                    refType: 'C',
-                    refCode: '01000104',
+                    branchNo: "08",
+                    refType: "C",
+                    refCode: selectedPhysicianDetails?.Ref_Code,
                     searchText: queryPhysician
                 },
                 (item, queryPhysician) => {
@@ -134,9 +146,9 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         const fetchObj = {
             Mode: 'P',
             Command: 'OLXV65571F',
-            branchNo: "01",
-            refType: "C",
-            refCode: "01000104",
+            branchNo: branchCode,
+            refType: selectedPatientDetails?.Ref_Type,
+            refCode: selectedPatientDetails?.Ref_Code,
             ptCode: code
         };
         setIsPatientLoading(true);
@@ -188,6 +200,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     };
 
     const handleSelectPhysician = (physician: PatientPhysician) => {
+        console.log('physician', physician);
+
         setPhysicianCodeQuery(physician.code);
         setPhysicianNameQuery(physician.name);
         setFilteredPhysician([]);
@@ -210,8 +224,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         }
         if ((patientData || selectedPatientDetails) && selectedPhysicianDetails) {
             navigation.navigate('ChooseTest', {
-                selectedPatientDetails: selectedPatientDetails || patientData,
-                selectedTests: [], // Add any other required parameters here
+                selectedPatientDetails: selectedPatientDetails ?? patientData,
+                selectedTests: [],
                 totalCartValue: 0,
                 shouldNavigateToCalender: false,
             });

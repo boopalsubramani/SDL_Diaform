@@ -36,11 +36,13 @@ interface Test {
 }
 
 const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
-    const { selectedTests = [], selectedDate, selectedTime, selectedPatientDetails } = route?.params || [];
+    const { selectedTests = [], selectedDate, selectedTime, selectedPatientDetails, testData, selectedTestDetails } = route?.params || [];
     const [paymentMethod, setPaymentMethod] = useState('');
+    const [bookingResponse, setBookingResponse] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
-    const [remark, setRemark] = useState(''); 
+    const [remark, setRemark] = useState('');
+    
 
     const toggleCheckbox = () => {
         setIsChecked(!isChecked);
@@ -51,51 +53,78 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
 
     const handleUpdate = async () => {
         setIsLoading(true);
-        const selectedTestDetails = selectedTests.map((test: Test) => ({
-            TestType: test.TestType || "T",
-            TestCode: test.TestCode,
-            Service_Amount: test.Service_Amount || "0.0",
-            Service_Discount: test.Service_Discount || "0.0",
-            Primary_Share: test.Primary_Share || "0",
-            Patient_Share: test.Patient_Share || "0",
-            Test_VAT: test.Test_VAT || "0.0",
-            Patient_VAT: test.Patient_VAT || "0.0",
-        }));
+        const selectedTestDetails = selectedTests.map((test: Test) => {
+            const correspondingTestData = testData.find(
+                (data: { Service_Name: string; }) => data.Service_Name === test.Service_Name
+            );
+
+            return {
+                TestType: correspondingTestData?.Service_Type,
+                TestCode: correspondingTestData?.Service_Code,
+                Service_Amount: correspondingTestData?.Amount,
+                Service_Discount: correspondingTestData?.Discount_Amount,
+                Primary_Share: correspondingTestData?.Primary_Share,
+                Patient_Share: correspondingTestData?.Patient_Share,
+                Test_VAT: correspondingTestData?.Test_VAT,
+                Patient_VAT: correspondingTestData?.Patient_VAT,
+                Aid_VAT: correspondingTestData?.Aid_VAT,
+                T_Round_Off: correspondingTestData?.T_Round_off,
+                Prof_Code: "",
+            };
+        });
 
         const payload = {
-            Ref_Code: "01000104",
-            Ref_Type: "C",
-            Pt_Code: "0100005036",
+            Ref_Code: selectedPatientDetails?.Ref_Code,
+            Ref_Type: selectedPatientDetails?.Ref_Type,
+            Pt_Code: selectedPatientDetails?.PtCode,
             Firm_No: "01",
-            Name: "MONIKA",
-            Dob: "2000/01/27",
-            Age: "23.0",
-            Gender: "F",
-            Title_Code: "05",
-            Title_Desc: "Miss.",
-            Street: "Blaji colony",
-            Place: "tirupati",
-            City: "tirupati",
-            Email: "tirupati@gmail.com",
-            Phone: "9874558585",
-            Paid_Amount: "50",
+            Name: selectedPatientDetails?.PtName,
+            Dob: selectedPatientDetails?.DOB,
+            Age: selectedPatientDetails?.Age,
+            Gender: selectedPatientDetails?.Gender,
+            Title_Code: selectedPatientDetails?.Title_Code,
+            Title_Desc: selectedPatientDetails?.Title_Desc,
+            Street: selectedPatientDetails?.Street,
+            Place: selectedPatientDetails?.Street,
+            City: selectedPatientDetails?.Street,
+            Email: selectedPatientDetails?.Email_Id,
+            Phone: selectedPatientDetails?.Mobile_No,
+            User_Id: "",
+            Paid_Amount: "0",
             Bill_Amount: "650.0",
-            DueAmount: "730",
-            Pay_No: "3564685874",
+            DiscountAmount: "",
+            DueAmount: "700",
+            Pay_No: "",
             Pay_Status: "P",
             Pay_Mode: paymentMethod === 'online' ? "O" : "C",
-            Sample_Collection_Date: "2025/01/10",
-            Sample_Collection_Time: "16:25",
+            Zero_Payment: 0,
+            Promo_Code: "",
+            Medical_Aid_No: "",
+            Coverage: "",
+            Package_Code: "",
+            Sponsor_Paid: "",
+            NationalityCode: "006",
+            Prescription_File1: "2024-01-17010001.jpg",
+            Prescription_File2: null,
+            File_Extension1: "jpeg",
+            File_Extension2: "",
+            Sample_Collection_Date: selectedDate,
+            Sample_Collection_Time: selectedTime,
             Services: selectedTestDetails,
         };
 
+        console.log("payloaddddddddddddddd", payload);
+        console.log("selectedTestDetails", selectedTestDetails);
+        console.log("selectedTests", selectedTests);
+
         try {
             const response = await serviceBookingAPIReq(payload).unwrap();
-
             if (response?.Code === 200 && response?.SuccessFlag === "true") {
                 const message = response.Message[0]?.Description || 'Booking Successful';
                 Alert.alert(message);
-                navigation.navigate('Bottom', { bookingNo: response.Message[0]?.Booking_No });
+                setBookingResponse(response);
+                console.log("---------response-------", response)
+                navigation.navigate('Bottom', { bookingNo: response.Message[0]?.Booking_No, bookingResponse: response });
             } else {
                 Alert.alert('Error: Something went wrong.');
             }
@@ -119,7 +148,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         navigation.goBack();
     };
 
-
     const handleNext = async () => {
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
@@ -135,26 +163,92 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                 Constants.VALIDATION_MSG.NO_PAYMENT_MSG,
             ); return;
         }
-        handleUpdate();
-        navigation.navigate('FinalPayment', { selectedTests, selectedDate, selectedTime, selectedPatientDetails });
+        await handleUpdate();
+        navigation.navigate('FinalPayment', { selectedTests, selectedDate, selectedTime, selectedPatientDetails, testData, bookingResponse, selectedTestDetails });
     };
 
 
-    const calculateTotal = ({ tests }: any) => {
-        const validTests = Array.isArray(tests) ? tests : [];
+    // const calculateTotal = ({ tests }: any) => {
+    //     // const validTests = Array.isArray(tests) ? tests : [];
+    //     // console.log("validtest",validTests);
 
-        const subTotal = validTests.reduce((sum, test) => sum + (parseFloat(test.Amount) || 0), 0);
-        const discount = validTests.reduce((sum, test) => sum + (parseFloat(test.Discount) || 0), 0);
-        const vatAmount = validTests.reduce((sum, test) => sum + (parseFloat(test.VAT_Amount) || 0), 0);
-        const patientAmount = validTests.reduce((sum, test) => sum + (parseFloat(test.Patient_Amount) || 0), 0);
-        const netAmount = subTotal - discount + vatAmount;
-        const netPayable = netAmount - patientAmount;
+    //     // const subTotal = validTests.reduce((sum, test) => sum + (parseFloat(test.Amount) || 0), 0);
+    //     // const discount = validTests.reduce((sum, test) => sum + (parseFloat(test.Discount) || 0), 0);
+    //     // const vatAmount = validTests.reduce((sum, test) => sum + (parseFloat(test.VAT_Amount) || 0), 0);
+    //     // const patientAmount = validTests.reduce((sum, test) => sum + (parseFloat(test.Patient_Amount) || 0), 0);
+    //     // const netAmount = subTotal - discount + vatAmount;
+    //     // const netPayable = netAmount - patientAmount;
 
-        return { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable };
+    //     // return { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable };
+    //     const amountDataDetails = selectedTests.map((test: Test) => {
+    //         const amountData = testData.find(
+    //             (data: { Service_Name: string; }) => data.Service_Name === test.Service_Name
+    //         );
+    //         return {
+    //             const subTotal = amountData?.T_Sub_Total;
+    //             const discount = amountData?.T_Discount_Amount;
+    //             const vatAmount = amountData?.T_VAT_Amount;
+    //             const netAmount = amountData?.T_Net_Amount;
+    //             const netPayable = amountData?.T_Patient_Due
+    //         }
+    //     })
+    // };
+
+    // const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable } = calculateTotal({ tests: amountDataDetails });
+    const calculateTotal = (tests: Test[]) => {
+        const amountDataDetails = tests.map((test: Test) => {
+            const amountData = testData.find(
+                (data: { Service_Name: string }) => data.Service_Name === test.Service_Name
+            );
+
+            console.log("amountData for test:", test.Service_Name, amountData);
+
+            if (!amountData) {
+                console.warn(`No matching data found for ${test.Service_Name}`);
+            }
+
+            return {
+                subTotal: parseFloat(amountData?.T_Sub_Total) || 0,
+                discount: parseFloat(amountData?.T_Discount_Amount) || 0,
+                vatAmount: parseFloat(amountData?.T_VAT_Amount) || 0,
+                netAmount: parseFloat(amountData?.T_Net_Amount) || 0,
+                patientAmount: parseFloat(amountData?.T_Patient_Due) || 0,
+                netPayable:
+                    (parseFloat(amountData?.T_Net_Amount) || 0) -
+                    (parseFloat(amountData?.T_Patient_Due) || 0),
+            };
+        });
+
+        // Aggregate the total values
+        const totals = amountDataDetails.reduce(
+            (acc, item) => ({
+                subTotal: acc.subTotal + item.subTotal,
+                discount: acc.discount + item.discount,
+                vatAmount: acc.vatAmount + item.vatAmount,
+                netAmount: acc.netAmount + item.netAmount,
+                patientAmount: acc.patientAmount + item.patientAmount,
+                netPayable: acc.netPayable + item.netPayable,
+            }),
+            {
+                subTotal: 0,
+                discount: 0,
+                vatAmount: 0,
+                netAmount: 0,
+                patientAmount: 0,
+                netPayable: 0,
+            }
+        );
+
+        console.log("Final totals:", JSON.stringify(totals));
+
+        return totals;
     };
 
-    const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable } = calculateTotal({ tests: selectedTests });
+    // Call the function and destructure totals
+    const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable } =
+        calculateTotal(selectedTests);
 
+console.log(patientAmount ,"patients");
 
     return (
         <View style={styles.mainContainer}>
@@ -192,7 +286,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                         </View>
                         <View style={styles.breakdownRow}>
                             <Text style={styles.breakdownLabel}>Patient Amount:</Text>
-                            <Text style={styles.breakdownValue}>- P {patientAmount.toFixed(2)}</Text>
+                            <Text style={styles.breakdownValue}>- P {patientAmount}</Text>
                         </View>
                         <View style={[styles.breakdownRow, styles.netPayableRow]}>
                             <Text style={styles.breakdownLabel}>Net Payable Amount:</Text>

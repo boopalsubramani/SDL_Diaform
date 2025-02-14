@@ -8,6 +8,7 @@ import BookTestHeader from './BookTestHeader';
 import NetInfo from '@react-native-community/netinfo';
 import ButtonBack from '../common/BackButton';
 import ButtonNext from '../common/NextButton';
+import { useAppSettings } from '../common/AppSettingContext';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from '../routes/Types';
 
@@ -18,13 +19,18 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 
 
 const ChooseTestScreen = ({ route, showHeader = true }: any) => {
-    const { selectedPatientDetails, totalCartValue: initialTotalCartValue, selectedTests, shouldNavigateToCalender } = route.params;
+    const { selectedPatientDetails, totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [] } = route.params;
     const navigation = useNavigation<NavigationProp>();
-    const [testData, setTestData] = useState(selectedTests || []);
+    const { settings } = useAppSettings();
     const { cartItems, setCartItems } = useCart();
     const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
     const [isModalVisible, setModalVisible] = useState(false);
 
+    const labels = settings?.Message?.[0]?.Labels || {};
+
+    const getLabel = (key: string) => {
+        return labels[key]?.defaultMessage || '';
+    };
 
 
     useEffect(() => {
@@ -48,7 +54,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
         if (cartItems.length > 0) {
             setModalVisible(true);
         } else {
-            Alert.alert('Cart', 'Cart is Empty');
+            Alert.alert('Alert', getLabel('labtscr_4'));
         }
     };
 
@@ -91,13 +97,14 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     const handleProceedClick = () => {
         if (cartItems.length > 0) {
             const selectedTests = cartItems.map(itemName => {
-                const item = testData.find((test: { Service_Name: string; }) => test.Service_Name === itemName);
+                // const item = testData.find((test: { Service_Name: string; }) => test.Service_Name === itemName);
+                const item = Array.isArray(testData) ? testData.find((test: { Service_Name: string; }) => test.Service_Name === itemName) : null;
                 return {
                     Service_Name: item?.Service_Name,
                     Amount: item?.Amount,
                 };
             });
-            navigation.navigate('Calender', { selectedTests, selectedPatientDetails, totalCartValue });
+            navigation.navigate('Calender', { selectedTests, selectedPatientDetails, totalCartValue, testData });
         } else {
             Alert.alert('Empty Cart', 'Please add items to the cart before proceeding.');
         }
@@ -107,7 +114,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
         if (cartItems.length === 0) {
             return (
                 <View style={styles.emptyCartContainer}>
-                    <Text style={styles.emptyCartText}>Cart is Empty</Text>
+                    <Text style={styles.emptyCartText}>{getLabel('labtscr_4')}</Text>
                 </View>
             );
         }
@@ -139,9 +146,9 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 <View style={styles.innerContainer}>
                     <View style={styles.ChooseTestView}>
-                        <Text style={styles.chooseTestText}>Choose test</Text>
+                        <Text style={styles.chooseTestText}>{getLabel('labtscr_5')}</Text>
                         <View style={styles.cartValueView}>
-                            <Text style={styles.cartValueLabel}>Cart value</Text>
+                            <Text style={styles.cartValueLabel}>{getLabel('labtscr_6')}</Text>
                             <Text style={styles.cartValue}>{totalCartValue} INR</Text>
                         </View>
                     </View>
@@ -149,7 +156,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                         <TouchableOpacity onPress={handleSearchTest}>
                             <Image source={require('../images/search.png')} style={styles.searchIcon} />
                         </TouchableOpacity>
-                        <Text style={styles.searchLabel}>Select Test</Text>
+                        <Text style={styles.searchLabel}>{getLabel('labtscr_8')}</Text>
                         <TouchableOpacity onPress={handleCartClick} style={styles.searchCartRightView}>
                             <Image source={require('../images/addCart.png')} style={styles.CartIcon} />
                         </TouchableOpacity>
@@ -162,7 +169,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                     <View style={styles.uploadContainer}>
                         <TouchableOpacity style={styles.uploadButtonView} onPress={handleUploadPrescription}>
                             <Image source={require('../images/up_arrow.png')} style={styles.uploadImage} />
-                            <Text style={styles.uploadText}>Upload Prescription</Text>
+                            <Text style={styles.uploadText}>{getLabel('labtscr_10')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -179,12 +186,12 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                                         {cartItems.length > 0 && (
                                             <TouchableOpacity onPress={handleProceedClick}>
                                                 <View style={styles.SubmitButtonView}>
-                                                    <Text style={styles.ButtonText}>Proceed</Text>
+                                                    <Text style={styles.ButtonText}>{getLabel('labtscr_2')}</Text>
                                                 </View>
                                             </TouchableOpacity>
                                         )}
                                         <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
-                                            <Text style={{ color: '#fd1a1b' }}>Note: *Indicates Non Discounted Test</Text>
+                                            <Text style={{ color: '#fd1a1b' }}>{getLabel('labtscr_3')}</Text>
                                         </View>
                                     </View>
                                 </View>

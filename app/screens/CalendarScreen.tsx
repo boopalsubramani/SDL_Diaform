@@ -18,7 +18,7 @@ interface Test {
 }
 
 const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
-  const { selectedTests = [], selectedPatientDetails } = route?.params || {};
+  const { selectedTests = [], selectedPatientDetails, testData } = route?.params || {};
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [dateInput, setDateInput] = useState('');
@@ -109,7 +109,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
       return;
     }
 
-    navigation.navigate('PaymentDetail', { selectedTests, selectedDate, selectedTime, selectedPatientDetails });
+    navigation.navigate('PaymentDetail', { selectedTests, selectedDate, selectedTime, selectedPatientDetails, testData });
   };
 
   return (
