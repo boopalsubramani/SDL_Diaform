@@ -13,366 +13,18 @@ import {
 import moment from 'moment';
 import Constants from '../util/Constants';
 import NavigationBar from '../common/NavigationBar';
-import FilterScreen from './FilterScreen';
 import { Calendar } from 'react-native-calendars';
 import { useBookingListMutation } from '../redux/service/BookingListService';
 import Spinner from 'react-native-spinkit';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import SpinnerIndicator from '../common/SpinnerIndicator';
 import { useUser } from '../common/UserContext';
+import { useAppSettings } from '../common/AppSettingContext';
+
 
 const { height: deviceHeight, } = Dimensions.get('window');
 const { width, height } = Dimensions.get('window');
 
-
-
-// const BookingScreen = ({ navigation }: any) => {
-//   const { userData } = useUser();
-//   const [bookingListAPIReq, bookingListAPIRes] = useBookingListMutation();
-//   const [bookingData, setBookingData] = useState<any[]>([]);
-//   const [loading, setLoading] = useState<boolean>(true);
-//   const [refreshing, setRefreshing] = useState<boolean>(false);
-//   const [dropdownVisible, setDropdownVisible] = useState(false);
-//   const [dropdownType, setDropdownType] = useState(null);
-//   const [selectedBranch, setSelectedBranch] = useState('Branch');
-//   const [selectedStatus, setSelectedStatus] = useState('Status');
-//   const [selectedDate, setSelectedDate] = useState('');
-//   const [showCalendar, setShowCalendar] = useState(false);
-//   const [branches, setBranches] = useState([]);
-//   const [status, setStatus] = useState([]);
-//   const [firmNo, setFirmNo] = useState('');
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   const [fetchAPIReq ] = useFetchApiMutation();
-//   const branchCode = userData?.Branch_Code;
-
-//   const formatDate = (date: any) => {
-//     const day = String(date.getDate()).padStart(2, '0');
-//     const month = String(date.getMonth() + 1).padStart(2, '0');
-//     const year = date.getFullYear();
-//     return `${day}/${month}/${year}`;
-//   };
-
-//   // Set the current date on component mount
-//   useEffect(() => {
-//     const currentDate = new Date();
-//     setSelectedDate(formatDate(currentDate));
-//     fetchData('branch');
-//     fetchData('status');
-//   }, []);
-
-//   // Generalized fetch function for branch and status
-//   const fetchData = async (type: 'branch' | 'status', branchNo = branchCode) => {
-//     setIsLoading(true);
-//     try {
-//       const fetchTitleObj = {
-//         Mode: type === 'branch' ? 'B' : 'S',
-//         Command: 'OLXV65571F',
-//         body: type === 'branch' ? { branchNo } : undefined,
-//       };
-//       const response = await fetchAPIReq(fetchTitleObj).unwrap();
-//       if (response?.TableData?.data1) {
-//         if (type === 'branch') setBranches(response.TableData.data1);
-//         if (type === 'status') setStatus(response.TableData.data1);
-//       }
-//     } catch (error) {
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   // Toggle dropdown visibility and type
-//   const toggleDropdown = (type: any) => {
-//     setDropdownType(type);
-//     setDropdownVisible(!dropdownVisible);
-//   };
-
-//   // Handle selection logic for branch and status
-//   const handleSelection = (item: any) => {
-//     if (dropdownType === 'branch') {
-//       setSelectedBranch(item.Branch_Name);
-//     } else if (dropdownType === 'status') {
-//       setSelectedStatus(item.StatusDesc);
-//     }
-//     setDropdownVisible(false);
-//   };
-
-
-//   useEffect(() => {
-//     // Update firmNo when selectedBranch changes
-//     if (selectedBranch) {
-//       const var1 = selectedBranch.substring(0, selectedBranch.indexOf('-'));
-//       setFirmNo(var1);
-//     }
-//   }, [selectedBranch]);
-
-//   useEffect(() => {
-//     fetchBookingData();
-//   }, [selectedBranch, selectedStatus, firmNo]);
-
-//   const fetchBookingData = async () => {
-//     setLoading(true);
-//     try {
-//       const payload = {
-//         App_Type: 'R',
-//         UserType: 'C',
-//         Username: '01000104',
-//         Branch: selectedBranch ? selectedBranch : '',
-//         Status: selectedStatus ? selectedStatus : '',
-//         Firm_No: firmNo,
-//       };
-
-//       const response = await bookingListAPIReq(payload).unwrap();
-//       if (response?.Message?.length > 0) {
-//         const allBookings = response.Message[0].Booking_Detail || [];
-//         const filteredBookings = allBookings.filter(item => {
-//           const branchMatch = selectedBranch === 'Branch' || item.Branch_Name === selectedBranch;
-//           const statusMatch = selectedStatus === 'Status' || item.Booking_Status_Desc === selectedStatus;
-//           const firmMatch = firmNo === '' || item.Firm_No === firmNo;
-//           return branchMatch && statusMatch && firmMatch;
-//         });
-//         setBookingData(filteredBookings);
-//       } else {
-//         setBookingData([]);
-//       }
-//     } catch (error) {
-//       setBookingData([]);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (bookingListAPIRes?.data?.Message) {
-//       setBookingData(bookingListAPIRes.data.Message[0].Booking_Detail);
-//     }
-//   }, [bookingListAPIRes]);
-
-//   // Pull-to-refresh handler
-//   const handleRefresh = async () => {
-//     setRefreshing(true);
-//     await bookingListAPIReq({
-//       App_Type: 'R',
-//       UserType: 'C',
-//       Username: '01000104',
-//     });
-//     setRefreshing(false);
-//   };
-
-//   const handleBookingDetail = (item: any) => {
-//     navigation.navigate('BookingDetail', { booking: item });
-//   };
-
-//   const CardItem = ({ item }: any) => {
-//     const formattedBookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('MMM');
-//     const formattedBookingDateAndYear = moment(item.Booking_Date, 'YYYY/MM/DD').format('D, YYYY');
-//     const formattedBookingTime = moment(item.Booking_Time, 'h:mmA').format('hh:mm A');
-
-//     const isCollectionCompleted = item.Booking_Status_Desc === 'Collection Completed';
-
-//     return (
-//       <TouchableOpacity onPress={() => handleBookingDetail(item)}>
-//         <View
-//           style={[
-//             styles.CardContainer,
-//             { backgroundColor: item.BookingType_ColorCode },
-//             isCollectionCompleted && {
-//               borderColor: '#71b4d2',
-//               borderWidth: 2,
-//             },
-//           ]}
-//         >
-//           <View style={styles.Column1}>
-//             <View style={styles.ServiceContainer}>
-//               <Text style={styles.ServiceText}>Service</Text>
-//               <Text style={styles.ServiceText}>No & Date</Text>
-//             </View>
-//             <Text style={styles.CardBookingNo}>{item.Booking_No}</Text>
-//             <Text style={styles.CardMonthDate}>{formattedBookingDate}</Text>
-//             <Text style={styles.CardMonthDate}>{formattedBookingDateAndYear}</Text>
-//           </View>
-
-//           <View style={styles.LocationContainer}>
-//             <Image source={require('../images/placeholder.png')} style={styles.LocationImg} />
-//             <Text style={styles.PlaceText} numberOfLines={2}>
-//               {item.Branch_Name}
-//             </Text>
-//           </View>
-
-//           <View style={styles.CardDetails}>
-//             <Text style={styles.PatientDetails}>
-//               {item.Pt_Name}, {item.Pt_First_Age}, {item.Pt_Gender}
-//             </Text>
-
-//             <View style={styles.RowContainer}>
-//               <Text style={styles.SIDText}>SID:</Text>
-//               <Text style={styles.CardTextNumber}>{item.Sid_No}</Text>
-
-//               <View style={styles.DateContainer}>
-//                 <Image source={require('../images/calendar.png')} style={styles.CalendarIcon} />
-//                 <Text style={styles.BookDate}>{item.Booking_Date}</Text>
-//               </View>
-//             </View>
-
-//             <View style={styles.StatusAndPayContainer}>
-//               <Text style={styles.StatusText} numberOfLines={1}>
-//                 {item.Booking_Status_Desc}
-//               </Text>
-//               <TouchableOpacity style={styles.ButtonPayNowView}>
-//                 <Text style={styles.ButtonPayNow}>Pay Now</Text>
-//               </TouchableOpacity>
-//             </View>
-
-//             {item.Booking_Status_Desc === 'Cancel' && (
-//               <View style={styles.CancelRemarks}>
-//                 <Text style={styles.CancelText}>
-//                   Remarks: {item.Remarks || 'No remarks available'}
-//                 </Text>
-//               </View>
-//             )}
-//           </View>
-//         </View>
-//       </TouchableOpacity>
-//     );
-//   };
-
-//   return (
-//     <View style={styles.ScreenContainer}>
-//       <NavigationBar title="Bookings" />
-//       {/* <FilterScreen /> */}
-
-//       <View style={styles.filterBar}>
-//         {/* Branch Dropdown */}
-//         <TouchableOpacity
-//           onPress={() => toggleDropdown('branch')}
-//           style={styles.dropdown}
-//         >
-//           <Text style={styles.text}>{selectedBranch}</Text>
-//           <Image
-//             source={
-//               dropdownType === 'branch' && dropdownVisible
-//                 ? require('../images/arrowUp.png')
-//                 : require('../images/arrowDown.png')
-//             }
-//             style={styles.icon}
-//           />
-//         </TouchableOpacity>
-
-//         {/* Status Dropdown */}
-//         <TouchableOpacity
-//           onPress={() => toggleDropdown('status')}
-//           style={styles.dropdown}
-//         >
-//           <Text style={styles.text}>{selectedStatus}</Text>
-//           <Image
-//             source={
-//               dropdownType === 'status' && dropdownVisible
-//                 ? require('../images/arrowUp.png')
-//                 : require('../images/arrowDown.png')
-//             }
-//             style={styles.icon}
-//           />
-//         </TouchableOpacity>
-
-//         {/* Date Picker */}
-//         <View style={styles.inputContainerDob}>
-//           <TouchableOpacity
-//             style={styles.touchableContainer}
-//             onPress={() => setShowCalendar(true)}
-//           >
-//             <Text style={styles.input}>
-//               {selectedDate || 'Select DOB'}
-//             </Text>
-//             <Image
-//               source={require('../images/calendar.png')}
-//               style={styles.CalenderImg}
-//             />
-//           </TouchableOpacity>
-//           {showCalendar && (
-//             <Modal transparent animationType="fade">
-//               <TouchableOpacity
-//                 style={styles.overlay}
-//                 onPress={() => setShowCalendar(false)}
-//               />
-//               <View style={styles.calendarContainer}>
-//                 <Calendar
-//                   onDayPress={(day) => {
-//                     const formattedDate = formatDate(
-//                       new Date(day.year, day.month - 1, day.day)
-//                     );
-//                     setSelectedDate(formattedDate);
-//                     setShowCalendar(false);
-//                   }}
-//                 />
-//               </View>
-//             </Modal>
-//           )}
-//         </View>
-//       </View>
-
-//       {/* Dropdown Modal */}
-//       <Modal visible={dropdownVisible} transparent animationType="fade">
-//         <TouchableOpacity
-//           style={styles.overlay}
-//           onPress={() => setDropdownVisible(false)}
-//         />
-//         <View style={styles.dropdownMenu}>
-//           {isLoading ? (
-//             <Spinner
-//               style={{
-//                 marginTop: deviceHeight / 10,
-//                 alignItems: 'center',
-//                 alignSelf: 'center',
-//               }}
-//               isVisible={true}
-//               size={40}
-//               type={'Wave'}
-//               color={Constants.COLOR.THEME_COLOR}
-//             />
-//           ) : (
-//             <FlatList
-//               data={dropdownType === 'branch' ? branches : status}
-//               keyExtractor={(item, index) =>
-//                 item.Firm_No || index.toString()
-//               }
-//               renderItem={({ item }) => (
-//                 <TouchableOpacity
-//                   style={styles.dropdownItem}
-//                   onPress={() => handleSelection(item)}
-//                 >
-//                   <Text style={styles.text}>
-//                     {dropdownType === 'branch' ? item.Branch_Name : item.StatusDesc}
-//                   </Text>
-//                 </TouchableOpacity>
-//               )}
-//             />
-//           )}
-//         </View>
-//       </Modal>
-
-//       {loading ? (
-//         <View style={styles.loaderContainer}>
-//           <SpinnerIndicator />
-//         </View>
-//       ) : (
-//         <FlatList
-//           data={bookingData}
-//           keyExtractor={(item) => item.Booking_No}
-//           renderItem={({ item }) => <CardItem item={item} />}
-//           refreshing={refreshing}
-//           onRefresh={handleRefresh}
-//           ListEmptyComponent={() => (
-//             <View style={styles.EmptyListContainer}>
-//               <SpinnerIndicator />
-//             </View>
-//           )}
-//         />
-//       )}
-//     </View>
-//   );
-// };
-
-// export default BookingScreen;
 
 // Define the type for the item object
 interface BookingItem {
@@ -390,16 +42,18 @@ interface BookingItem {
   Firm_No: string;
 }
 
-const BookingScreen = ({ navigation }: any) => {
+
+const BookingScreen = ({ navigation, route }: any) => {
   const { userData } = useUser();
+  const { settings } = useAppSettings();
   const [bookingListAPIReq, bookingListAPIRes] = useBookingListMutation();
   const [bookingData, setBookingData] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [dropdownType, setDropdownType] = useState<string | null>(null);
-  const [selectedBranch, setSelectedBranch] = useState('Branch');
-  const [selectedStatus, setSelectedStatus] = useState('Status');
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [branches, setBranches] = useState<any[]>([]);
@@ -410,22 +64,22 @@ const BookingScreen = ({ navigation }: any) => {
   const [fetchAPIReq] = useFetchApiMutation();
   const branchCode = userData?.Branch_Code;
 
-  const formatDate = (date: Date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  const labels = settings?.Message?.[0]?.Labels || {};
+
+  const getLabel = (key: string) => {
+    return labels[key]?.defaultMessage || '';
   };
 
-  // Set the current date on component mount
+  const formatDate = (date: string | Date) => moment(date).format('YYYY/MM/DD');
+
   useEffect(() => {
     const currentDate = new Date();
     setSelectedDate(formatDate(currentDate));
     fetchData('branch');
     fetchData('status');
+    fetchBookingData(); // Fetch all data initially
   }, []);
 
-  // Generalized fetch function for branch and status
   const fetchData = async (type: 'branch' | 'status', branchNo = branchCode) => {
     setIsLoading(true);
     try {
@@ -446,13 +100,11 @@ const BookingScreen = ({ navigation }: any) => {
     }
   };
 
-  // Toggle dropdown visibility and type
   const toggleDropdown = (type: string) => {
     setDropdownType(type);
     setDropdownVisible(!dropdownVisible);
   };
 
-  // Handle selection logic for branch and status
   const handleSelection = (item: any) => {
     if (dropdownType === 'branch') {
       setSelectedBranch(item.Branch_Name);
@@ -463,39 +115,43 @@ const BookingScreen = ({ navigation }: any) => {
   };
 
   useEffect(() => {
-    // Update firmNo when selectedBranch changes
     if (selectedBranch) {
-      const var1 = selectedBranch.substring(0, selectedBranch.indexOf('-'));
+      const var1 = selectedBranch.split('-')[0];
       setFirmNo(var1);
     }
   }, [selectedBranch]);
 
   useEffect(() => {
     fetchBookingData();
-  }, [selectedBranch, selectedStatus, firmNo]);
+  }, [selectedBranch, selectedStatus, firmNo, selectedDate]);
 
   const fetchBookingData = async () => {
     setLoading(true);
     try {
       const payload = {
         App_Type: 'R',
-        UserType: 'C',
-        Username: '01000104',
-        Branch: selectedBranch ? selectedBranch : '',
-        Status: selectedStatus ? selectedStatus : '',
-        Firm_No: firmNo,
+        UserType: userData?.UserType,
+        Username: userData?.UserCode,
+        Branch: selectedBranch || '',
+        Status: selectedStatus || '',
+        Firm_No: firmNo || '',
       };
 
       const response = await bookingListAPIReq(payload).unwrap();
       if (response?.Message?.length > 0) {
-        const allBookings = response.Message[0].Booking_Detail || [];
-        const filteredBookings = allBookings.filter(item => {
-          const branchMatch = selectedBranch === 'Branch' || item.Branch_Name === selectedBranch;
-          const statusMatch = selectedStatus === 'Status' || item.Booking_Status_Desc === selectedStatus;
-          const firmMatch = firmNo === '' || item.Firm_No === firmNo;
-          return branchMatch && statusMatch && firmMatch;
-        });
-        setBookingData(filteredBookings);
+        let allBookings = response.Message[0].Booking_Detail || [];
+        if (selectedBranch || selectedStatus || selectedDate || firmNo) {
+          allBookings = allBookings.filter((item: { Branch_Name: string; Booking_Status_Desc: string; Firm_No: string; Booking_Date: string; }) => {
+            const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
+            const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
+            const firmMatch = !firmNo || item.Firm_No === firmNo;
+            const bookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('YYYY/MM/DD');
+            const selectedDateFormatted = moment(selectedDate, 'YYYY/MM/DD').format('YYYY/MM/DD');
+            const dateMatch = !selectedDate || bookingDate === selectedDateFormatted;
+            return branchMatch && statusMatch && firmMatch && dateMatch;
+          });
+        }
+        setBookingData(allBookings);
       } else {
         setBookingData([]);
       }
@@ -507,32 +163,27 @@ const BookingScreen = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
-    if (bookingListAPIRes?.data?.Message) {
-      setBookingData(bookingListAPIRes.data.Message[0].Booking_Detail);
-    }
-  }, [bookingListAPIRes]);
-
-  // Pull-to-refresh handler
   const handleRefresh = async () => {
     setRefreshing(true);
-    await bookingListAPIReq({
-      App_Type: 'R',
-      UserType: 'C',
-      Username: '01000104',
-    });
+    await fetchBookingData(); // Call fetchBookingData directly to ensure filtering
     setRefreshing(false);
   };
 
   const handleBookingDetail = (item: BookingItem) => {
-    navigation.navigate('BookingDetail', { booking: item });
+    if (!item.Sid_No || item.Sid_No.trim() === '') {
+      navigation.navigate('PaymentDetail', {
+        showCancel: true,
+        fromBookingScreen: true,
+        booking: item
+      });
+    } else {
+      navigation.navigate('BookingDetail', { booking: item });
+    }
   };
 
   const CardItem = ({ item }: { item: BookingItem }) => {
     const formattedBookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('MMM');
     const formattedBookingDateAndYear = moment(item.Booking_Date, 'YYYY/MM/DD').format('D, YYYY');
-    const formattedBookingTime = moment(item.Booking_Time, 'h:mmA').format('hh:mm A');
-
     const isCollectionCompleted = item.Booking_Status_Desc === 'Collection Completed';
 
     return (
@@ -584,7 +235,7 @@ const BookingScreen = ({ navigation }: any) => {
                 {item.Booking_Status_Desc}
               </Text>
               <TouchableOpacity style={styles.ButtonPayNowView}>
-                <Text style={styles.ButtonPayNow}>Pay Now</Text>
+                <Text style={styles.ButtonPayNow}>{getLabel('bkrow_9')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -604,15 +255,13 @@ const BookingScreen = ({ navigation }: any) => {
   return (
     <View style={styles.ScreenContainer}>
       <NavigationBar title="Bookings" />
-      {/* <FilterScreen /> */}
 
       <View style={styles.filterBar}>
-        {/* Branch Dropdown */}
         <TouchableOpacity
           onPress={() => toggleDropdown('branch')}
           style={styles.dropdown}
         >
-          <Text style={styles.text}>{selectedBranch}</Text>
+          <Text style={styles.text}>{selectedBranch || 'Select Branch'}</Text>
           <Image
             source={
               dropdownType === 'branch' && dropdownVisible
@@ -623,12 +272,11 @@ const BookingScreen = ({ navigation }: any) => {
           />
         </TouchableOpacity>
 
-        {/* Status Dropdown */}
         <TouchableOpacity
           onPress={() => toggleDropdown('status')}
           style={styles.dropdown}
         >
-          <Text style={styles.text}>{selectedStatus}</Text>
+          <Text style={styles.text}>{selectedStatus || 'Select Status'}</Text>
           <Image
             source={
               dropdownType === 'status' && dropdownVisible
@@ -639,14 +287,13 @@ const BookingScreen = ({ navigation }: any) => {
           />
         </TouchableOpacity>
 
-        {/* Date Picker */}
         <View style={styles.inputContainerDob}>
           <TouchableOpacity
             style={styles.touchableContainer}
             onPress={() => setShowCalendar(true)}
           >
             <Text style={styles.input}>
-              {selectedDate || 'Select DOB'}
+              {selectedDate || 'Select Date'}
             </Text>
             <Image
               source={require('../images/calendar.png')}
@@ -661,7 +308,7 @@ const BookingScreen = ({ navigation }: any) => {
               />
               <View style={styles.calendarContainer}>
                 <Calendar
-                  onDayPress={(day) => {
+                  onDayPress={(day: any) => {
                     const formattedDate = formatDate(
                       new Date(day.year, day.month - 1, day.day)
                     );
@@ -675,7 +322,6 @@ const BookingScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Dropdown Modal */}
       <Modal visible={dropdownVisible} transparent animationType="fade">
         <TouchableOpacity
           style={styles.overlay}
@@ -728,10 +374,12 @@ const BookingScreen = ({ navigation }: any) => {
           onRefresh={handleRefresh}
           ListEmptyComponent={() => (
             <View style={styles.EmptyListContainer}>
-              {bookingData?.length === 0 ? (
-                <Text style={styles.NoDataText}>No data found</Text>
-              ) : (
+              {loading ? (
                 <SpinnerIndicator />
+              ) : (
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular', }}>{getLabel('aboutscr_5')}</Text>
+                </View>
               )}
             </View>
           )}
@@ -743,9 +391,10 @@ const BookingScreen = ({ navigation }: any) => {
 
 export default BookingScreen;
 
+
 const styles = StyleSheet.create({
   ScreenContainer: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#FBFBFB',
     flex: 1,
   },
   loaderContainer: {
@@ -758,15 +407,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     flexDirection: 'row',
     flex: 1,
-    borderRadius: 30,
-    height: Platform.OS === 'android' ? deviceHeight / 6.5 : undefined,
-    borderWidth: 0.5,
+    borderRadius: 15,
+    height: 'auto',
   },
   Column1: {
     flexDirection: 'column',
     backgroundColor: '#3c3636',
-    borderTopLeftRadius: 30,
-    borderBottomLeftRadius: 30,
+    borderTopLeftRadius: 15,
+    borderBottomLeftRadius: 15,
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     width: '30%',
@@ -781,15 +429,16 @@ const styles = StyleSheet.create({
   ServiceText: {
     color: 'white',
     fontSize: 10,
+    fontFamily: 'Poppins-Regular',
   },
   CardBookingNo: {
-    fontSize: Constants.FONT_SIZE.SM,
+    fontSize: 12,
     color: Constants.COLOR.BOOK_DATE_TIME_TEXT_COLOR,
     fontWeight: '600',
     paddingHorizontal: 10,
   },
   CardMonthDate: {
-    fontSize: Constants.FONT_SIZE.SM,
+    fontSize: 10,
     color: Constants.COLOR.BOOK_DATE_TIME_TEXT_COLOR,
     paddingHorizontal: 10,
   },
@@ -801,34 +450,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   LocationImg: {
-    width: deviceHeight / 50,
-    height: deviceHeight / 50,
+    width: 14,
+    height: 14,
     marginHorizontal: 5,
   },
   PlaceText: {
     color: '#ba2f33',
     fontSize: 12,
+    fontFamily: 'Poppins-Regular',
   },
   CardDetails: {
     marginTop: 10,
     paddingHorizontal: 10,
     paddingVertical: 10,
+    flex: 1,
   },
   PatientDetails: {
-    fontWeight: '600',
-    marginBottom: 10,
+    fontWeight: 'bold',
+    fontSize: 12,
+    width: '60%',
+    marginBottom: 5,
+    fontFamily: 'Poppins-Regular',
   },
   RowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   SIDText: {
-    fontSize: Constants.FONT_SIZE.S,
+    fontSize: 12,
     marginRight: 5,
+    fontFamily: 'Poppins-Regular',
   },
   CardTextNumber: {
-    fontSize: Constants.FONT_SIZE.S,
+    fontSize: 12,
     color: Constants.COLOR.BOOK_ID_TEXT_COLOR,
+    fontFamily: 'Poppins-Regular',
   },
   DateContainer: {
     flexDirection: 'row',
@@ -836,15 +492,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   CalendarIcon: {
-    width: 16,
-    height: 16,
+    width: 14,
+    height: 14,
     marginRight: 5,
     resizeMode: 'contain',
     tintColor: 'black',
   },
   BookDate: {
     color: Constants.COLOR.BOOK_ID_TEXT_COLOR,
-    fontSize: Constants.FONT_SIZE.S,
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
   },
   StatusAndPayContainer: {
     flexDirection: 'row',
@@ -853,28 +510,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   StatusText: {
-    fontSize: Constants.FONT_SIZE.S,
+    fontSize: 10,
     borderRadius: 5,
-    padding: 5,
+    padding: 4,
     borderWidth: 0.5,
+    fontFamily: 'Poppins-Regular',
   },
   ButtonPayNowView: {
-    backgroundColor: Constants.COLOR.BOOK_PAY_BG,
+    backgroundColor: '#056FF9',
     borderRadius: 5,
     marginLeft: 10,
   },
   ButtonPayNow: {
-    padding: 6,
+    padding: 4,
     textAlign: 'center',
     color: 'white',
-    fontSize: Constants.FONT_SIZE.S,
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
   },
   CancelRemarks: {
     marginTop: 10,
   },
   CancelText: {
     color: 'red',
-    fontSize: Constants.FONT_SIZE.S,
+    fontSize: 10,
+    fontFamily: 'Poppins-Regular',
   },
   EmptyListContainer: {
     alignSelf: 'center',
@@ -882,7 +542,7 @@ const styles = StyleSheet.create({
   filterBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: width * 0.03,
+    padding: 6,
   },
   dropdown: {
     flexDirection: 'row',
@@ -890,18 +550,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ececec',
     borderRadius: 5,
-    padding: width * 0.02,
+    paddingHorizontal: 10,
     width: '30%',
   },
   text: {
-    fontSize: width * 0.03,
+    fontSize: 10,
     color: Constants.COLOR.BLACK_COLOR,
     flex: 1,
     fontFamily: 'Poppins-Regular',
   },
   icon: {
-    width: width * 0.04,
-    height: width * 0.04,
+    width: 14,
+    height: 14,
     resizeMode: 'contain',
     tintColor: Constants.COLOR.BLACK_COLOR,
   },
@@ -911,17 +571,17 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     position: 'absolute',
-    marginTop: height * 0.15,
+    top: 60,
     alignSelf: 'flex-start',
     width: '50%',
     backgroundColor: 'white',
     borderRadius: 5,
     elevation: 5,
-    padding: width * 0.03,
+    padding: 10,
     marginHorizontal: 10,
   },
   dropdownItem: {
-    paddingVertical: height * 0.01,
+    paddingVertical: 10,
   },
   inputContainerDob: {
     width: '30%',
@@ -929,26 +589,26 @@ const styles = StyleSheet.create({
   touchableContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderColor: '#ececec',
     borderRadius: 5,
-    padding: width * 0.02,
+    padding: 10,
+    borderWidth: 1
   },
   input: {
     flex: 1,
-    fontSize: width * 0.03,
+    fontSize: 10,
     color: Constants.COLOR.BLACK_COLOR,
     fontFamily: 'Poppins-Regular',
   },
   CalenderImg: {
-    width: width * 0.04,
-    height: width * 0.04,
+    width: 14,
+    height: 14,
     resizeMode: 'contain',
     tintColor: Constants.COLOR.BLACK_COLOR,
   },
   calendarContainer: {
     position: 'absolute',
-    marginTop: height * 0.15,
+    marginTop: 60,
     backgroundColor: '#fff',
     borderRadius: 5,
     elevation: 5,
@@ -956,4 +616,3 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
 });
-

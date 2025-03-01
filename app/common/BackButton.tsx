@@ -1,12 +1,21 @@
 import React from 'react';
 import { Text, View, StyleSheet, Dimensions, Image } from 'react-native';
+import Constants from '../util/Constants';
+import { useAppSettings } from '../common/AppSettingContext';
 
 const deviceHeight = Dimensions.get('window').height;
 
 const ButtonBack = () => {
+    const { settings } = useAppSettings();
+    const labels = settings?.Message?.[0]?.Labels || {};
+
+    const getLabel = (key: string) => {
+      return labels[key]?.defaultMessage || '';
+    };
+  
     return (
         <View style={styles.nextMainView}>
-            <Text style={styles.nextText}>Back</Text>
+            <Text style={styles.nextText}>{getLabel('btnback_1')}</Text>
             <Image
                 style={styles.nextImage}
                 resizeMode="contain"
@@ -22,10 +31,10 @@ const styles = StyleSheet.create({
         marginHorizontal:10,
         flexDirection: 'row-reverse',
         alignSelf:'flex-start',
-        backgroundColor: '#676767',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        borderRadius: 10,
+        backgroundColor: Constants.COLOR.THEME_COLOR,
+        paddingHorizontal: 5,
+        paddingVertical: 5,
+        borderRadius: 4,
     },
     nextText: {
         justifyContent: 'center',
@@ -34,9 +43,10 @@ const styles = StyleSheet.create({
         paddingLeft: 10,
         textAlign: 'right',
         alignItems: 'center',
-        color: 'white',
-        fontSize: 16, 
-    },
+        color: Constants.COLOR.WHITE_COLOR,
+        fontFamily:Constants.FONT_FAMILY.fontFamilyMedium,
+        fontSize: Constants.FONT_SIZE.M,
+        },
     nextImage: {
         justifyContent: 'center',
         alignContent: 'center',

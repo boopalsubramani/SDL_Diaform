@@ -52,7 +52,7 @@ const NavigationBar = ({ title }: any) => {
     return (
       <View
         style={{
-          backgroundColor:'#3d9972',
+          backgroundColor: Constants.COLOR.THEME_COLOR,
           width: 20,
           height: 20,
           borderWidth: 1,
@@ -82,7 +82,7 @@ const NavigationBar = ({ title }: any) => {
   };
 
   return (
-    <View style={{ backgroundColor: Constants.COLOR.BACKGROUND_COLOR_SCREEN }}>
+    <View >
       <View style={styles.container}>
         <View style={styles.leftView}>
           {/* Displaying the title */}
@@ -132,9 +132,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: Platform.OS === 'ios' ? 64 : 58,
     flexDirection: 'row',
-    backgroundColor: '#3d9972',
+    backgroundColor: Constants.COLOR.THEME_COLOR,
     borderBottomWidth: 2,
-    borderBottomColor: '#3d9972',
+    borderBottomColor: Constants.COLOR.THEME_COLOR,
   },
   leftView: {
     flex: 3,
@@ -146,8 +146,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headingText: {
-    color: '#FFFFFF',
-    fontSize: Constants.FONT_SIZE.XL,
+    color: Constants.COLOR.WHITE_COLOR,
+    fontSize: Constants.FONT_SIZE.L,
+    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold
   },
   headerRightImage: {
     marginLeft: 25,

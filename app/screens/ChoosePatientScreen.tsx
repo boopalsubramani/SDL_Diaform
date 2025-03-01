@@ -14,6 +14,8 @@ import SpinnerIndicator from '../common/SpinnerIndicator';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from '../routes/Types';
 import { useUser } from '../common/UserContext';
+import { useAppSettings } from '../common/AppSettingContext';
+
 
 
 type NavigationProp = StackNavigationProp<RootStackParamList, "AddPatient">;
@@ -25,6 +27,7 @@ type PatientPhysician = {
 
 const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const { userData } = useUser();
+    const { settings } = useAppSettings();
     const navigation = useNavigation<NavigationProp>();
     const [codeQuery, setCodeQuery] = useState('');
     const [nameQuery, setNameQuery] = useState('');
@@ -45,10 +48,15 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     console.log('selectedPhysicianDetails', selectedPhysicianDetails)
     console.log('patientData', patientData)
 
+    const labels = settings?.Message?.[0]?.Labels || {};
+
+    const getLabel = (key: string) => {
+        return labels[key]?.defaultMessage || '';
+    };
+
     // Fetch API hook
     const [fetchAPIReq] = useFetchApiMutation();
     const branchCode = userData?.Branch_Code;
-    console.log("============branchCode====", branchCode);
 
     // Reusable search and fetch logic
     const fetchData = async (fetchObj: object, filterFunc: (item: any, query: string) => boolean, setFilteredData: React.Dispatch<React.SetStateAction<PatientPhysician[]>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, query: string) => {
@@ -72,8 +80,6 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
             setIsLoading(false);
         }
     };
-
-
 
     // Handle patient search
     const handlePatientSearch = (query: string, type: string) => {
@@ -222,12 +228,13 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
             );
             return;
         }
-        if ((patientData || selectedPatientDetails) && selectedPhysicianDetails) {
+        if ((patientData || selectedPatientDetails)) {
             navigation.navigate('ChooseTest', {
                 selectedPatientDetails: selectedPatientDetails ?? patientData,
                 selectedTests: [],
                 totalCartValue: 0,
                 shouldNavigateToCalender: false,
+                fromChoosePatient: true
             });
         } else {
             Alert.alert(
@@ -266,10 +273,10 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                 keyboardOpeningTime={0}
                 extraScrollHeight={10}
             >
-                <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.LAB_SEARCH_SCREEN_BG }}>
+                <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.WHITE_COLOR }}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Choose Patient</Text>
+                        <Text style={styles.headerTitle}>{getLabel('patinfo_4')}</Text>
                         {(patientData === null && selectedPatientDetails === null) && (
                             <TouchableOpacity onPress={handlePressAdd}>
                                 <Text style={styles.addText}>Add</Text>
@@ -284,14 +291,14 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                             <TextInput
                                 style={[styles.inputPatient, styles.inputSmall]}
                                 placeholder="Code"
-                                placeholderTextColor="black"
+                                // placeholderTextColor="black"
                                 value={codeQuery}
                                 onChangeText={(query) => handlePatientSearch(query, 'code')}
                             />
                             <TextInput
                                 style={[styles.inputPatient, styles.inputLarge]}
                                 placeholder="Name"
-                                placeholderTextColor="black"
+                                // placeholderTextColor="black"
                                 value={nameQuery}
                                 onChangeText={(query) => handlePatientSearch(query, 'name')}
                             />
@@ -339,11 +346,16 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                         style={styles.closeIcon}
                                     />
                                 </TouchableOpacity>
-                                <Text style={styles.patientDetailText}>Code: {selectedPatientDetails.PtCode}</Text>
-                                <Text style={styles.patientDetailText}>Name: {selectedPatientDetails.PtName}</Text>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, flex: 1, }]}>Code:</Text>
+                                    <Text style={[styles.patientDetailText, { width: '80%' }]}>{selectedPatientDetails.PtCode}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, flex: 1, }]}>Name:</Text>
+                                    <Text style={[styles.patientDetailText, { width: '80%' }]}> {selectedPatientDetails.PtName}</Text>
+                                </View>
                             </View>
                         )}
-
                         {patientData && (
                             <View style={styles.selectedPatientDetails}>
                                 <TouchableOpacity
@@ -364,11 +376,11 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
 
                     {/* Physician Search Section */}
                     <View style={styles.physicianSection}>
-                        <Text style={styles.label}>Physician</Text>
+                        <Text style={styles.label}>{getLabel('patinfo_6')}</Text>
                         <TextInput
                             style={styles.inputPatient}
                             placeholder="Search Physicians"
-                            placeholderTextColor="#bab8ba"
+                            // placeholderTextColor="#bab8ba"
                             value={physicianNameQuery}
                             onChangeText={(query) => handlePhysicianSearch(query, 'name')}
                         />
@@ -415,8 +427,14 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                     style={styles.closeIcon}
                                 />
                             </TouchableOpacity>
-                            <Text style={styles.patientDetailText}>Code: {selectedPhysicianDetails.Ref_Code}</Text>
-                            <Text style={styles.patientDetailText}>Name: {selectedPhysicianDetails.Ref_Name}</Text>
+                            <View style={{ flexDirection: 'row', }}>
+                                <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, flex: 1 }]}>Code:</Text>
+                                <Text style={[styles.patientDetailText, { width: '80%', }]}>{selectedPhysicianDetails.Ref_Code}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', }}>
+                                <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, flex: 1 }]}>Name:</Text>
+                                <Text style={[styles.patientDetailText, { width: '80%', }]}> {selectedPhysicianDetails.Ref_Name}</Text>
+                            </View>
                         </View>
                     )}
                 </View>
@@ -437,7 +455,7 @@ export default ChoosePatientScreen;
 const styles = StyleSheet.create({
     MainContainer: {
         flex: 1,
-        backgroundColor: '#FBFBFB',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
     },
     header: {
         flexDirection: 'row',
@@ -446,16 +464,15 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: Constants.COLOR.BLACK_COLOR,
+        fontSize: Constants.FONT_SIZE.M,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
+        color: '#3C3636',
     },
     addText: {
-        fontSize: 16,
-        color: '#00A3FF',
-        fontWeight: '500',
+        fontSize: Constants.FONT_SIZE.M,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
+        color: Constants.COLOR.THEME_COLOR,
     },
-
     section: {
         marginBottom: 24,
     },
@@ -463,9 +480,9 @@ const styles = StyleSheet.create({
 
     },
     label: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#000',
+        fontSize: Constants.FONT_SIZE.M,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
+        color: '#3C3636',
         marginBottom: 8,
     },
     row: {
@@ -473,23 +490,29 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     inputPatient: {
-        backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 12,
+        backgroundColor: '#ECEEF5',
+        borderRadius: 4,
+        paddingHorizontal: 10,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+        fontSize: Constants.FONT_SIZE.S
     },
     inputSmall: {
         flex: 1,
-        marginRight: 8,
+        marginRight: 10,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+        fontSize: Constants.FONT_SIZE.M
     },
     inputLarge: {
         flex: 2,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+        fontSize: Constants.FONT_SIZE.M
     },
     autocompleteContainer: {
-        maxHeight: 120,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        backgroundColor: '#fff',
-        borderRadius: 5,
+        maxHeight: 150,
+        borderWidth: 0.5,
+        borderColor: Constants.COLOR.BLACK_COLOR,
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
+        borderRadius: 4,
         marginTop: 5,
     },
     autocompleteItem: {
@@ -498,14 +521,13 @@ const styles = StyleSheet.create({
         borderBottomColor: '#eee',
     },
     autocompleteText: {
-        fontSize: 14,
-        color: '#333',
+        fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
     },
     selectedPatientDetails: {
         marginTop: 10,
         padding: 16,
-        backgroundColor: '#fff',
-        borderRadius: 8,
+        backgroundColor: '#ECEEF5',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
@@ -522,12 +544,11 @@ const styles = StyleSheet.create({
     closeIcon: {
         width: 14,
         height: 14,
-        tintColor: 'gray',
+        resizeMode: 'contain',
     },
     patientDetailText: {
-        fontSize: 14,
-        color: '#000',
-        marginBottom: 8,
+        fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
     },
     navigationContainer: {
         flexDirection: 'row',

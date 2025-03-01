@@ -8,6 +8,8 @@ import PaymentScreen from '../screens/PaymentScreen';
 import OthersScreen from '../screens/OthersScreen';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
+import Constants from '../util/Constants';
+
 
 
 const Bottom = createBottomTabNavigator();
@@ -66,9 +68,10 @@ const BottomNavigation = () => {
           borderTopColor: '#778899',
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: 'bold',
-          color: 'grey',
+          fontSize: Constants.FONT_SIZE.S,
+          fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
+          // fontWeight: 'bold',
+          // color: 'grey',
         },
       }}
     >
@@ -100,7 +103,9 @@ const BottomNavigation = () => {
                 />
               ),
               tabBarLabel: ({ focused }) => (
-                <Text style={{ color: focused ? 'black' : 'grey', fontSize: 12 }}>
+                <Text style={{
+                  color: focused ? Constants.COLOR.THEME_COLOR : 'black', fontSize: Constants.FONT_SIZE.S, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
+                }}>
                   {item.Menu_Desc}
                 </Text>
               ),

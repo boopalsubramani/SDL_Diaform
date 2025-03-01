@@ -26,6 +26,11 @@ import serviceBooking from "../redux/slice/ServiceBookingSlice";
 import otpSend from "../redux/slice/OtpSendSlice";
 import resetPassword from "../redux/slice/ResetPasswordSlice";
 import duplicateServiceBooking from "../redux/slice/DuplicateServiceBookingSlice";
+import collectionDetails from '../redux/slice/CollectionDetailsSlice';
+import transactionDetails from '../redux/slice/TransactionDetailsSlice';
+import ledgerDateWise from '../redux/slice/LedgerDateWiseSlice';
+import ledgerMonthWise from '../redux/slice/LedgerMonthWiseSlice';
+import payment from '../redux/slice/PaymentSlice';
 
 const reducers = combineReducers({
     [api.reducerPath]: api.reducer,
@@ -40,7 +45,12 @@ const reducers = combineReducers({
     serviceBooking,
     otpSend,
     resetPassword,
-    duplicateServiceBooking
+    duplicateServiceBooking,
+    collectionDetails,
+    transactionDetails,
+    ledgerDateWise,
+    ledgerMonthWise,
+    payment
 
 });
 

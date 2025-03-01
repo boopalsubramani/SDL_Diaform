@@ -4,8 +4,17 @@ import NavigationBar from '../common/NavigationBar';
 import { useRefAppDashboardMutation } from '../redux/service/DashboardService';
 import Spinner from 'react-native-spinkit';
 import Constants from '../util/Constants';
+import { useUser } from '../common/UserContext';
 
-const AmountCard = ({ title, amount, bgColor, iconColor }: any) => {
+interface DashboardItem {
+  id: string;
+  title: string;
+  amount: string;
+  bgColor: string;
+  iconColor: string;
+}
+
+const AmountCard = ({ title, amount, bgColor, iconColor }:any) => {
   return (
     <View style={[styles.card, { backgroundColor: bgColor }]}>
       <View style={styles.textContainer}>
@@ -19,40 +28,39 @@ const AmountCard = ({ title, amount, bgColor, iconColor }: any) => {
   );
 };
 
-interface DashboardItem {
-  id: string;
-  title: string;
-  amount: string;
-  bgColor: string;
-  iconColor: string;
-}
-
 const DashboardScreen = () => {
+  const { userData } = useUser();
   const [dashboardApiReq, { isLoading, data, error }] = useRefAppDashboardMutation();
   const [dashboardData, setDashboardData] = useState<DashboardItem[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      try {
-        const payload = {
-          refType: 'C',
-          refCode: '01000104',
-        };
+      if (!userData) return;
 
-        const response = await dashboardApiReq(payload);
-        if (response && response.data) {
-          const parsedData = parseApiResponse(response.data);
+      const payload = {
+        refType: userData.UserType,
+        refCode: userData.UserCode,
+      };
+
+      try {
+        const response = await dashboardApiReq(payload).unwrap();
+        if (response && response.Payments) {
+          const parsedData = parseApiResponse(response);
           setDashboardData(parsedData);
+        } else {
+          setDashboardData([]);
         }
       } catch (e) {
         console.error('Error fetching dashboard data:', e);
+        setDashboardData([]);
       }
     };
 
     fetchDashboardData();
-  }, [dashboardApiReq]);
+  }, [dashboardApiReq, userData]);
 
-  const parseApiResponse = (response: { Payments: any[] }): DashboardItem[] => {
+
+    const parseApiResponse = (response: { Payments: any[] }): DashboardItem[] => {
     return response.Payments.map(
       (item: { Field: string; Value: string; BgColor: string; IconColor: string }) => ({
         id: item.Field,
@@ -67,6 +75,7 @@ const DashboardScreen = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <NavigationBar title="Dashboard" />
         <View style={styles.loadingContainer}>
           <Spinner
             isVisible={true}
@@ -79,10 +88,10 @@ const DashboardScreen = () => {
     );
   }
 
-
   if (error) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <NavigationBar title="Dashboard" />
         <Text style={styles.errorText}>Failed to load data</Text>
       </SafeAreaView>
     );
@@ -91,21 +100,27 @@ const DashboardScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <NavigationBar title="Dashboard" />
-      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <FlatList
-          contentContainerStyle={styles.flatListContainer}
-          data={dashboardData}
-          renderItem={({ item }: any) => (
-            <AmountCard
-              title={item.title}
-              amount={item.amount}
-              bgColor={item.bgColor}
-              iconColor={item.iconColor}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-        />
-      </ScrollView>
+      {dashboardData.length === 0 ? (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No data found</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+          <FlatList
+            contentContainerStyle={styles.flatListContainer}
+            data={dashboardData}
+            renderItem={({ item }) => (
+              <AmountCard
+                title={item.title}
+                amount={item.amount}
+                bgColor={item.bgColor}
+                iconColor={item.iconColor}
+              />
+            )}
+            keyExtractor={(item) => item.id}
+          />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -125,7 +140,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
@@ -133,10 +148,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    color: 'black',
-    marginBottom: 8,
-    fontWeight: '600',
+    fontSize: Constants.FONT_SIZE.L,
+    marginBottom: 10,
   },
   amountContainer: {
     flexDirection: 'row',
@@ -144,14 +157,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   amount: {
-    fontSize: 20,
-    color: 'black',
-    fontWeight: '700',
+    fontSize: Constants.FONT_SIZE.L,
+    fontFamily:Constants.FONT_FAMILY.fontFamilySemiBold,
     marginRight: 8,
   },
   iconPlaceholder: {
     width: 24,
     height: 24,
+    resizeMode:'contain',
     borderRadius: 10,
   },
   errorText: {
@@ -160,10 +173,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
-  spinner: {
-    marginTop: '10%',
+  noDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+  },
+  noDataText: {
+    color: 'gray',
+    fontSize: 16,
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

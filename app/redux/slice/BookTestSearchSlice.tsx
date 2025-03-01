@@ -3,12 +3,17 @@ import { bookTestSearchService } from '../service/BookTestSearchService';
 
 const initialState = {
     bookTestSearchDetails: [],
+    updatedCartData: [],
 };
 
 export const bookTestSearchSlice = createSlice({
     name: 'bookTestSearch',
     initialState,
-    reducers: {},
+    reducers: {
+        updateSelectedTest: (state, action) => {
+            state.updatedCartData = action.payload;
+        }
+    },
     extraReducers: builder => {
         builder.addMatcher(
             bookTestSearchService.endpoints.bookTestSearch.matchFulfilled,
@@ -23,6 +28,6 @@ export const bookTestSearchSlice = createSlice({
     },
 });
 
-export const { } = bookTestSearchSlice.actions;
+export const { updateSelectedTest } = bookTestSearchSlice.actions;
 
 export default bookTestSearchSlice.reducer;

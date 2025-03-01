@@ -3,10 +3,18 @@ import { View, Text, StyleSheet } from 'react-native';
 import Spinner from 'react-native-spinkit';
 import Constants from '../util/Constants';
 import { Dimensions } from 'react-native';
+import { useAppSettings } from '../common/AppSettingContext';
+
 
 const deviceHeight = Dimensions.get('window').height;
 
 const SpinnerIndicator = () => {
+    const { settings } = useAppSettings();
+    const labels = settings?.Message?.[0]?.Labels || {};
+
+    const getLabel = (key: string) => {
+        return labels[key]?.defaultMessage || '';
+    };
     return (
         <View style={styles.container}>
             <Spinner
@@ -16,7 +24,7 @@ const SpinnerIndicator = () => {
                 type={'Wave'}
                 color={Constants.COLOR.THEME_COLOR}
             />
-            <Text style={styles.text}>Loading....</Text>
+            <Text style={styles.text}>{getLabel('loading_1')}</Text>
         </View>
     );
 };

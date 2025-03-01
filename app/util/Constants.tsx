@@ -300,7 +300,7 @@ const Constants = {
   },
 
   COLOR: {
-    THEME_COLOR: '#3d9972',
+    THEME_COLOR: '#1F3A8B',
     THEME_COLOR_2: '#F6461A',
     FONT_COLOR: '#3F3F3F',
     FONT_HINT: '#A19B9B',
@@ -377,7 +377,7 @@ const Constants = {
     BIG: 30,
     XXXL: 26,
     XXL: 23,
-    XL: 20,
+    XL: 22,
     L: 18,
     M: 16,
     SM: 14,
@@ -386,9 +386,15 @@ const Constants = {
     XXS: 8,
   },
 
+  FONT_FAMILY: {
+    fontFamilyRegular: 'Poppins-Regular',
+    fontFamilyMedium: 'Poppins-Medium',
+    fontFamilySemiBold:'Poppins-SemiBold'
+  },
+
   ALERT: {
     TITLE: {
-      APP_NAME: 'Samiyak Health',
+      APP_NAME: 'Reffer_App',
       INFO: 'Info',
       ERROR: 'Error',
       FAILED: 'Failed',
@@ -480,7 +486,7 @@ const Constants = {
     CHECK_TERMS_CONDITION: 'Kindly select Terms and Condition',
     NO_TEST_SELECTED: 'Kindly choose test or upload prescription to proceed',
     NO_DATE_TIME_SELECTED: 'Kindly select Date and Time',
-    NO_PAYMENT_MSG:'Please select payment mode',
+    NO_PAYMENT_MSG: 'Please select payment mode',
     NO_PATIENT_SELECTED: 'Kindly select the patient to proceed',
     NO_PATIENT_ADDRESS_SELECTED:
       'Kindly select the patient and Address to proceed',

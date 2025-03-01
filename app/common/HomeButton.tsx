@@ -1,9 +1,18 @@
 import React from 'react';
-import {Text, View, StyleSheet, Dimensions, Image} from 'react-native';
+import { Text, View, StyleSheet, Dimensions, Image } from 'react-native';
+import Constants from '../util/Constants';
+import { useAppSettings } from '../common/AppSettingContext';
 
 const deviceHeight = Dimensions.get('window').height;
 
 const ButtonHome = () => {
+  const { settings } = useAppSettings();
+  const labels = settings?.Message?.[0]?.Labels || {};
+
+  const getLabel = (key: string) => {
+    return labels[key]?.defaultMessage || '';
+  };
+
   return (
     <View style={styles.homeView}>
       <Image
@@ -11,7 +20,7 @@ const ButtonHome = () => {
         source={require('../images/homeWhite.png')}
         resizeMode="contain"
       />
-      <Text style={styles.homeText}>Home</Text>
+      <Text style={styles.homeText}>{getLabel('btnhome_1')}</Text>
     </View>
   );
 };
@@ -19,7 +28,7 @@ const ButtonHome = () => {
 const styles = StyleSheet.create({
   homeView: {
     flexDirection: 'row',
-    backgroundColor: '#313131',
+    backgroundColor: Constants.COLOR.THEME_COLOR,
     borderRadius: 20,
     justifyContent: 'center',
     alignSelf: 'center',

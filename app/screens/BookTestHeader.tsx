@@ -64,7 +64,7 @@ const BookTestHeader = ({ selectValue }: any) => {
 
 const styles = StyleSheet.create({
   headerStatus: {
-    backgroundColor: '#eef3fd',
+    backgroundColor: '#ECEEF5',
     flexDirection: 'row',
     paddingVertical: 15,
   },

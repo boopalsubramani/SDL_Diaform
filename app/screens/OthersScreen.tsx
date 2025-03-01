@@ -70,6 +70,8 @@ const OthersScreen = ({ navigation }: any) => {
         navigation.navigate('Collection');
         break;
       case 'LD':
+        navigation.navigate('Ledger');
+        break;
       case 'LO':
         navigation.navigate('Login');
         break;
@@ -133,12 +135,13 @@ const styles = StyleSheet.create({
     width: deviceHeight / 35,
     height: deviceHeight / 35,
     resizeMode: 'contain',
+    tintColor: '#3C3636'
   },
   itemText: {
     flex: 1,
     paddingHorizontal: 20,
-    fontSize: Constants.FONT_SIZE.L,
-    fontFamily: 'Poppins-Regular',
+    fontSize: Constants.FONT_SIZE.M,
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
 });
 

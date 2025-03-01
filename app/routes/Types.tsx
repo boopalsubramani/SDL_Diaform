@@ -2,6 +2,7 @@ export type RootStackParamList = {
   SplashScreen: undefined;
   Login: undefined;
   BookTestSearchScreen: undefined;
+  BookTestScreen:undefined;
   AddPatient: undefined;
   UploadPrescription: undefined;
   ChoosePatient: undefined;
@@ -18,10 +19,12 @@ export type RootStackParamList = {
     selectedPatientDetails: any;
     totalCartValue: number;
     testData: any[];
+
   };
   PaymentDetail: {
     testData: any[];
-  }
+  };
+  BookTest:any;
 
 
 

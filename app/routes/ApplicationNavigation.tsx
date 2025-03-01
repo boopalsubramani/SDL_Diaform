@@ -12,7 +12,7 @@ import NotificationScreen from '../screens/NotificationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BookingDetailsScreen from '../screens/BookingDetailsScreen';
 import BookTestHeader from '../screens/BookTestHeader';
-import BookTestSearchScreen from '../screens/BookTestSearchScree';
+import BookTestSearchScreen from '../screens/BookTestSearchScreen';
 import AddPatientScreen from '../screens/AddPatientScreen';
 import ForgetPasswordScreen from '../screens/ForgotPasswordScreen';
 import ChoosePatientScreen from '../screens/ChoosePatientScreen';
@@ -21,6 +21,8 @@ import CalendarScreen from '../screens/CalendarScreen';
 import FilterScreen from '../screens/CollectionScreen';
 import PaymentDetailScreen from '../screens/PaymentDetailScreen';
 import FinalPaymentScreen from '../screens/FinalPaymentScreen';
+import LedgerDetailsScreen from '../screens/LedgerDetailsScreen';
+import BookTestScreen from '../screens/BookTestScreen';
 
 const Stack = createStackNavigator();
 const ApplicationNavigation = () => {
@@ -31,6 +33,7 @@ const ApplicationNavigation = () => {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Bottom" component={BottomNavigation} />
           <Stack.Screen name="UploadPrescription" component={UploadPrescriptionScreen} />
+          <Stack.Screen name="BookTestScreen" component={BookTestScreen} />
           <Stack.Screen name="Collection" component={CollectionScreen} />
           <Stack.Screen name="Transaction" component={TransactionScreen} />
           <Stack.Screen name="SosAlert" component={SosAlertScreen} />
@@ -47,6 +50,8 @@ const ApplicationNavigation = () => {
           <Stack.Screen name="Filter" component={FilterScreen} />
           <Stack.Screen name="PaymentDetail" component={PaymentDetailScreen} />
           <Stack.Screen name="FinalPayment" component={FinalPaymentScreen} />
+          <Stack.Screen name="Ledger" component={LedgerDetailsScreen} />
+
         </Stack.Navigator>
       </NavigationContainer>
   );

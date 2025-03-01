@@ -8,7 +8,9 @@ const initialState = {
 export const AppSettingSlice = createSlice({
     name: 'appSettings',
     initialState,
-    reducers: {},
+    reducers: {
+        
+    },
     extraReducers: builder => {
         builder.addMatcher(
             AppSettingService.endpoints.RefAppSetting.matchFulfilled,

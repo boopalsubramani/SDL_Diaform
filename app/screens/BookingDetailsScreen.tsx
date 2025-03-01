@@ -6,13 +6,11 @@ import ButtonBack from '../common/BackButton';
 import Constants from "../util/Constants";
 import { useBookingDetailMutation } from '../redux/service/BookingDetailService';
 import SpinnerIndicator from '../common/SpinnerIndicator';
+import { useUser } from '../common/UserContext';
 
-
-// Device dimensions
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
 
-// Define the type for booking details
 interface ServiceDetail {
     Service_Name: string;
     Service_Amount: string;
@@ -32,20 +30,19 @@ interface BookingDetails {
     Service_Detail: ServiceDetail[];
 }
 
-// Define the type for the booking prop passed to the screen
 interface Booking {
     Booking_No: string;
-    Booking_Date: string; // Ensure this property exists on the booking object
+    Booking_Date: string; 
 }
 
 type BookingDetailsScreenRouteProp = RouteProp<{
-    BookingDetails: { booking: Booking }; // Define the booking type here
+    BookingDetails: { booking: Booking }; 
 }, 'BookingDetails'>;
 
 const BookingDetailsScreen = ({ navigation }: any) => {
     const route = useRoute<BookingDetailsScreenRouteProp>();
     const { booking } = route.params;
-
+    const { userData } = useUser();
     const [reviewText, setReviewText] = useState('');
     const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
     const [bookingDetailAPIReq] = useBookingDetailMutation();
@@ -54,7 +51,7 @@ const BookingDetailsScreen = ({ navigation }: any) => {
         const fetchBookingDetails = async () => {
             const requestBody = {
                 App_Type: "R",
-                Username: "01000104",
+                Username: userData?.UserCode,
                 Booking_Type: "R",
                 Firm_No: "01",
                 Booking_Date: booking.Booking_Date,
@@ -70,11 +67,9 @@ const BookingDetailsScreen = ({ navigation }: any) => {
         fetchBookingDetails();
     }, [booking, bookingDetailAPIReq]);
 
-
     const handleButtonPress = () => {
         navigation.goBack();
     };
-
     if (!bookingDetails) {
         return (
             <View style={styles.loadingContainer}>
@@ -264,10 +259,10 @@ const styles = StyleSheet.create({
         padding: deviceWidth * 0.04,
     },
     detailTitle: {
-        color: '#676767',
+        color: '#4c6f86',
     },
     detailValue: {
-        color: '#696969',
+        color: '#6f6f6f',
     },
     ratingContainer: {
         marginTop: 30,
@@ -321,7 +316,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#F9F9F9',
     },
-   
+
 });
 
 
