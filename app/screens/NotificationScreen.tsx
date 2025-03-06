@@ -87,7 +87,7 @@ const NotificationScreen = ({ navigation }: any) => {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.AddMemberView}>
+            <View style={styles.NotificationView}>
                 <Text style={styles.headerText}>Notification</Text>
                 <TouchableOpacity onPress={handleCross}>
                     <Image source={require('../images/black_cross.png')} />
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#eef3fd',
     },
-    AddMemberView: {
+    NotificationView: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingHorizontal: 15,

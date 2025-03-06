@@ -17,281 +17,6 @@ import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import { useUser } from '../common/UserContext';
 const deviceHeight = Dimensions.get('window').height;
 
-// const AddPatientScreen = ({ navigation }: any) => {
-//     const [phoneNumber, setPhoneNumber] = useState('');
-//     const [title, setTitle] = useState('');
-//     const [firstName, setFirstName] = useState('');
-//     const [middleName, setMiddleName] = useState('');
-//     const [surName, setSurName] = useState('');
-//     const [nationalId, setNationalId] = useState('');
-//     const [passport, setPassport] = useState('');
-//     const [sex, setSex] = useState('');
-//     const [selectedDate, setSelectedDate] = useState('');
-//     const [showCalendar, setShowCalendar] = useState(false);
-//     const [titleCode, setTitleCode] = useState('');
-//     const [dropDownVisible, setDropdownVisible] = useState(false);
-//     const [dropDownVisibleRelation, setDropdownVisibleRelation] = useState(false);
-//     const [dropDownVisibleTitle, setDropdownVisibleTitle] = useState(false);
-//     const [genderData, setGenderData] = useState([]);
-//     const [titleData, setTitleData] = useState([]);
-
-//     // Fetch API for gender and patient_relation
-//     const [fetchAPIReq, fetchAPIRes] = useFetchApiMutation();
-
-//     const fetchData = async (type: 'T' | 'G', setData: Function) => {
-//         try {
-//             const requestObj = {
-//                 Mode: type,
-//                 Command: "OLXV65571F",
-//                 branchNo: "01",
-//             };
-//             const response = await fetchAPIReq(requestObj).unwrap();
-//             if (response?.TableData?.data1) {
-//                 setData(response.TableData.data1);
-//             } else {
-//                 console.error(`Error fetching data for type ${type}: Invalid response`);
-//             }
-//         } catch (error) {
-//             console.error(`Failed to fetch data for type ${type}:`, error);
-//         }
-//     };
-
-//     const handleTitleArrow = async () => {
-//         if (!dropDownVisibleTitle) {
-//             await fetchData("T", setTitleData);
-//         }
-//         setDropdownVisibleTitle(!dropDownVisibleTitle);
-//     };
-
-//     const handleGenderArrow = async () => {
-//         if (!dropDownVisible) {
-//             await fetchData("G", setGenderData);
-//         }
-//         setDropdownVisible(!dropDownVisible);
-//     };
-
-//     const handleSubmit = async () => {
-//         if (
-//             firstName === '' || 
-//             middleName === '' || 
-//             surName === '' || 
-//             nationalId === '' || 
-//             passport === '' || 
-//             sex === '' || 
-//             selectedDate === '' || 
-//             phoneNumber === ''
-//         ) {
-//             Alert.alert('Error', 'Please fill in all fields before submitting.');
-//             return; 
-//         }
-//         const addMemberObj = {
-//             Dob: selectedDate,
-//             Gender: sex,
-//             Mobile_No: phoneNumber,
-//             Pt_Name: firstName,
-//         };
-//         try {
-//             await AsyncStorage.setItem('patientData', JSON.stringify(addMemberObj));
-//             Alert.alert('Success', 'Member added successfully.');
-//             navigation.navigate('ChoosePatient');
-//         } catch (error) {
-//             console.error('Failed to save data:', error);
-//         }
-//     };
-
-//     const handleCross = () => {
-//         navigation.goBack('');
-//     };
-
-//     const padZero = (num: number): string => {
-//         return num < 10 ? `0${num}` : `${num}`;
-//     };
-
-//     return (
-//         <View style={styles.MainContainer}>
-//             <View style={styles.AddMemberView}>
-//                 <Text style={styles.headerText}>Add Patient</Text>
-//                 <TouchableOpacity onPress={handleCross}>
-//                     <Image source={require('../images/black_cross.png')} />
-//                 </TouchableOpacity>
-//             </View>
-
-//             {/* <ScrollView> */}
-//             <ScrollView scrollEnabled={!dropDownVisible && !dropDownVisibleTitle && !dropDownVisibleRelation}>
-//                 <View style={styles.inputContainer}>
-//                     <TextInput
-//                         style={styles.input}
-//                         placeholder="Phone Number"
-//                         keyboardType="number-pad"
-//                         placeholderTextColor={Constants.COLOR.FONT_HINT}
-//                         onChangeText={setPhoneNumber}
-//                         value={phoneNumber}
-//                     />
-//                     <TouchableOpacity style={styles.touchableContainer}>
-//                         <Image
-//                             source={require('../images/search.png')}
-//                             style={styles.SearchImg}
-//                         />
-//                     </TouchableOpacity>
-//                 </View>
-
-//                 <View style={styles.dropdownContainer}>
-//                     <TouchableOpacity
-//                         style={styles.touchableContainer}
-//                         onPress={handleTitleArrow}>
-//                         <Text style={styles.input}>{title || 'Title'}</Text>
-//                         <Image
-//                             source={require('../images/downArrow.png')}
-//                             style={styles.downArrow}
-//                         />
-//                     </TouchableOpacity>
-//                     {dropDownVisibleTitle && (
-//                         <View style={styles.dropdownCard}>
-//                             <ScrollView style={styles.dropdownScrollView}>
-//                                 {titleData.map((item, index) => {
-//                                     return (
-//                                         <TouchableOpacity
-//                                             key={index}
-//                                             onPress={() => {
-//                                                 setTitle(item.Title_Desc);
-//                                                 setTitleCode(item.TitleCode);
-//                                                 setDropdownVisibleTitle(false);
-//                                             }}>
-//                                             <Text style={styles.dropdownItem}>{item.Title_Desc}</Text>
-//                                         </TouchableOpacity>
-//                                     );
-//                                 })}
-//                             </ScrollView>
-//                         </View>
-//                     )}
-//                 </View>
-
-
-//                 {/* Input Fields for Names */}
-//                 <View style={styles.inputContainer}>
-//                     <TextInput
-//                         style={styles.input}
-//                         placeholder="First Name"
-//                         placeholderTextColor={Constants.COLOR.FONT_HINT}
-//                         onChangeText={setFirstName}
-//                         value={firstName}
-//                     />
-//                 </View>
-
-//                 <View style={styles.inputContainer}>
-//                     <TextInput
-//                         style={styles.input}
-//                         placeholder="Middle Name"
-//                         placeholderTextColor={Constants.COLOR.FONT_HINT}
-//                         onChangeText={setMiddleName}
-//                         value={middleName}
-//                     />
-//                 </View>
-
-//                 <View style={styles.inputContainer}>
-//                     <TextInput
-//                         style={styles.input}
-//                         placeholder="Sur Name"
-//                         placeholderTextColor={Constants.COLOR.FONT_HINT}
-//                         onChangeText={setSurName}
-//                         value={surName}
-//                     />
-//                 </View>
-
-//                 {/* National ID and Passport */}
-//                 <View style={styles.inputContainer}>
-//                     <TextInput
-//                         style={styles.input}
-//                         placeholder="National ID Card"
-//                         placeholderTextColor={Constants.COLOR.FONT_HINT}
-//                         onChangeText={setNationalId}
-//                         value={nationalId}
-//                     />
-//                 </View>
-
-//                 <View style={styles.inputContainer}>
-//                     <TextInput
-//                         style={styles.input}
-//                         placeholder="Passport Number"
-//                         placeholderTextColor={Constants.COLOR.FONT_HINT}
-//                         onChangeText={setPassport}
-//                         value={passport}
-//                     />
-//                 </View>
-
-//                 {/* Date of Birth */}
-//                 <View style={styles.inputContainerDob}>
-//                     <TouchableOpacity
-//                         style={styles.touchableContainer}
-//                         onPress={() => setShowCalendar(true)}>
-//                         <Text style={styles.input}>
-//                             {selectedDate || 'Select DOB'}
-//                         </Text>
-//                         <Image
-//                             source={require('../images/calendar.png')}
-//                             style={styles.CalenderImg}
-//                         />
-//                     </TouchableOpacity>
-//                     {showCalendar && (
-//                         <Calendar
-//                             onDayPress={(day) => {
-//                                 const formattedDate = `${day.year}/${padZero(day.month)}/${padZero(day.day)}`;
-//                                 setSelectedDate(formattedDate);
-//                                 setShowCalendar(false);
-//                             }}
-//                         />
-//                     )}
-//                 </View>
-
-//                 {/* Gender Dropdown */}
-//                 <View style={styles.dropdownContainer}>
-//                     <TouchableOpacity
-//                         style={styles.touchableContainer}
-//                         onPress={handleGenderArrow}>
-//                         <Text style={styles.input}>
-//                             {sex || 'Sex'}
-//                         </Text>
-//                         <Image
-//                             source={require('../images/downArrow.png')}
-//                             style={styles.downArrow}
-//                         />
-//                     </TouchableOpacity>
-//                     {dropDownVisible && (
-//                         <View style={styles.dropdownCard}>
-//                             <ScrollView>
-//                                 {genderData.map((item, index) => {
-//                                     return (
-//                                         <TouchableOpacity
-//                                             key={index}
-//                                             onPress={() => {
-//                                                 setSex(item.GenderDesc);
-//                                                 setDropdownVisible(false);
-//                                             }}>
-//                                             <Text style={styles.dropdownItem}>{item.GenderDesc}</Text>
-//                                         </TouchableOpacity>
-//                                     );
-//                                 })}
-//                             </ScrollView>
-//                         </View>
-//                     )}
-//                 </View>
-
-//                 {/* Submit Button */}
-//                 <TouchableOpacity onPress={handleSubmit}>
-//                     <View style={styles.SubmitButtonView}>
-//                         <Text style={styles.ButtonText}>Submit</Text>
-//                     </View>
-//                 </TouchableOpacity>
-//             </ScrollView>
-//         </View>
-//     );
-// };
-
-// export default AddPatientScreen;
-
-
-
-
 // Define Types for Data
 interface TitleData {
     Title_Desc: string;
@@ -422,7 +147,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                         style={styles.input}
                         placeholder="Phone Number"
                         keyboardType="number-pad"
-                        placeholderTextColor={Constants.COLOR.FONT_HINT}
                         onChangeText={setPhoneNumber}
                         value={phoneNumber}
                     />
@@ -460,7 +184,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                     <TextInput
                         style={styles.input}
                         placeholder="First Name"
-                        placeholderTextColor={Constants.COLOR.FONT_HINT}
                         onChangeText={setFirstName}
                         value={firstName}
                     />
@@ -470,7 +193,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Middle Name"
-                        placeholderTextColor={Constants.COLOR.FONT_HINT}
                         onChangeText={setMiddleName}
                         value={middleName}
                     />
@@ -480,7 +202,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Sur Name"
-                        placeholderTextColor={Constants.COLOR.FONT_HINT}
                         onChangeText={setSurName}
                         value={surName}
                     />
@@ -490,7 +211,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                     <TextInput
                         style={styles.input}
                         placeholder="National ID Card"
-                        placeholderTextColor={Constants.COLOR.FONT_HINT}
                         onChangeText={setNationalId}
                         value={nationalId}
                     />
@@ -500,7 +220,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Passport Number"
-                        placeholderTextColor={Constants.COLOR.FONT_HINT}
                         onChangeText={setPassport}
                         value={passport}
                     />
@@ -558,7 +277,7 @@ export default AddPatientScreen;
 
 const styles = StyleSheet.create({
     MainContainer: {
-        backgroundColor: '#eef3fd',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         flex: 1
     },
     AddMemberView: {
@@ -568,15 +287,19 @@ const styles = StyleSheet.create({
         paddingVertical: 20
     },
     headerText: {
-        fontSize: 20,
-        color: '#a19b9b',
+        fontSize: Constants.FONT_SIZE.M,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
     },
     input: {
         flex: 1,
         padding: 20,
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
+        backgroundColor: '#F5F7FA',
+        borderWidth: 0.5,
+        borderColor: Constants.COLOR.THEME_COLOR,
         margin: 15,
-        borderRadius: 50,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
+        fontSize: Constants.FONT_SIZE.M,
+        borderRadius: 16,
     },
     dropdownContainer: {
         width: '100%',
@@ -594,18 +317,18 @@ const styles = StyleSheet.create({
     },
     SubmitButtonView: {
         backgroundColor: Constants.COLOR.THEME_COLOR,
-        borderRadius: 50,
+        borderRadius: 25,
         marginTop: 30,
         marginHorizontal: 10,
-        marginBottom: 150,
+        marginBottom: 100,
         justifyContent: 'center',
         alignItems: 'center',
         paddingVertical: 11,
     },
     ButtonText: {
         color: Constants.COLOR.WHITE_COLOR,
-        fontSize: Constants.FONT_SIZE.L,
-        fontWeight: '600',
+        fontSize: Constants.FONT_SIZE.M,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium
     },
     touchableContainer: {
         flexDirection: 'row',

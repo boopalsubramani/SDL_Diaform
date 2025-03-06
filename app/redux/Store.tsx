@@ -31,6 +31,8 @@ import transactionDetails from '../redux/slice/TransactionDetailsSlice';
 import ledgerDateWise from '../redux/slice/LedgerDateWiseSlice';
 import ledgerMonthWise from '../redux/slice/LedgerMonthWiseSlice';
 import payment from '../redux/slice/PaymentSlice';
+import invoiceDownload from '../redux/slice/InvoiceDownloadSlice';
+import paymentGateway from '../redux/slice/PaymentGatewaySlice';
 
 const reducers = combineReducers({
     [api.reducerPath]: api.reducer,
@@ -50,7 +52,9 @@ const reducers = combineReducers({
     transactionDetails,
     ledgerDateWise,
     ledgerMonthWise,
-    payment
+    payment,
+    invoiceDownload,
+    paymentGateway
 
 });
 

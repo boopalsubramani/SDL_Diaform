@@ -27,33 +27,33 @@ import BookTestScreen from '../screens/BookTestScreen';
 const Stack = createStackNavigator();
 const ApplicationNavigation = () => {
   return (
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Bottom" component={BottomNavigation} />
-          <Stack.Screen name="UploadPrescription" component={UploadPrescriptionScreen} />
-          <Stack.Screen name="BookTestScreen" component={BookTestScreen} />
-          <Stack.Screen name="Collection" component={CollectionScreen} />
-          <Stack.Screen name="Transaction" component={TransactionScreen} />
-          <Stack.Screen name="SosAlert" component={SosAlertScreen} />
-          <Stack.Screen name="Notification" component={NotificationScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="BookingDetail" component={BookingDetailsScreen} />
-          <Stack.Screen name="Stepper" component={BookTestHeader} />
-          <Stack.Screen name="BookTestSearch" component={BookTestSearchScreen} />
-          <Stack.Screen name="AddPatient" component={AddPatientScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgetPasswordScreen} />
-          <Stack.Screen name="ChoosePatient" component={ChoosePatientScreen} />
-          <Stack.Screen name="ChooseTest" component={ChooseTestScreen} />
-          <Stack.Screen name="Calender" component={CalendarScreen} />
-          <Stack.Screen name="Filter" component={FilterScreen} />
-          <Stack.Screen name="PaymentDetail" component={PaymentDetailScreen} />
-          <Stack.Screen name="FinalPayment" component={FinalPaymentScreen} />
-          <Stack.Screen name="Ledger" component={LedgerDetailsScreen} />
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName='Splash' screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Bottom" component={BottomNavigation} />
+        <Stack.Screen name="UploadPrescription" component={UploadPrescriptionScreen} />
+        <Stack.Screen name="BookTestScreen" component={BookTestScreen} />
+        <Stack.Screen name="Collection" component={CollectionScreen} />
+        <Stack.Screen name="Transaction" component={TransactionScreen} />
+        <Stack.Screen name="SosAlert" component={SosAlertScreen} />
+        <Stack.Screen name="Notification" component={NotificationScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="BookingDetail" component={BookingDetailsScreen} />
+        <Stack.Screen name="Stepper" component={BookTestHeader} />
+        <Stack.Screen name="BookTestSearch" component={BookTestSearchScreen} />
+        <Stack.Screen name="AddPatient" component={AddPatientScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgetPasswordScreen} />
+        <Stack.Screen name="ChoosePatient" component={ChoosePatientScreen} />
+        <Stack.Screen name="ChooseTest" component={ChooseTestScreen} />
+        <Stack.Screen name="Calender" component={CalendarScreen} />
+        <Stack.Screen name="Filter" component={FilterScreen} />
+        <Stack.Screen name="PaymentDetail" component={PaymentDetailScreen} />
+        <Stack.Screen name="FinalPayment" component={FinalPaymentScreen} />
+        <Stack.Screen name="Ledger" component={LedgerDetailsScreen} />
 
-        </Stack.Navigator>
-      </NavigationContainer>
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 

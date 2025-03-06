@@ -39,15 +39,12 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const updatedCart = useSelector(
     (state: RootState) => state.bookTestSearch.updatedCartData
   );
+  console.log('1111111111111111updatedCart111111111111', updatedCart);
 
 
   const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';
   };
-
-  useEffect(() => {
-    console.log("Received selectedTests in CalendarScreen:", selectedTests);
-  }, []);
 
 
   const handleDateInputChange = (text: any) => {
@@ -130,15 +127,6 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
     navigation.navigate('PaymentDetail', { selectedTests, selectedDate, selectedTime, selectedPatientDetails, testData });
   };
 
-  useEffect(() => {
-    console.log("Received selectedTests in CalendarScreen:", selectedTests);
-    setTestList(selectedTests);
-  }, [selectedTests]);
-
-  useEffect(() => {
-    console.log("Test List state updated:", testList);
-  }, [testList]);
-
 
 
   return (
@@ -152,12 +140,15 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.cartSection}>
           <Text style={styles.cartTitle}>{getLabel('labtsummary_5')}</Text>
-          {updatedCart.map((test: Test, index: number) => (
-            <View key={index} style={styles.cartItem}>
-              <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
-              <Text style={styles.cartItemPrice}>P {test.Amount}</Text>
-            </View>
-          ))}
+          {updatedCart.map((test: Test, index: number) => {
+            console.log('77777777777777777777', test);
+            return (
+              <View key={index} style={styles.cartItem}>
+                <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
+                <Text style={styles.cartItemPrice}>P {test.Amount}</Text>
+              </View>
+            );
+          })}
           <View style={styles.cartSubtotal}>
             <Text style={styles.cartSubtotalLabel}>{getLabel('labtsummary_6')}</Text>
             <Text style={styles.cartSubtotalAmount}>
@@ -203,31 +194,33 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           </TouchableOpacity>
         </View>
 
-        {showCalendar && (
-          <Calendar
-            onDayPress={(day: any) => {
-              setSelectedDate(day.dateString);
-              if (!selectedTime || day.dateString !== moment().format('YYYY-MM-DD')) {
-                setSelectedTime('');
-              }
-              setDateInput(`${day.dateString} ${selectedTime || ''}`);
-            }}
-            markedDates={{
-              [selectedDate]: {
-                selected: true,
-                selectedColor: Constants.COLOR.THEME_COLOR,
-                dots: [{ key: 's0', color: Constants.COLOR.THEME_COLOR, selectedDotColor: 'white' }],
-              },
-            }}
-            renderDay={(day: any) => (
-              <View>
-                <Text>{day.day}</Text>
-                {day.dateString === selectedDate && <Text>{selectedTime}</Text>}
-              </View>
-            )}
-            minDate={moment().format('YYYY-MM-DD')}
-          />
-        )}
+        {
+          showCalendar && (
+            <Calendar
+              onDayPress={(day: any) => {
+                setSelectedDate(day.dateString);
+                if (!selectedTime || day.dateString !== moment().format('YYYY-MM-DD')) {
+                  setSelectedTime('');
+                }
+                setDateInput(`${day.dateString} ${selectedTime || ''}`);
+              }}
+              markedDates={{
+                [selectedDate]: {
+                  selected: true,
+                  selectedColor: Constants.COLOR.THEME_COLOR,
+                  dots: [{ key: 's0', color: Constants.COLOR.THEME_COLOR, selectedDotColor: 'white' }],
+                },
+              }}
+              renderDay={(day: any) => (
+                <View>
+                  <Text>{day.day}</Text>
+                  {day.dateString === selectedDate && <Text>{selectedTime}</Text>}
+                </View>
+              )}
+              minDate={moment().format('YYYY-MM-DD')}
+            />
+          )
+        }
 
         <TimePickerModal
           isVisible={showTimePicker}
@@ -237,7 +230,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           minimumDate={selectedDate === moment().format('YYYY-MM-DD') ? new Date() : undefined}
 
         />
-      </ScrollView>
+      </ScrollView >
       <View style={styles.navigationContainer}>
         <TouchableOpacity onPress={handleBack}>
           <ButtonBack />
@@ -246,7 +239,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           <ButtonNext />
         </TouchableOpacity>
       </View>
-    </View>
+    </View >
   );
 };
 export default CalendarScreen;

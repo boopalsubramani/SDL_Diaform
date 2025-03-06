@@ -25,7 +25,7 @@ const NetworkError = {
 const baseQuery = fetchBaseQuery({
     baseUrl: BASE_URL,
     prepareHeaders: (headers, { getState }) => {
-        headers.set('Content-Type', 'application/json');
+        // headers.set('Content-Type', 'application/json');
         headers.set('cache-control', 'no-cache');
         const token = (getState() as RootState).appSettings.tokenDetails;
 
@@ -37,6 +37,7 @@ const baseQuery = fetchBaseQuery({
         if (token?.access_token) {
             headers.set('Authorization', `${token?.access_token}`);
         }
+        console.log(headers,"headers.....................>>>")
         return headers;
     },
 });

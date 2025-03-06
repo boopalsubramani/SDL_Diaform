@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 import Constants from "../util/Constants";
+import ButtonHome from '../common/HomeButton';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
@@ -46,8 +47,8 @@ const ProfileScreen = ({ navigation }: any) => {
             <View style={styles.myProfileView}>
                 <Text style={{
                     fontSize: Constants.FONT_SIZE.L,
-                    color: '#757677',
-                    fontWeight: 'bold',
+                    color: Constants.COLOR.WHITE_COLOR,
+                    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold
                 }}>My Profile</Text>
                 <TouchableOpacity onPress={handleCross}>
                     <Image
@@ -125,15 +126,16 @@ const ProfileScreen = ({ navigation }: any) => {
                 <Text style={styles.HomeButtonText}>
                     {isEditMode ? 'Update' : 'Home'}
                 </Text>
+                {/* <ButtonHome title={isEditMode ? "Update" : "Home"} /> */}
             </TouchableOpacity>
-        </View>
+        </View >
     );
 };
 
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: Constants.COLOR.BACKGROUND_COLOR_SCREEN,
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
     },
     myProfileView: {
         flexDirection: 'row',
@@ -141,15 +143,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         alignItems: 'center',
         height: 60,
+        backgroundColor: Constants.COLOR.THEME_COLOR
     },
     crossImg: {
         width: deviceHeight / 35,
         height: deviceHeight / 35,
+        tintColor: Constants.COLOR.WHITE_COLOR
     },
     divider: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#757677',
+
     },
     editProfileContainer: {
         alignItems: 'center',
@@ -162,17 +164,17 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     editProfileText: {
-        color: '#1E75C0',
+        color: Constants.COLOR.THEME_COLOR,
         textAlign: 'right',
         alignContent: 'flex-end',
         alignItems: 'flex-end',
         alignSelf: 'flex-end',
     },
     input: {
-        fontSize: Constants.FONT_SIZE.M,
-        color: 'black',
+        fontSize: Constants.FONT_SIZE.SM,
         marginVertical: 8,
-        borderBottomColor: '#A9A9A9',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+
     },
     secondInnerContainer: {
         flexDirection: 'column',
@@ -184,8 +186,8 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: Constants.FONT_SIZE.M,
-        color: '#fb5861',
-        marginRight: 50,
+        color: Constants.COLOR.THEME_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     NameView: {
         flexDirection: 'row',
@@ -195,12 +197,12 @@ const styles = StyleSheet.create({
     },
     NameText: {
         flex: 3,
-        color: '#757677',
-        fontSize: Constants.FONT_SIZE.XXXL,
+        fontSize: Constants.FONT_SIZE.XL,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
         marginHorizontal: 5,
     },
     HomeButton: {
-        backgroundColor: '#040619',
+        backgroundColor: Constants.COLOR.THEME_COLOR,
         alignItems: 'center',
         borderRadius: 25,
         width: deviceWidth / 3.9,
@@ -213,21 +215,12 @@ const styles = StyleSheet.create({
         marginBottom: 35,
     },
     HomeButtonText: {
-        fontSize: Constants.FONT_SIZE.S,
-        paddingVertical: 10,
-        textAlign: 'center',
-        color: '#FFFFFF',
+        fontSize: Constants.FONT_SIZE.M,
+        paddingVertical: 5,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
+        color: Constants.COLOR.WHITE_COLOR,
     },
-    // circleImage: {
-    //     width: 100,
-    //     height: 100,
-    //     borderRadius: 50,
-    // },
     headerRightImage: {
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end',
-        alignSelf: 'flex-end',
-        alignContent: 'flex-end',
         borderRadius: deviceHeight / 8 / 2,
         width: deviceHeight / 8,
         height: deviceHeight / 8,

@@ -17,3 +17,5 @@ export const TRANSACTION_DETAILS = 'RefApp/Transaction_Details';
 export const LEDGER_DATE_WISE = 'RefApp/Ledger_Date_Wise';
 export const LEDGER_MONTH_WISE = 'RefApp/Ledger_Month_Wise';
 export const PAYMENT = 'RefApp/Dueclose';
+export const INVOICE_DOWNLOAD = 'Patient/InvoiceDownload';
+export const PAYMENT_GATEWAY = 'RefApp/GetPaymentUrl';

@@ -37,7 +37,7 @@ const SplashScreen = () => {
 
     const timeout = setTimeout(() => {
       if (isConnected && settings) {
-        navigation.navigate("Login");
+        navigation.replace("Login");
       }
     }, 3000);
 
