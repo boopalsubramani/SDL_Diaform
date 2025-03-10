@@ -159,10 +159,8 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         width: deviceWidth / 1.3,
         marginTop: 50,
-        shadowColor: "rgba(0, 0, 0, 0.1)",
-        shadowOpacity: 1.0,
-        elevation: 6,
-        shadowRadius: 15,
+        shadowColor: Constants.COLOR.THEME_COLOR,
+        elevation: 3,
     },
     sendButtonText: {
         fontSize: Constants.FONT_SIZE.L,

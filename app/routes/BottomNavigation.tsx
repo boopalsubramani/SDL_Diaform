@@ -1,16 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Dimensions, Image, Text } from 'react-native';
+import { Image, Text } from 'react-native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
+import Constants from '../util/Constants';
 import BookingScreen from '../screens/BookingScreen';
 import BookTestScreen from '../screens/BookTestScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import OthersScreen from '../screens/OthersScreen';
-import { useSelector } from 'react-redux';
-import { RootState } from '../redux/Store';
-import Constants from '../util/Constants';
-
-
 
 const Bottom = createBottomTabNavigator();
 
@@ -18,8 +16,8 @@ interface MenuItem {
   Main_Menu_Code: string;
   Menu_Desc: string;
   component: React.ComponentType<any>;
-  Selected_Tab_Icon_Url: string;
-  Tab_Icon_url: string;
+  Selected_Tab_Icon_Url?: string;
+  Tab_Icon_url?: string;
 }
 
 interface AppSettingDetails {
@@ -31,56 +29,49 @@ const BottomNavigation = () => {
     (state: RootState) => state.appSettings.AppSettingDetails as AppSettingDetails[]
   );
 
+  // Fallback menu items
   const fallbackMenuItems: MenuItem[] = [
-    { Main_Menu_Code: 'BK', Menu_Desc: 'Bookings', component: BookingScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
-    { Main_Menu_Code: 'BT', Menu_Desc: 'Book Test', component: BookTestScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
-    { Main_Menu_Code: 'DB', Menu_Desc: 'Offers', component: DashboardScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
-    { Main_Menu_Code: 'PY', Menu_Desc: 'Payments', component: PaymentScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
-    { Main_Menu_Code: 'OT', Menu_Desc: 'Others', component: OthersScreen, Selected_Tab_Icon_Url: '', Tab_Icon_url: '' },
+    { Main_Menu_Code: 'BK', Menu_Desc: 'Bookings', component: BookingScreen },
+    { Main_Menu_Code: 'BT', Menu_Desc: 'Book Test', component: BookTestScreen },
+    { Main_Menu_Code: 'DB', Menu_Desc: 'Offers', component: DashboardScreen },
+    { Main_Menu_Code: 'PY', Menu_Desc: 'Payments', component: PaymentScreen },
+    { Main_Menu_Code: 'OT', Menu_Desc: 'Others', component: OthersScreen },
   ];
 
-  const menuItems: MenuItem[] = bottomImages?.[0]?.Menu_Items || fallbackMenuItems;
+  // Get dynamic menu items or fallback
+  const menuItems: MenuItem[] = bottomImages?.[0]?.Menu_Items?.length
+    ? bottomImages[0].Menu_Items
+    : fallbackMenuItems;
 
-  const getComponentByMainMenuCode = (mainMenuCode: string) => {
-    switch (mainMenuCode) {
-      case 'BK':
-        return BookingScreen;
-      case 'BT':
-        return BookTestScreen;
-      case 'DB':
-        return DashboardScreen;
-      case 'PY':
-        return PaymentScreen;
-      case 'OT':
-        return OthersScreen;
-      default:
-        return null;
-    }
+  // Mapping Main_Menu_Code to components
+  const componentMap: { [key: string]: React.ComponentType<any> } = {
+    BK: BookingScreen,
+    BT: BookTestScreen,
+    DB: DashboardScreen,
+    PY: PaymentScreen,
+    OT: OthersScreen,
   };
 
   return (
     <Bottom.Navigator
       initialRouteName="Book Test"
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
           borderTopWidth: 0.3,
           borderTopColor: '#778899',
+          display: route.name === 'Payments' ? 'none' : 'flex',
         },
         tabBarLabelStyle: {
           fontSize: Constants.FONT_SIZE.S,
-          fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
-          // fontWeight: 'bold',
-          // color: 'grey',
+          fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         },
-      }}
+      })}
     >
-      {menuItems.map((item: MenuItem, index: number) => {
-        const Component = getComponentByMainMenuCode(item.Main_Menu_Code);
+      {menuItems.map((item, index) => {
+        const Component = componentMap[item.Main_Menu_Code];
 
-        if (!Component) {
-          return null;
-        }
+        if (!Component) return null;
 
         return (
           <Bottom.Screen
@@ -90,22 +81,25 @@ const BottomNavigation = () => {
             options={{
               tabBarIcon: ({ focused }) => (
                 <Image
-                  source={
-                    focused
-                      ? { uri: item.Selected_Tab_Icon_Url }
-                      : { uri: item.Tab_Icon_url }
-                  }
+                  source={{
+                    uri: focused ? item.Selected_Tab_Icon_Url || '' : item.Tab_Icon_url || '',
+                  }}
                   style={{
                     width: 20,
                     height: 20,
                     resizeMode: 'contain',
                   }}
+                  onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
                 />
               ),
               tabBarLabel: ({ focused }) => (
-                <Text style={{
-                  color: focused ? Constants.COLOR.THEME_COLOR : 'black', fontSize: Constants.FONT_SIZE.S, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
-                }}>
+                <Text
+                  style={{
+                    color: focused ? Constants.COLOR.THEME_COLOR : 'black',
+                    fontSize: Constants.FONT_SIZE.S,
+                    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+                  }}
+                >
                   {item.Menu_Desc}
                 </Text>
               ),
@@ -118,3 +112,4 @@ const BottomNavigation = () => {
 };
 
 export default BottomNavigation;
+

@@ -335,10 +335,9 @@ const styles = StyleSheet.create({
     registerContainer: {
         backgroundColor: Constants.COLOR.WHITE_COLOR,
         borderRadius: 10,
-        shadowColor: 'rgba(0, 0, 0, 0.1)',
-        shadowOffset: { width: 0, height: 4 },
+        shadowColor: Constants.COLOR.THEME_COLOR,
         shadowOpacity: 1.0,
-        elevation: 6,
+        elevation: 3,
     },
     registerInnerView: {
         paddingLeft: 25,

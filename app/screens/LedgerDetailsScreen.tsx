@@ -338,11 +338,8 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         justifyContent: 'space-between',
         padding: 6,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        shadowColor: Constants.COLOR.THEME_COLOR,
+        elevation: 3,
     },
     dateText: {
         fontSize: 12,
@@ -355,11 +352,7 @@ const styles = StyleSheet.create({
     },
     table: {
         backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        shadowColor: Constants.COLOR.THEME_COLOR,
     },
     tableRow: {
         flexDirection: 'row',

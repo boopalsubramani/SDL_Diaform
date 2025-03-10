@@ -33,6 +33,7 @@ import ledgerMonthWise from '../redux/slice/LedgerMonthWiseSlice';
 import payment from '../redux/slice/PaymentSlice';
 import invoiceDownload from '../redux/slice/InvoiceDownloadSlice';
 import paymentGateway from '../redux/slice/PaymentGatewaySlice';
+import serviceBookingCancel from '../redux/slice/ServiceBookingCancelSlice';
 
 const reducers = combineReducers({
     [api.reducerPath]: api.reducer,
@@ -54,7 +55,8 @@ const reducers = combineReducers({
     ledgerMonthWise,
     payment,
     invoiceDownload,
-    paymentGateway
+    paymentGateway,
+    serviceBookingCancel
 
 });
 

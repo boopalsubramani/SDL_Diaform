@@ -32,11 +32,11 @@ interface BookingDetails {
 
 interface Booking {
     Booking_No: string;
-    Booking_Date: string; 
+    Booking_Date: string;
 }
 
 type BookingDetailsScreenRouteProp = RouteProp<{
-    BookingDetails: { booking: Booking }; 
+    BookingDetails: { booking: Booking };
 }, 'BookingDetails'>;
 
 const BookingDetailsScreen = ({ navigation }: any) => {
@@ -165,7 +165,7 @@ export default BookingDetailsScreen;
 
 const styles = StyleSheet.create({
     scrollContainer: {
-        flex: 1,
+        flexGrow: 1,
         paddingHorizontal: 10,
     },
     bookingIdView: { flexDirection: 'row' },
@@ -175,24 +175,22 @@ const styles = StyleSheet.create({
     },
     heading: {
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
         fontSize: Constants.FONT_SIZE.M,
-        fontWeight: 'bold',
         marginTop: 0,
     },
     subHeading: {
-        marginTop: 5,
-        fontWeight: 'bold',
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
         fontSize: Constants.FONT_SIZE.M,
     },
     text: {
-        marginTop: 5,
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         fontSize: Constants.FONT_SIZE.SM,
     },
     commentMainView: {
         flexDirection: 'row',
-        marginTop: 10,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -212,7 +210,9 @@ const styles = StyleSheet.create({
     },
     infoText: {
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
+        width:'90%',
         fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     nameAddressRightAgePhoneView: { flexDirection: 'row', marginTop: 10 },
     nameAddressRightAgeImage: {
@@ -224,6 +224,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
         fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     nameAddressRightMobileImage: {
         marginLeft: 10,
@@ -235,6 +236,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
         fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     row: {
         flexDirection: 'row',
@@ -249,44 +251,25 @@ const styles = StyleSheet.create({
         marginVertical: deviceHeight * 0.01,
     },
     bannerText: {
-        color: Constants.COLOR.BLACK_COLOR,
-        fontSize: deviceWidth * 0.045,
+        fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     detailRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        backgroundColor: '#f7f7f7',
-        padding: deviceWidth * 0.04,
+        backgroundColor: '#ECEEF5',
+        padding: deviceWidth * 0.03,
     },
     detailTitle: {
-        color: '#4c6f86',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
     },
     detailValue: {
-        color: '#6f6f6f',
-    },
-    ratingContainer: {
-        marginTop: 30,
-        backgroundColor: '#F5F5F5',
-        paddingVertical: 20,
-        paddingHorizontal: 5,
-    },
-    textCenter: {
-        textAlign: 'center',
-        color: 'black',
-        fontSize: Constants.FONT_SIZE.SM,
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    submitButton: {
-        backgroundColor: '#dddbdb',
-        paddingVertical: deviceWidth * 0.02,
-        paddingHorizontal: deviceWidth * 0.1,
-        borderRadius: deviceWidth * 0.02,
-        marginTop: deviceHeight * 0.01,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+        color: Constants.COLOR.FONT_COLOR_DEFAULT
     },
     submitText: {
         fontSize: Constants.FONT_SIZE.SM,
-        backgroundColor: '#DDDBDB',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         borderRadius: 10,
         paddingVertical: 10,
         paddingHorizontal: 10,
@@ -294,19 +277,19 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         alignSelf: 'center',
         marginLeft: 10,
-        color: 'black'
+        color: Constants.COLOR.BLACK_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
     },
     reviewContainer: {
         marginVertical: deviceHeight * 0.02,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#ECEEF5',
         marginBottom: 10,
-        paddingVertical: 20,
-        paddingHorizontal: 10,
+        padding: 10
     },
     input: {
         backgroundColor: Constants.COLOR.WHITE_COLOR,
         flex: 0.999,
-        padding: 10,
+        paddingHorizontal: 10,
         borderRadius: 10,
         height: deviceHeight / 8,
     },
@@ -314,9 +297,8 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F9F9F9',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
     },
-
 });
 
 

@@ -23,6 +23,7 @@ import PaymentDetailScreen from '../screens/PaymentDetailScreen';
 import FinalPaymentScreen from '../screens/FinalPaymentScreen';
 import LedgerDetailsScreen from '../screens/LedgerDetailsScreen';
 import BookTestScreen from '../screens/BookTestScreen';
+import PaymentFailureScreen from '../screens/PaymentFailureScreen';
 
 const Stack = createStackNavigator();
 const ApplicationNavigation = () => {
@@ -51,6 +52,8 @@ const ApplicationNavigation = () => {
         <Stack.Screen name="PaymentDetail" component={PaymentDetailScreen} />
         <Stack.Screen name="FinalPayment" component={FinalPaymentScreen} />
         <Stack.Screen name="Ledger" component={LedgerDetailsScreen} />
+        <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
+
 
       </Stack.Navigator>
     </NavigationContainer>

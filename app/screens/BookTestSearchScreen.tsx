@@ -455,23 +455,10 @@ const BookTestSearchScreen = ({ route }: any) => {
         }
     }, [searchTestAPIRes, setTestData]);
 
-    // useEffect(() => {
-    //     const unsubscribe = navigation.addListener('focus', () => {
-    //         setCartItems(cartItems);
-    //         setCartItemDetails(cartItemDetails);
-    //         setDisplayCartState(
-    //             cartItems.reduce((acc, itemName) => {
-    //                 acc[itemName] = true;
-    //                 return acc;
-    //             }, {})
-    //         );
-    //     });
-    //     return unsubscribe;
-    // }, [navigation, cartItems, cartItemDetails]);
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            setCartItems([...cartItems]);  // Ensure reactivity
+            setCartItems([...cartItems]);
             setCartItemDetails([...cartItemDetails]);
             setTotalCartValue(cartItemDetails.reduce((total, item) => total + (item?.Amount || 0), 0));
 
@@ -495,40 +482,6 @@ const BookTestSearchScreen = ({ route }: any) => {
 
     const handleCross = () => navigation.goBack();
 
-
-    // const handleToggleCart = (itemName: string) => {
-    //     const item = testData.find(test => test.Service_Name === itemName);
-    //     if (!item) return;
-
-    //     setCartItems(prevCartItems => {
-    //         const isItemInCart = prevCartItems.includes(itemName);
-
-    //         if (isItemInCart) {
-    //             console.log("Removing item:", itemName);
-
-    //             setCartItemDetails(prevDetails => prevDetails.filter(detail => detail.Service_Code !== item.Service_Code));
-
-    //             return prevCartItems.filter(name => name !== itemName);
-    //         } else {
-    //             console.log("Adding item:", itemName);
-
-    //             return [...prevCartItems, itemName];
-    //         }
-    //     });
-
-    //     setCartItemDetails(prevDetails => {
-    //         const isAlreadyInCart = prevDetails.some(cartItem => cartItem.Service_Code === item.Service_Code);
-
-    //         if (isAlreadyInCart) {
-    //             Alert.alert("Alert", `${item.Service_Name} is already in the cart.`);
-    //             return prevDetails;
-    //         }
-
-    //         return [...prevDetails, item];
-    //     });
-
-    //     setDisplayCartState(prev => ({ ...prev, [itemName]: !prev[itemName] }));
-    // };
     const handleToggleCart = (itemName: string) => {
         const item = testData.find(test => test.Service_Name === itemName);
         if (!item) return;
@@ -555,34 +508,9 @@ const BookTestSearchScreen = ({ route }: any) => {
         });
 
         setDisplayCartState(prev => ({ ...prev, [itemName]: !prev[itemName] }));
-        calculateTotalCartValue(); // Ensure the total updates
+        calculateTotalCartValue();
     };
 
-
-
-    // const handleProceedClick = () => {
-    //     if (cartItems.length > 0) {
-    //         const selectedTests = cartItemDetails.map(item => ({
-    //             Service_Name: item.Service_Name || "Unknown",
-    //             Amount: item.Amount ?? 0,
-    //             Service_Code: item.Service_Code || "",
-    //             Discount_Amount: item.Discount_Amount ?? 0,
-    //             T_Bill_Amount: item.T_Bill_Amount ?? 0,
-    //             T_Patient_Due: item.T_Patient_Due ?? 0,
-    //         }));
-    //         dispatch(updateSelectedTest(cartItemDetails));
-
-    //         navigation.navigate('ChooseTest', {
-    //             selectedTests,
-    //             selectedPatientDetails,
-    //             totalCartValue,
-    //             testData,
-    //             shouldNavigateToCalender: true,
-    //         });
-    //     } else {
-    //         Alert.alert('Empty Cart', 'Please add items to the cart before proceeding.');
-    //     }
-    // };
     const handleProceedClick = () => {
         if (cartItems.length > 0) {
             const selectedTests = cartItemDetails.map(item => ({
@@ -725,29 +653,27 @@ const BookTestSearchScreen = ({ route }: any) => {
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {isLoading && (
+            {isLoading ? (
                 <View style={styles.spinnerContainer}>
                     <SpinnerIndicator />
                 </View>
-            )}
-
-            {errorMessage ? (
-                <Text style={{ textAlign: 'center', marginTop: 20, color: 'red', fontSize: Constants.FONT_SIZE.M }}>
-                    {errorMessage}
-                </Text>
             ) : (
-                <FlatList
-                    data={testData}
-                    keyExtractor={item => `${item.RowNumber || item.Service_Name}`}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.flatListContainer}
-                    ListEmptyComponent={() => (
+                <>
+                    {testData.length === 0 ? (
                         <Text style={{ textAlign: 'center', marginTop: 20, fontSize: Constants.FONT_SIZE.M, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular }}>
                             No tests found. Please try again.
                         </Text>
+                    ) : (
+                        <FlatList
+                            data={testData}
+                            keyExtractor={item => `${item.RowNumber || item.Service_Name}`}
+                            renderItem={renderItem}
+                            contentContainerStyle={styles.flatListContainer}
+                        />
                     )}
-                />
+                </>
             )}
+
 
             {searchText.trim().length > 0 && (
                 <View>
@@ -807,7 +733,7 @@ const styles = StyleSheet.create({
         fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold
     },
     addToCartButton: { flexDirection: 'row', alignItems: 'center' },
-    spinnerContainer: { position: 'absolute', top: '30%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }] },
+    spinnerContainer: {flex:1,justifyContent:'center' },
     modalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
     modalBackground: { width: '100%', borderTopLeftRadius: 30, borderTopRightRadius: 30, backgroundColor: 'white' },
     modalContent: { paddingVertical: 20, paddingHorizontal: 15, borderTopRightRadius: 30 },

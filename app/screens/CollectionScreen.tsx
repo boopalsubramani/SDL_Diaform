@@ -19,6 +19,7 @@ import Spinner from 'react-native-spinkit';
 import { useCollectionDetailsMutation } from '../redux/service/CollectionDetailsService';
 import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
+import CalendarModal from '../common/Calender';
 
 
 interface TransactionDetail {
@@ -37,7 +38,8 @@ interface TransactionDetail {
   Ref_Name: string;
   Bill_Mode: string;
   Bill_Time: string;
-  Bill_No: string
+  Bill_No: string;
+  Pay_Mode: string
 }
 
 interface PayMode {
@@ -263,7 +265,7 @@ const CollectionScreen = () => {
                     <View style={styles.Row1}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Text style={styles.BillText}>Bill Mode </Text>
-                        <Text style={styles.BillTextValue}>{detail.Bill_Mode}</Text>
+                        <Text style={styles.BillTextValue}>{detail.Pay_Mode}</Text>
                       </View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
                         <Text style={styles.BillText}>Bill Time </Text>
@@ -332,27 +334,12 @@ const CollectionScreen = () => {
       </Modal>
 
       {/* Calendar Modal */}
-      <Modal visible={showCalendar} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.overlay}
-          onPress={() => setShowCalendar(false)}
-        />
-        <View style={styles.calendarContainer}>
-          <Calendar
-            onDayPress={handleDateSelection}
-            markedDates={{
-              [selectedFromDate.split('/').reverse().join('-')]: {
-                selected: true,
-                selectedColor: '#5cb85c',
-              },
-              [selectedToDate.split('/').reverse().join('-')]: {
-                selected: true,
-                selectedColor: '#5cb85c',
-              },
-            }}
-          />
-        </View>
-      </Modal>
+      <CalendarModal
+        isVisible={showCalendar}
+        onConfirm={handleDateSelection}
+        onCancel={() => setShowCalendar(false)}
+        mode="date"
+      />
     </SafeAreaView>
   );
 };
@@ -373,17 +360,14 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Constants.COLOR.WHITE_COLOR,
     borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: Constants.COLOR.THEME_COLOR,
+    elevation: 3,
     padding: 6,
     marginRight: 5
   },
   label: {
     fontSize: Constants.FONT_SIZE.S,
-    fontFamily:Constants.FONT_FAMILY.fontFamilySemiBold,
+    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
   },
   dropdown: {
     flexDirection: 'row',
@@ -392,25 +376,22 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: Constants.FONT_SIZE.XS,
-    fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
   icon: {
     width: 14,
     height: 14,
-    resizeMode:'contain',
+    resizeMode: 'contain',
     marginLeft: 5,
   },
   detailsContainer: {
     marginTop: 20,
   },
   detailCard: {
-    backgroundColor:Constants.COLOR.WHITE_COLOR,
+    backgroundColor: Constants.COLOR.WHITE_COLOR,
     borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: Constants.COLOR.THEME_COLOR,
+    elevation: 3,
     borderWidth: 0.2,
     marginBottom: 10,
     flex: 1,
@@ -429,7 +410,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: 5,
     paddingVertical: 3,
-    fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
   Column2: {
     width: '60%',
@@ -447,7 +428,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingVertical: 3,
     paddingHorizontal: 5,
-    fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
   Row1: {
     width: '50%',
@@ -467,7 +448,7 @@ const styles = StyleSheet.create({
     color: Constants.COLOR.BLACK_COLOR,
     paddingHorizontal: 5,
     paddingVertical: 5,
-    fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
   BillTextValue: {
     fontSize: 12,
@@ -475,7 +456,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
     paddingHorizontal: 10,
-    fontFamily:Constants.FONT_FAMILY.fontFamilySemiBold,
+    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
   },
   overlay: {
     flex: 1,

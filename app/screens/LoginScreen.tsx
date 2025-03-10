@@ -478,10 +478,8 @@ const styles = StyleSheet.create({
         right: 20,
         bottom: 20,
         borderRadius: 10,
-        shadowColor: 'rgba(0, 0, 0, 0.1)',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 1.0,
-        elevation: 6,
+        shadowColor: Constants.COLOR.THEME_COLOR,
+        elevation: 3,
     },
     registerInnerView: {
         paddingLeft: 25,
@@ -679,11 +677,8 @@ const styles = StyleSheet.create({
         width: '80%',
         maxWidth: 400,
         alignItems: 'center',
-        elevation: 5, // Add shadow on Android
-        shadowColor: '#000', // Add shadow on iOS
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
+        elevation: 3, 
+        shadowColor: Constants.COLOR.THEME_COLOR,
     },
     alertTitle: {
         fontSize: 20,

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image, TextInput, ScrollView, Alert } from 'react-native';
-import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
@@ -12,6 +11,7 @@ import ButtonBack from '../common/BackButton';
 import ButtonNext from '../common/NextButton';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
+import CalendarModal from '../common/Calender';
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -22,7 +22,6 @@ interface Test {
 
 const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const { selectedTests = [], selectedPatientDetails, testData } = route?.params || {};
-  const [testList, setTestList] = useState(selectedTests);
   const { settings } = useAppSettings();
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
@@ -30,6 +29,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedTime, setSelectedTime] = useState('');
   const [isChecked, setIsChecked] = useState(false);
+  const [currentYear, setCurrentYear] = useState(moment().year());
 
   const toggleCalendar = () => setShowCalendar(!showCalendar);
   const toggleTimePicker = () => setShowTimePicker(!showTimePicker);
@@ -39,13 +39,10 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const updatedCart = useSelector(
     (state: RootState) => state.bookTestSearch.updatedCartData
   );
-  console.log('1111111111111111updatedCart111111111111', updatedCart);
-
 
   const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';
   };
-
 
   const handleDateInputChange = (text: any) => {
     setDateInput(text);
@@ -66,16 +63,25 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
     setDateInput(`${selectedDate || now.format('YYYY-MM-DD')} ${formattedTime}`);
   };
 
+  const handleDateSelection = (date: any) => {
+    if (!date) {
+      console.error('Invalid date object:', date);
+      return;
+    }
 
-  const renderDay = (day: any) => {
-    return (
-      <View>
-        <Text>{day.day}</Text>
-        {day.dateString === selectedDate && (
-          <Text>{selectedTime}</Text>
-        )}
-      </View>
-    );
+    const selectedDateMoment = moment(date);
+    const yesterday = moment().subtract(1, 'days').startOf('day');
+
+    if (selectedDateMoment.isAfter(yesterday, 'day')) {
+      Alert.alert('Invalid Selection', 'Future dates are not allowed. Please select a past date.');
+      return;
+    }
+
+    const dateString = selectedDateMoment.format('YYYY-MM-DD');
+    setSelectedDate(dateString);
+    setSelectedTime('');
+    setDateInput(`${dateString} ${selectedTime || ''}`);
+    setShowCalendar(false);
   };
 
   const handleCheckboxToggle = () => {
@@ -127,7 +133,16 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
     navigation.navigate('PaymentDetail', { selectedTests, selectedDate, selectedTime, selectedPatientDetails, testData });
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const year = moment().year();
+      if (year !== currentYear) {
+        setCurrentYear(year);
+      }
+    }, 1000);
 
+    return () => clearInterval(interval);
+  }, [currentYear]);
 
   return (
     <View style={styles.container}>
@@ -194,33 +209,15 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           </TouchableOpacity>
         </View>
 
-        {
-          showCalendar && (
-            <Calendar
-              onDayPress={(day: any) => {
-                setSelectedDate(day.dateString);
-                if (!selectedTime || day.dateString !== moment().format('YYYY-MM-DD')) {
-                  setSelectedTime('');
-                }
-                setDateInput(`${day.dateString} ${selectedTime || ''}`);
-              }}
-              markedDates={{
-                [selectedDate]: {
-                  selected: true,
-                  selectedColor: Constants.COLOR.THEME_COLOR,
-                  dots: [{ key: 's0', color: Constants.COLOR.THEME_COLOR, selectedDotColor: 'white' }],
-                },
-              }}
-              renderDay={(day: any) => (
-                <View>
-                  <Text>{day.day}</Text>
-                  {day.dateString === selectedDate && <Text>{selectedTime}</Text>}
-                </View>
-              )}
-              minDate={moment().format('YYYY-MM-DD')}
-            />
-          )
-        }
+        {showCalendar && (
+          <CalendarModal
+            isVisible={showCalendar}
+            onConfirm={handleDateSelection}
+            onCancel={() => setShowCalendar(false)}
+            mode="date"
+            maximumDate={moment().subtract(1, 'days').toDate()}
+          />
+        )}
 
         <TimePickerModal
           isVisible={showTimePicker}
@@ -228,9 +225,8 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           onCancel={toggleTimePicker}
           mode="time"
           minimumDate={selectedDate === moment().format('YYYY-MM-DD') ? new Date() : undefined}
-
         />
-      </ScrollView >
+      </ScrollView>
       <View style={styles.navigationContainer}>
         <TouchableOpacity onPress={handleBack}>
           <ButtonBack />
@@ -239,55 +235,53 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           <ButtonNext />
         </TouchableOpacity>
       </View>
-    </View >
+    </View>
   );
 };
-export default CalendarScreen;
 
+export default CalendarScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBFBFB',
+    backgroundColor: Constants.COLOR.WHITE_COLOR,
   },
   cartSection: {
     padding: 10,
   },
   cartTitle: {
-    fontSize: 18,
-    fontWeight: '600',
     marginBottom: 10,
-    color: Constants.COLOR.BLACK_COLOR,
+    fontSize: Constants.FONT_SIZE.M,
+    fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
+    color: '#3C3636',
   },
   cartItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#ECEEF5',
     padding: 10,
   },
   cartItemName: {
-    fontSize: 16,
-    color: "#4c6f86",
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     flex: 1
   },
   cartItemPrice: {
-    fontSize: 16,
-    color: '#6f6f6f',
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+    color: Constants.COLOR.FONT_COLOR_DEFAULT
   },
   cartSubtotal: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#ECEEF5',
     padding: 10,
   },
   cartSubtotalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: "#4c6f86",
+    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
+    color: Constants.COLOR.THEME_COLOR
   },
   cartSubtotalAmount: {
-    fontSize: 16,
-    color: '#6f6f6f',
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+    color: Constants.COLOR.FONT_COLOR_DEFAULT
   },
   labelAndCheckboxContainer: {
     flexDirection: 'row',
@@ -298,8 +292,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     marginVertical: 5,
-    color: Constants.COLOR.BLACK_COLOR,
-    fontFamily: "Poppins-Regular",
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -333,7 +326,7 @@ const styles = StyleSheet.create({
   checkboxText: {
     fontSize: 12,
     color: Constants.COLOR.BLACK_COLOR,
-    fontFamily: "Poppins-Regular",
+    fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -374,4 +367,3 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
 });
-

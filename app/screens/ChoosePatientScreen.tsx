@@ -288,21 +288,24 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     <View style={styles.section}>
                         <Text style={styles.label}>Patient</Text>
                         <View style={styles.row}>
-                            <TextInput
-                                style={[styles.inputPatient, styles.inputSmall]}
-                                placeholder="Code"
-                                // placeholderTextColor="black"
-                                value={codeQuery}
-                                onChangeText={(query) => handlePatientSearch(query, 'code')}
-                            />
-                            <TextInput
-                                style={[styles.inputPatient, styles.inputLarge]}
-                                placeholder="Name"
-                                // placeholderTextColor="black"
-                                value={nameQuery}
-                                onChangeText={(query) => handlePatientSearch(query, 'name')}
-                            />
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.placeholderText}>Code</Text>
+                                <TextInput
+                                    style={[styles.inputPatient, styles.inputSmall]}
+                                    value={codeQuery}
+                                    onChangeText={(query) => handlePatientSearch(query, 'code')}
+                                />
+                            </View>
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.placeholderText}>Name</Text>
+                                <TextInput
+                                    style={[styles.inputPatient, styles.inputLarge]}
+                                    value={nameQuery}
+                                    onChangeText={(query) => handlePatientSearch(query, 'name')}
+                                />
+                            </View>
                         </View>
+
 
                         {(codeQuery !== '' || nameQuery !== '') && (
                             filteredPatients.length > 0 ? (
@@ -377,13 +380,14 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                     {/* Physician Search Section */}
                     <View style={styles.physicianSection}>
                         <Text style={styles.label}>{getLabel('patinfo_6')}</Text>
-                        <TextInput
-                            style={styles.inputPatient}
-                            placeholder="Search Physicians"
-                            // placeholderTextColor="#bab8ba"
-                            value={physicianNameQuery}
-                            onChangeText={(query) => handlePhysicianSearch(query, 'name')}
-                        />
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.placeholderText}>Search Physicians</Text>
+                            <TextInput
+                                style={styles.inputPatient}
+                                value={physicianNameQuery}
+                                onChangeText={(query) => handlePhysicianSearch(query, 'name')}
+                            />
+                        </View>
                     </View>
 
                     {(physicianCodeQuery !== '' || physicianNameQuery !== '') && (
@@ -482,7 +486,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: Constants.FONT_SIZE.M,
         fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
-        color: '#3C3636',
         marginBottom: 8,
     },
     row: {
@@ -490,11 +493,28 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     inputPatient: {
-        backgroundColor: '#ECEEF5',
-        borderRadius: 4,
+        borderRadius: 10,
+        borderWidth: 0.5,
         paddingHorizontal: 10,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-        fontSize: Constants.FONT_SIZE.S
+        fontSize: Constants.FONT_SIZE.S,
+        zIndex: 0,
+    },
+    inputContainer: {
+        position: 'relative',
+        marginBottom: 10,
+        flex: 1,
+    },
+    placeholderText: {
+        position: 'absolute',
+        top: -10,
+        left: 10,
+        zIndex: 1,
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
+        paddingHorizontal: 5,
+        fontSize: Constants.FONT_SIZE.SM,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+        color: Constants.COLOR.BOOK_ID_TEXT_COLOR
     },
     inputSmall: {
         flex: 1,
@@ -503,7 +523,7 @@ const styles = StyleSheet.create({
         fontSize: Constants.FONT_SIZE.M
     },
     inputLarge: {
-        flex: 2,
+        flex:2,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         fontSize: Constants.FONT_SIZE.M
     },
@@ -511,8 +531,8 @@ const styles = StyleSheet.create({
         maxHeight: 150,
         borderWidth: 0.5,
         borderColor: Constants.COLOR.BLACK_COLOR,
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
-        borderRadius: 4,
+        backgroundColor: '#ECEEF5',
+        borderRadius: 10,
         marginTop: 5,
     },
     autocompleteItem: {
@@ -528,10 +548,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         padding: 16,
         backgroundColor: '#ECEEF5',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
+        shadowColor:Constants.COLOR.THEME_COLOR,
         elevation: 3,
         position: 'relative',
     },
