@@ -9,6 +9,7 @@ import {
   Dimensions,
   Platform,
   Modal,
+  I18nManager,
 } from 'react-native';
 import moment from 'moment';
 import Constants from '../util/Constants';
@@ -22,6 +23,7 @@ import SpinnerIndicator from '../common/SpinnerIndicator';
 import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
+import { useSelector } from 'react-redux';
 
 
 const { height: deviceHeight, } = Dimensions.get('window');
@@ -399,8 +401,8 @@ interface BookingItem {
 
 const BookingScreen = ({ navigation, route }: any) => {
   const { userData } = useUser();
-  const { settings } = useAppSettings();
-  const [bookingListAPIReq, bookingListAPIRes] = useBookingListMutation();
+  const { settings, labels } = useAppSettings();
+  const [bookingListAPIReq] = useBookingListMutation();
   const [bookingData, setBookingData] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -414,11 +416,15 @@ const BookingScreen = ({ navigation, route }: any) => {
   const [status, setStatus] = useState<any[]>([]);
   const [firmNo, setFirmNo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+
 
   const [fetchAPIReq] = useFetchApiMutation();
   const branchCode = userData?.Branch_Code;
 
-  const labels = settings?.Message?.[0]?.Labels || {};
+  useEffect(() => {
+    I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+  }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';
@@ -618,7 +624,7 @@ const BookingScreen = ({ navigation, route }: any) => {
           onPress={() => toggleDropdown('branch')}
           style={styles.dropdown}
         >
-          <Text style={styles.text}>{selectedBranch || 'Select Branch'}</Text>
+          <Text style={styles.text}>{selectedBranch || getLabel('managebrscr_1')}</Text>
           <Image
             source={
               dropdownType === 'branch' && dropdownVisible

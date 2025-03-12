@@ -10,6 +10,7 @@ import {
     ScrollView,
     Alert,
     Image,
+    I18nManager,
 } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import BookTestHeader from './BookTestHeader';
@@ -1037,7 +1038,7 @@ interface ServiceDetail {
 
 const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const { userData, imageBase64 } = useUser();
-    const { settings } = useAppSettings();
+    const { settings, labels } = useAppSettings();
     const {
         selectedTests = [],
         selectedDate,
@@ -1062,8 +1063,14 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const [bookingDetailAPIReq] = useBookingDetailMutation();
     const [serviceBookingAPIReq] = useServiceBookingMutation();
     const [serviceBookingCancelApiReq] = useServiceBookingCancelMutation();
+    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
 
-    const labels = settings?.Message?.[0]?.Labels || {};
+
+    // const labels = settings?.Message?.[0]?.Labels || {};
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
@@ -1697,23 +1704,23 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     headerTitle: {
-        fontFamily:Constants.FONT_FAMILY.fontFamilySemiBold,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
         color: Constants.COLOR.BLACK_COLOR,
     },
     bookingId: {
-        fontSize:Constants.FONT_SIZE.M,
-        color:Constants.COLOR.BOOK_ID_TEXT_COLOR,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyRegular
+        fontSize: Constants.FONT_SIZE.M,
+        color: Constants.COLOR.BOOK_ID_TEXT_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
     },
     title: {
-        fontSize:Constants.FONT_SIZE.L,
+        fontSize: Constants.FONT_SIZE.L,
         color: Constants.COLOR.WHITE_COLOR,
         alignSelf: 'center',
-        fontFamily:Constants.FONT_FAMILY.fontFamilySemiBold,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
     },
     amount: {
-        fontFamily:Constants.FONT_FAMILY.fontFamilySemiBold,
-        fontSize:Constants.FONT_SIZE.XL,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
+        fontSize: Constants.FONT_SIZE.XL,
         color: Constants.COLOR.WHITE_COLOR,
         alignSelf: 'center',
     },
@@ -1743,7 +1750,7 @@ const styles = StyleSheet.create({
     },
     HomeButton: {
         marginBottom: 35,
-        marginTop:15
+        marginTop: 15
     },
 });
 

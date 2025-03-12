@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -8,20 +8,38 @@ import {
     Alert,
     TouchableOpacity,
     Dimensions,
+    I18nManager,
 } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 import Constants from "../util/Constants";
-import ButtonHome from '../common/HomeButton';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
+import { useAppSettings } from '../common/AppSettingContext';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
+interface Language {
+    Alignment: 'ltr' | 'rtl';
+}
 
 const ProfileScreen = ({ navigation }: any) => {
+    const { labels } = useAppSettings();
     const [fullName, setFullName] = useState('John Doe');
     const [email, setEmail] = useState('johndoe@example.com');
     const [dob, setDOB] = useState('1990-01-01');
     const [mobileNumber, setMobileNumber] = useState('1234567890');
     const [isEditMode, setIsEditMode] = useState(false);
+    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+    }, [selectedLanguage]);
+
+    const getLabel = (key: string) => {
+        return labels[key]?.defaultMessage || '';
+    };
+
 
     const handleCross = () => {
         navigation.goBack();
@@ -30,8 +48,6 @@ const ProfileScreen = ({ navigation }: any) => {
     const handleEditProfile = () => {
         setIsEditMode(!isEditMode);
     };
-
-
 
     const handleUpdate = () => {
         if (isEditMode) {
@@ -63,7 +79,7 @@ const ProfileScreen = ({ navigation }: any) => {
                 <View style={styles.editProfileContainer}>
                     <TouchableOpacity onPress={handleEditProfile} style={styles.editTextView}>
                         <Text style={styles.editProfileText}>
-                            {isEditMode ? 'Cancel' : 'Edit Profile'}
+                            {isEditMode ? 'Cancel' : getLabel('proscr_2')}
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity>
@@ -78,7 +94,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
             <View style={styles.secondInnerContainer}>
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Full Name</Text>
+                    <Text style={styles.label}>{getLabel('proscr_4')}</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="Enter your name"
@@ -88,7 +104,7 @@ const ProfileScreen = ({ navigation }: any) => {
                     />
                 </View>
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Email</Text>
+                    <Text style={styles.label}>{getLabel('proscr_8')}</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="Enter your email"
@@ -100,7 +116,7 @@ const ProfileScreen = ({ navigation }: any) => {
                     />
                 </View>
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>D.O.B</Text>
+                    <Text style={styles.label}>{getLabel('proscr_9')}</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="Enter your DOB"

@@ -11,6 +11,8 @@ import {
     SafeAreaView,
     KeyboardAvoidingView,
     Platform,
+    I18nManager,
+    ActivityIndicator,
 } from 'react-native';
 import Constants from '../util/Constants';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -19,6 +21,7 @@ import { useForgotPasswordMutation } from '../redux/service/ForgotPasswordServic
 import { useOtpSendMutation } from '../redux/service/OtpSendService';
 import { useResetPasswordMutation } from '../redux/service/ResetPasswordService';
 import { useUser } from '../common/UserContext';
+import { useSelector } from 'react-redux';
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -32,11 +35,12 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isOtpValidated, setIsOtpValidated] = useState(false);
     const [isResendOtpVisible, setIsResendOtpVisible] = useState(false);
-    const { settings } = useAppSettings();
+    const { settings, labels } = useAppSettings();
     const [forgotPasswordAPIReq] = useForgotPasswordMutation();
     const [otpSendAPIReq] = useOtpSendMutation();
     const [resetPasswordAPIReq] = useResetPasswordMutation();
     const [isMounted, setIsMounted] = useState(true);
+    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
 
     useEffect(() => {
         setIsMounted(true);
@@ -45,7 +49,10 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
         };
     }, []);
 
-    const labels = settings?.Message?.[0]?.Labels || {};
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    }, [selectedLanguage]);
+
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
@@ -59,19 +66,19 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
 
     const handleMobileNumberChange = (text: string) => {
         const numericRegex = /^[0-9]*$/;
-        if (numericRegex.test(text)) {
+        if (numericRegex.test(text) && text.length <= 15) {
             setMobileNumber(text);
         }
     };
 
     const handleValidateUser = async () => {
-        if (!userName) {
-            showToast('Please enter a valid username');
+        if (!userName.trim()) {
+            showToast('Username cannot be empty');
             return;
         }
 
         try {
-            const response = await forgotPasswordAPIReq({ Username: userName }).unwrap();
+            const response = await forgotPasswordAPIReq({ Username: userName.trim() }).unwrap();
             if (response.Code === 200) {
                 setUserData(response.Message[0]);
                 setIsUsernameValidated(true);
@@ -135,10 +142,36 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
             showToast('Failed to resend OTP');
         }
     };
- 
+
+    // const handleSendOrResendOTP = async (isResend = false) => {
+    //     if (!userData) {
+    //         showToast('Please validate the user first');
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await otpSendAPIReq({
+    //             UserCode: userData.UserCode,
+    //             UserType: userData.UserType,
+    //             Send_Type: 'M',
+    //             Mobile_No: mobileNumber,
+    //             Email_Id: userData.Email,
+    //         }).unwrap();
+
+    //         if (response.Code === 200) {
+    //             setIsOtpSent(true);
+    //             setIsResendOtpVisible(true);
+    //             showToast(isResend ? 'OTP resent successfully' : 'OTP sent successfully');
+    //         } else {
+    //             showToast('Failed to send OTP');
+    //         }
+    //     } catch (error) {
+    //         showToast('Failed to send OTP');
+    //     }
+    // };
 
     const handleValidateOTP = async () => {
-        if (!otp) {
+        if (!otp.trim()) {
             showToast('Please enter the OTP');
             return;
         }
@@ -148,6 +181,26 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
             setIsOtpValidated(true);
         }, 1000);
     };
+
+    // const handleValidateOTP = async () => {
+    //     if (!otp.trim()) {
+    //         showToast('Please enter the OTP');
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await validateOtpAPIReq({ UserCode: userData.UserCode, Otp_Code: otp }).unwrap();
+    //         if (response.Code === 200) {
+    //             setIsOtpValidated(true);
+    //             showToast('OTP verified successfully');
+    //         } else {
+    //             showToast('Invalid OTP');
+    //         }
+    //     } catch (error) {
+    //         showToast('OTP validation failed');
+    //     }
+    // };
+
 
     const handleResetPassword = async () => {
         if (!userData || !newPassword) {
@@ -219,7 +272,7 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
                                         <Text style={styles.inputLabel}>{getLabel('loginsrc_2')}</Text>
                                         <TextInput
                                             style={styles.input}
-                                            placeholder="Enter your username"
+                                            placeholder={getLabel('loginsrc_2')}
                                             onChangeText={setUserName}
                                             value={userName}
                                         />
@@ -234,7 +287,7 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
                                         <Text style={styles.inputLabel}>{getLabel('verifysrc_1')}</Text>
                                         <TextInput
                                             style={styles.input}
-                                            placeholder="Enter the Mobile Number"
+                                            placeholder={getLabel('verifysrc_1')}
                                             onChangeText={handleMobileNumberChange}
                                             keyboardType="numeric"
                                             value={mobileNumber}
@@ -365,6 +418,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         marginBottom: 20,
         paddingLeft: 10,
+        paddingEnd: 10,
         color: 'black',
         fontSize: Constants.FONT_SIZE.SM,
         flexDirection: 'row',

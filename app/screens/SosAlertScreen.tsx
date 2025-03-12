@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -7,21 +7,31 @@ import {
     TouchableOpacity,
     Modal,
     Dimensions,
+    I18nManager,
 } from 'react-native';
 import Constants from "../util/Constants";
 import { useAppSettings } from '../common/AppSettingContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
 
+interface Language {
+    Alignment: 'ltr' | 'rtl';
+}
 
 const SosAlertScreen = ({ navigation }: any) => {
     const [showPopup, setShowPopup] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
-    const { settings } = useAppSettings();
+    const { labels } = useAppSettings();
+    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
-    const labels = settings?.Message?.[0]?.Labels || {};
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
@@ -110,7 +120,7 @@ const SosAlertScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#eef3fd",
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         padding: 10,
         alignItems: "center",
         justifyContent: "center",
@@ -138,7 +148,7 @@ const styles = StyleSheet.create({
         color: "black",
         fontSize: Constants.FONT_SIZE.XXXL,
         paddingTop: 25,
-        fontFamily: 'Poppins-Regular',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     MessageView: {
         justifyContent: 'center',
@@ -150,7 +160,7 @@ const styles = StyleSheet.create({
         fontSize: Constants.FONT_SIZE.M,
         paddingTop: 50,
         marginHorizontal: 10,
-        fontFamily: 'Poppins-Regular',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     sendButton: {
         backgroundColor: "#58afff",
@@ -165,8 +175,8 @@ const styles = StyleSheet.create({
     sendButtonText: {
         fontSize: Constants.FONT_SIZE.L,
         paddingVertical: 10,
-        color: "#FFFFFF",
-        fontFamily: 'Poppins-Regular',
+        color: Constants.COLOR.WHITE_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     popupContainer: {
         flex: 1,
@@ -175,7 +185,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     popupCard: {
-        backgroundColor: '#fff',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         padding: 20,
         borderRadius: 8,
         elevation: 4,
@@ -186,7 +196,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 30,
         color: '#737373',
-        fontFamily: 'Poppins-Regular',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     rowButtonsContainer: {
         flexDirection: 'row',
@@ -198,13 +208,13 @@ const styles = StyleSheet.create({
         color: '#8db0d5',
         fontSize: 18,
         padding: 20,
-        fontFamily: 'Poppins-Regular',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     buttonText1: {
         color: '#8db0d5',
         fontSize: 18,
         alignSelf: 'flex-end',
-        fontFamily: 'Poppins-Regular',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     confirmationContainer: {
         flex: 1,
@@ -222,7 +232,7 @@ const styles = StyleSheet.create({
     confirmationText: {
         fontSize: 14,
         marginBottom: 10,
-        fontFamily: 'Poppins-Regular',
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },
     confirmationHeading: {
         fontSize: 18,

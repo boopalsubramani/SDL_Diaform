@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform, I18nManager } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
+import { useSelector } from 'react-redux';
 
 const deviceHeight = Dimensions.get('window').height;
 
 const UploadPrescriptionScreen = ({ navigation }: any) => {
-  const { settings } = useAppSettings();
+  const { settings, labels } = useAppSettings();
+  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  const labels = settings?.Message?.[0]?.Labels || {};
+   useEffect(() => {
+      I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
   const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 

@@ -1,13 +1,17 @@
-import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, View, StyleSheet, I18nManager } from 'react-native';
 import { useAppSettings } from '../common/AppSettingContext';
 import Constants from '../util/Constants';
+import { useSelector } from 'react-redux';
 
 
 const BookTestHeader = ({ selectValue }: any) => {
-  const { settings } = useAppSettings();
+  const { settings, labels } = useAppSettings();
+  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
 
-  const labels = settings?.Message?.[0]?.Labels || {};
+  useEffect(() => {
+    I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+  }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';

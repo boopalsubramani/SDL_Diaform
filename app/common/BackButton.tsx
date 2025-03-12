@@ -1,18 +1,24 @@
-import React from 'react';
-import { Text, View, StyleSheet, Dimensions, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, View, StyleSheet, Dimensions, Image, I18nManager } from 'react-native';
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
+import { useSelector } from 'react-redux';
 
 const deviceHeight = Dimensions.get('window').height;
 
 const ButtonBack = () => {
-    const { settings } = useAppSettings();
-    const labels = settings?.Message?.[0]?.Labels || {};
+    const { settings, labels } = useAppSettings();
+    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     const getLabel = (key: string) => {
-      return labels[key]?.defaultMessage || '';
+        return labels[key]?.defaultMessage || '';
     };
-  
+
     return (
         <View style={styles.nextMainView}>
             <Text style={styles.nextText}>{getLabel('btnback_1')}</Text>
@@ -28,9 +34,9 @@ const ButtonBack = () => {
 const styles = StyleSheet.create({
     nextMainView: {
         marginVertical: 10,
-        marginHorizontal:10,
+        marginHorizontal: 10,
         flexDirection: 'row-reverse',
-        alignSelf:'flex-start',
+        alignSelf: 'flex-start',
         backgroundColor: Constants.COLOR.THEME_COLOR,
         paddingHorizontal: 5,
         paddingVertical: 5,
@@ -44,9 +50,9 @@ const styles = StyleSheet.create({
         textAlign: 'right',
         alignItems: 'center',
         color: Constants.COLOR.WHITE_COLOR,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyMedium,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
         fontSize: Constants.FONT_SIZE.M,
-        },
+    },
     nextImage: {
         justifyContent: 'center',
         alignContent: 'center',

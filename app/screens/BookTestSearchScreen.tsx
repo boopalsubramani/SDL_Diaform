@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, FlatList, TextInput, Image, Modal, Alert, StyleSheet, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, TextInput, Image, Modal, Alert, StyleSheet, Dimensions, TouchableWithoutFeedback, I18nManager } from 'react-native';
 import Constants from '../util/Constants';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from '../routes/Types';
@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateSelectedTest } from '../redux/slice/BookTestSearchSlice';
 import { useAppSettings } from '../common/AppSettingContext';
 import { RootState } from '../redux/Store';
+
 
 
 const deviceHeight = Dimensions.get('window').height;
@@ -403,15 +404,20 @@ const BookTestSearchScreen = ({ route }: any) => {
     const { selectedPatientDetails, serviceDetails, selectedTests = [] } = route.params;
     const [testData, setTestData] = useState<any[]>([]);
     const [searchText, setSearchText] = useState('');
-    const { settings } = useAppSettings();
+    const { settings, labels } = useAppSettings();
     const [errorMessage, setErrorMessage] = useState('');
     const { cartItems, setCartItems, totalCartValue, setTotalCartValue, isModalVisible, setModalVisible } = useCart();
     const [displayCartState, setDisplayCartState] = useState<{ [key: string]: boolean }>({});
     const [cartItemDetails, setCartItemDetails] = useState<Array<any>>(selectedTests || []);
-
     const [searchTestAPIReq, { data: searchTestAPIRes, isLoading }] = useBookTestSearchMutation();
+    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
 
-    const labels = settings?.Message?.[0]?.Labels || {};
+
+    // const labels = settings?.Message?.[0]?.Labels || {};
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
@@ -563,7 +569,7 @@ const BookTestSearchScreen = ({ route }: any) => {
                     <View style={styles.addToCartContainer}>
                         <Image source={require('../images/addCart.png')} style={styles.CartIcon} />
                         <Text style={{ fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyMedium, color: Constants.COLOR.WHITE_COLOR }}>
-                            {isItemInCart ? 'Remove' : 'Add Cart'}
+                            {isItemInCart ? getLabel('sealiscell_1') : getLabel('sealiscell_2')}
                         </Text>
                     </View>
                 </TouchableOpacity>
@@ -574,7 +580,7 @@ const BookTestSearchScreen = ({ route }: any) => {
     return (
         <View style={styles.MainContainer}>
             <View style={styles.searchTestView}>
-                <Text style={styles.headerText}>Search Test</Text>
+                <Text style={styles.headerText}>{getLabel('labtsrc_9')}</Text>
                 <TouchableOpacity onPress={handleCross} style={styles.closeImageStyle}>
                     <Image source={require('../images/black_cross.png')} />
                 </TouchableOpacity>
@@ -584,7 +590,7 @@ const BookTestSearchScreen = ({ route }: any) => {
                 <Image source={require('../images/search.png')} style={styles.searchIcon} />
                 <TextInput
                     style={styles.inputText}
-                    placeholder="Search"
+                    placeholder={getLabel('labtsrc_9')}
                     placeholderTextColor="black"
                     value={searchText}
                     onChangeText={setSearchText}
@@ -628,7 +634,7 @@ const BookTestSearchScreen = ({ route }: any) => {
                                                     <TouchableOpacity onPress={() => handleToggleCart(item.Service_Name)}>
                                                         <View style={styles.addToCartContainer}>
                                                             <Image source={require('../images/addCart.png')} style={styles.CartIcon} />
-                                                            <Text style={{ fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyMedium, color: Constants.COLOR.WHITE_COLOR }}>Remove</Text>
+                                                            <Text style={{ fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyMedium, color: Constants.COLOR.WHITE_COLOR }}>{getLabel('sealiscell_1')}</Text>
                                                         </View>
                                                     </TouchableOpacity>
                                                 </View>
@@ -639,12 +645,12 @@ const BookTestSearchScreen = ({ route }: any) => {
                                     {cartItemDetails.length > 0 && (
                                         <TouchableOpacity onPress={handleProceedClick}>
                                             <View style={styles.SubmitButtonView}>
-                                                <Text style={styles.ButtonText}>Proceed</Text>
+                                                <Text style={styles.ButtonText}>{getLabel('labtsrc_6')}</Text>
                                             </View>
                                         </TouchableOpacity>
                                     )}
                                     <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
-                                        <Text style={{ color: '#fd1a1b', fontFamily: Constants.FONT_FAMILY.fontFamilyRegular }}>Note: *Indicates Non Discounted Test</Text>
+                                        <Text style={{ color: '#fd1a1b', fontFamily: Constants.FONT_FAMILY.fontFamilyRegular }}>{getLabel('labtsrc_7')}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -680,11 +686,11 @@ const BookTestSearchScreen = ({ route }: any) => {
                     <Text style={styles.bottomText}>Total Cart Value INR {totalCartValue}</Text>
                     <TouchableOpacity onPress={handleProceedClick}>
                         <View style={styles.SubmitButtonView}>
-                            <Text style={styles.ButtonText}>Proceed</Text>
+                            <Text style={styles.ButtonText}>{getLabel('labtsrc_6')}</Text>
                         </View>
                     </TouchableOpacity>
                     <View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
-                        <Text style={{ color: '#fd1a1b', fontFamily: Constants.FONT_FAMILY.fontFamilyRegular }}>{getLabel('labtscr_3')}</Text>
+                        <Text style={{ color: '#fd1a1b', fontFamily: Constants.FONT_FAMILY.fontFamilyRegular }}>{getLabel('labtsrc_7')}</Text>
                     </View>
                 </View>
             )}
@@ -693,16 +699,6 @@ const BookTestSearchScreen = ({ route }: any) => {
 };
 
 export default BookTestSearchScreen;
-
-
-
-
-
-
-
-
-
-
 
 
 const styles = StyleSheet.create({
@@ -733,7 +729,7 @@ const styles = StyleSheet.create({
         fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold
     },
     addToCartButton: { flexDirection: 'row', alignItems: 'center' },
-    spinnerContainer: {flex:1,justifyContent:'center' },
+    spinnerContainer: { flex: 1, justifyContent: 'center' },
     modalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
     modalBackground: { width: '100%', borderTopLeftRadius: 30, borderTopRightRadius: 30, backgroundColor: 'white' },
     modalContent: { paddingVertical: 20, paddingHorizontal: 15, borderTopRightRadius: 30 },

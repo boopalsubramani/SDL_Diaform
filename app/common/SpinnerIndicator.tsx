@@ -1,16 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, I18nManager } from 'react-native';
 import Spinner from 'react-native-spinkit';
 import Constants from '../util/Constants';
 import { Dimensions } from 'react-native';
 import { useAppSettings } from '../common/AppSettingContext';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
 const deviceHeight = Dimensions.get('window').height;
 
+interface Language {
+    Alignment: 'ltr' | 'rtl';
+}
+
 const SpinnerIndicator = () => {
-    const { settings } = useAppSettings();
-    const labels = settings?.Message?.[0]?.Labels || {};
+    const { labels } = useAppSettings();
+    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';

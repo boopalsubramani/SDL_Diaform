@@ -23,14 +23,448 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../common/UserContext';
 import { useRefAppLoginMutation } from '../redux/service/LoginService';
 import { useOtpSendMutation } from '../redux/service/OtpSendService';
+import { useDispatch } from 'react-redux';
+import { loadSelectedLanguage } from '../redux/slice/AppSettingSlice';
 
 const deviceHeight = Dimensions.get('window').height;
 
+// const LoginScreen = ({ navigation }: any) => {
+//     const [isPasswordVisible, setPasswordVisible] = useState(false);
+//     const passwordRef = useRef<TextInput>(null);
+//     const [isModalVisible, setModalVisible] = useState(false);
+//     const [selectedLanguage, setSelectedLanguage] = useState("Language");
+//     const [isOtpLogin, setOtpLogin] = useState(false);
+//     const [phoneNumber, setPhoneNumber] = useState('');
+//     const [otp, setOtp] = useState('');
+//     const [otpRequested, setOtpRequested] = useState(false);
+//     const [userName, setUserName] = useState('');
+//     const [password, setPassword] = useState('');
+//     const [userNameError, setUserNameError] = useState('');
+//     const [passwordError, setPasswordError] = useState('');
+//     const [isError, setIsError] = useState(false);
+//     const [alertVisible, setAlertVisible] = useState(false);
+//     const [alertTitle, setAlertTitle] = useState('');
+//     const [alertMessage, setAlertMessage] = useState('');
+//     const { settings } = useAppSettings();
+//     const { userData, setUserData } = useUser();
+//     const [loginAPIReq, LoginAPIRes] = useRefAppLoginMutation();
+//     const [otpSendAPIReq] = useOtpSendMutation();
+
+//     const passwordPolicyMessages = settings?.Message?.[0]?.Password_Policy_Message ?? [];
+//     const language: { Code: string; Description: string }[] =
+//         Array.isArray(settings?.Message?.[0]?.Languages)
+//             ? settings?.Message?.[0]?.Languages.map(lang =>
+//                 typeof lang === "object" && lang !== null ? lang : { Code: "", Description: "" })
+//             : [];
+//     const labels = settings?.Message?.[0]?.Labels || {};
+
+//     const getLabel = (key: string) => {
+//         return labels[key]?.defaultMessage || '';
+//     };
+
+//     useEffect(() => {
+//         // setLoading(LoginAPIRes.isLoading);
+
+//         if (LoginAPIRes.isSuccess && LoginAPIRes.data.SuccessFlag === "true" && LoginAPIRes.data.Code === 200) {
+//             const userData = LoginAPIRes.data.Message[0];
+//             AsyncStorage.setItem('userData', JSON.stringify(userData));
+//             AsyncStorage.removeItem('patientData')
+//             setUserData(userData);
+//             navigation.navigate('Bottom');
+//         } else if (LoginAPIRes.isError && LoginAPIRes?.data?.Message) {
+//             const errorMessage = LoginAPIRes?.data?.Message[0]?.Message || 'An error occurred';
+//             setIsError(true);
+//             showAlert('Error', errorMessage);
+//         }
+//     }, [LoginAPIRes, navigation]);
+
+//     useEffect(() => {
+//         const retrieveUserData = async () => {
+//             const userData = await AsyncStorage.getItem('userData');
+//             if (userData) {
+//                 setUserData(JSON.parse(userData));
+//             }
+//         };
+//         retrieveUserData();
+//     }, [setUserData]);
+
+//     const showAlert = (title: string, message: string) => {
+//         setAlertTitle(title);
+//         setAlertMessage(message);
+//         setAlertVisible(true);
+//     };
+
+//     const closeAlert = () => {
+//         setAlertVisible(false);
+//     };
+
+//     const validateInputs = async () => {
+//         setUserNameError('');
+//         setPasswordError('');
+//         setIsError(false);
+
+//         if (isOtpLogin) {
+//             if (!otpRequested) {
+//                 if (!phoneNumber || phoneNumber.length === 0) {
+//                     setUserNameError('Phone Number is required');
+//                 } else if (phoneNumber.length < 10) {
+//                     setUserNameError('Phone Number should not be empty and must contain minimum 10 characters');
+//                 } else {
+//                     try {
+//                         const response = await otpSendAPIReq({
+//                             UserCode: userData?.UserCode || '',
+//                             UserType: userData?.UserType || '',
+//                             Send_Type: 'M',
+//                             Mobile_No: phoneNumber,
+//                             Email_Id: userData?.Email || '',
+//                         }).unwrap();
+
+//                         if (response.Code === 200) {
+//                             setOtpRequested(true);
+//                             Alert.alert('OTP Sent', 'OTP has been sent to your phone number.');
+//                         } else {
+//                             // showAlert('Error', response.Message || 'Failed to send OTP');
+//                         }
+//                     } catch (error) {
+//                         showAlert('Error', 'An error occurred while sending OTP');
+//                     }
+//                 }
+//             } else {
+//                 // Validate OTP
+//                 if (!otp || otp.length === 0) {
+//                     setUserNameError('OTP is required');
+//                 } else {
+//                     let loginReqObj = {
+//                         PhoneNumber: phoneNumber,
+//                         OTP: otp,
+//                     };
+//                     const response = await loginAPIReq(loginReqObj);
+//                     console.log("Login API Request:", loginReqObj);
+//                     console.log("Login API Response:", response);
+//                 }
+//             }
+//         } else {
+//             // Validate username and password
+//             if (!userName || userName.length === 0) {
+//                 setUserNameError('Mobile Number is required');
+//             } else if (userName.length < 9) {
+//                 setUserNameError('Mobile Number should not be empty and must contain minimum 10 characters');
+//             } else if (!password || password.length === 0) {
+//                 setPasswordError(passwordPolicyMessages[0]);
+//             } else if (password.length < 8) {
+//                 setPasswordError(passwordPolicyMessages[1]);
+//             } else {
+//                 let loginReqObj = {
+//                     UserName: userName,
+//                     Password: password,
+//                 };
+//                 const response = await loginAPIReq(loginReqObj);
+//                 console.log("Login API Request:", loginReqObj);
+//                 console.log("Login API Response:", response);
+//             }
+//         }
+//     };
+
+//     const handleForgotPasswordOrResendOtp = () => {
+//         if (isOtpLogin && otpRequested) {
+//             // Resend OTP
+//             handleResendOTP();
+//         } else {
+//             navigation.navigate('ForgotPassword');
+//         }
+//     };
+
+//     const handleResendOTP = async () => {
+//         if (!userData) {
+//             Alert.alert('Please validate the user first');
+//             return;
+//         }
+
+//         try {
+//             const response = await otpSendAPIReq({
+//                 UserCode: userData.UserCode,
+//                 UserType: userData.UserType,
+//                 Send_Type: 'M',
+//                 Mobile_No: phoneNumber,
+//                 Email_Id: userData.Email,
+//             }).unwrap();
+
+//             if (response.Code === 200) {
+//                 Alert.alert('OTP resent successfully');
+//             } else {
+//                 Alert.alert('Failed to resend OTP');
+//             }
+//         } catch (error) {
+//             Alert.alert('Failed to resend OTP');
+//         }
+//     };
+
+
+//     const navigateTermsAndConditionScreen = () => {
+//         Alert.alert('Registration', 'Navigate to registration screen');
+//     };
+
+//     const handleSelectLanguage = (language: { Code: string; Description: string }) => {
+//         setSelectedLanguage(language.Description);
+//         setModalVisible(false);
+//     };
+
+//     const togglePasswordVisibility = () => {
+//         setPasswordVisible(!isPasswordVisible);
+//     };
+
+//     return (
+//         <SafeAreaView style={styles.mainContainer}>
+//             <KeyboardAwareScrollView>
+//                 <View style={styles.bodyContainerTop}>
+//                     <View style={{ flexDirection: "row", alignItems: 'center', justifyContent: "space-between", padding: 10 }}>
+//                         <View style={styles.titleView}>
+//                             <Text style={styles.title}>{getLabel('loginsrc_1')}</Text>
+//                         </View>
+//                         <View>
+//                             <TouchableOpacity
+//                                 style={[styles.dropdownButton, {}]}
+//                                 onPress={() => setModalVisible(true)}
+//                             >
+//                                 <Text style={styles.dropdownButtonText}>{selectedLanguage}</Text>
+//                                 <Image
+//                                     style={styles.downImage}
+//                                     resizeMode="contain"
+//                                     source={require('../images/arrowDown.png')}
+//                                 />
+//                             </TouchableOpacity>
+//                             <Modal
+//                                 transparent={true}
+//                                 visible={isModalVisible}
+//                                 animationType="fade"
+//                                 onRequestClose={() => setModalVisible(false)}
+//                             >
+//                                 <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+//                                     <View style={styles.modalOverlay}>
+//                                         <View style={styles.modalContainer}>
+//                                             <FlatList
+//                                                 data={language}
+//                                                 renderItem={({ item }) => (
+//                                                     <TouchableOpacity
+//                                                         style={styles.modalItem}
+//                                                         onPress={() => handleSelectLanguage(item)}
+//                                                     >
+//                                                         <Text style={styles.modalItemText}>{item.Description}</Text>
+//                                                     </TouchableOpacity>
+//                                                 )}
+//                                                 keyExtractor={(item, index) => item.Code || index.toString()}
+//                                             />
+//                                         </View>
+//                                     </View>
+//                                 </TouchableWithoutFeedback>
+//                             </Modal>
+//                         </View>
+//                     </View>
+//                 </View>
+
+//                 <View style={styles.bodyContainerBottom} />
+//                 <View style={styles.registerContainer}>
+//                     <View style={styles.registerInnerView}>
+//                         <View style={{ marginHorizontal: 10 }}>
+//                             <Image
+//                                 resizeMode="contain"
+//                                 source={{ uri: settings?.Message?.[0].Flash_Logo }}
+//                                 style={styles.image}
+//                             />
+
+//                             <Text style={[styles.placeholder, {
+//                                 textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+//                             }]}
+//                             >
+//                                 {isOtpLogin ? getLabel('verifysrc_1') : getLabel('loginsrc_2')}
+//                             </Text>
+
+//                             {isOtpLogin ? (
+//                                 <>
+//                                     <View style={styles.inputContainer}>
+//                                         <TextInput
+//                                             style={styles.inputs}
+//                                             placeholder="Enter Phone Number"
+//                                             placeholderTextColor={Constants.COLOR.FONT_HINT}
+//                                             value={phoneNumber}
+//                                             editable={true}
+//                                             maxLength={15}
+//                                             keyboardType="numeric"
+//                                             underlineColorAndroid="transparent"
+//                                             returnKeyType={'next'}
+//                                             onChangeText={setPhoneNumber}
+//                                         />
+//                                     </View>
+//                                     {userNameError ? (
+//                                         <Text style={styles.errorText}>{userNameError}</Text>
+//                                     ) : null}
+
+//                                     {otpRequested && (
+//                                         <>
+//                                             <Text style={[styles.placeholder, {
+//                                                 textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+//                                             }]}
+//                                             >{getLabel('verifysrc_4')}</Text>
+//                                             <View style={styles.inputContainer}>
+//                                                 <TextInput
+//                                                     style={styles.inputs}
+//                                                     placeholder="Enter OTP"
+//                                                     placeholderTextColor={Constants.COLOR.FONT_HINT}
+//                                                     value={otp}
+//                                                     editable={true}
+//                                                     maxLength={6}
+//                                                     underlineColorAndroid="transparent"
+//                                                     keyboardType="numeric"
+//                                                     returnKeyType={'done'}
+//                                                     onChangeText={setOtp}
+//                                                 />
+//                                             </View>
+//                                         </>
+//                                     )}
+//                                 </>
+//                             ) : (
+//                                 <>
+//                                     <View style={styles.inputContainer}>
+//                                         <TextInput
+//                                             style={styles.inputs}
+//                                             placeholder="Enter Username"
+//                                             placeholderTextColor={Constants.COLOR.FONT_HINT}
+//                                             value={userName}
+//                                             editable={true}
+//                                             maxLength={15}
+//                                             underlineColorAndroid="transparent"
+//                                             returnKeyType={'next'}
+//                                             onSubmitEditing={() => passwordRef?.current?.focus()}
+//                                             onChangeText={setUserName}
+//                                         />
+//                                     </View>
+//                                     {userNameError ? (
+//                                         <Text style={styles.errorText}>{userNameError}</Text>
+//                                     ) : null}
+
+//                                     <Text style={[styles.placeholder, {
+//                                         textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+//                                     }]}
+//                                     >{getLabel('loginsrc_3')}</Text>
+//                                     <View style={styles.inputContainer}>
+//                                         <TextInput
+//                                             ref={passwordRef}
+//                                             style={[styles.inputs, {
+//                                                 textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+//                                             }]}
+//                                             value={password}
+//                                             placeholder='Enter Password'
+//                                             placeholderTextColor={Constants.COLOR.FONT_HINT}
+//                                             keyboardType="default"
+//                                             secureTextEntry={!isPasswordVisible}
+//                                             underlineColorAndroid="transparent"
+//                                             autoCapitalize="none"
+//                                             returnKeyType="done"
+//                                             onChangeText={setPassword}
+//                                             onSubmitEditing={validateInputs}
+//                                         />
+//                                         <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIconContainer}>
+//                                             <Image
+//                                                 source={isPasswordVisible ? require('../images/EyeView.png') : require('../images/EyeHidden.png')}
+//                                                 style={styles.eyeIcon}
+//                                             />
+//                                         </TouchableOpacity>
+//                                     </View>
+//                                     {passwordError ? (
+//                                         <Text style={styles.errorText}>{passwordError}</Text>
+//                                     ) : null}
+//                                 </>
+//                             )}
+
+//                             {isOtpLogin ? (
+//                                 otpRequested && (
+//                                     <TouchableOpacity
+//                                         style={styles.linkView}
+//                                         onPress={handleForgotPasswordOrResendOtp}>
+//                                         <Text style={styles.link}>
+//                                             {getLabel('verifysrc_5')}
+//                                         </Text>
+//                                     </TouchableOpacity>
+//                                 )
+//                             ) : (
+//                                 <TouchableOpacity
+//                                     style={styles.linkView}
+//                                     onPress={handleForgotPasswordOrResendOtp}>
+//                                     <Text style={styles.link}>
+//                                         {getLabel('loginsrc_4')}
+//                                     </Text>
+//                                 </TouchableOpacity>
+//                             )}
+
+//                             <TouchableOpacity onPress={validateInputs}>
+//                                 <Text style={styles.button}>
+//                                     {isOtpLogin ? (otpRequested ? 'Login' : 'Get OTP') : 'Login'}
+//                                 </Text>
+//                             </TouchableOpacity>
+
+//                             {isError ? (
+//                                 <Text style={styles.errorText}>Invalid username or password</Text>
+//                             ) : null}
+
+//                             <TouchableOpacity onPress={() => setOtpLogin(!isOtpLogin)}>
+//                                 <Text style={styles.OTPbutton}>
+//                                     {isOtpLogin ? 'Login With Password' : 'Login With OTP'}
+//                                 </Text>
+//                             </TouchableOpacity>
+
+//                             <View
+//                                 style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+//                                 <Text style={styles.version}>
+//                                     {getLabel('loginsrc_6').replace('{version}', DeviceInfo.getVersion() || '1.0.0')}
+//                                 </Text>
+
+//                                 <Text style={styles.version}>{getLabel('loginsrc_7')}</Text>
+//                             </View>
+//                             <TouchableOpacity onPress={navigateTermsAndConditionScreen}>
+//                                 <Text style={styles.linkRegister}>
+//                                     {getLabel('loginsrc_8')}
+//                                 </Text>
+//                             </TouchableOpacity>
+//                         </View>
+//                     </View>
+//                 </View>
+//             </KeyboardAwareScrollView>
+
+//             {/* Custom Alert Modal */}
+//             <Modal
+//                 transparent={true}
+//                 visible={alertVisible}
+//                 animationType="fade"
+//                 onRequestClose={closeAlert}
+//             >
+//                 <TouchableWithoutFeedback onPress={closeAlert}>
+//                     <View style={styles.modalOverlay}>
+//                         <View style={styles.alertContainer}>
+//                             <Text style={styles.alertTitle}>{alertTitle}</Text>
+//                             <Text style={styles.alertMessage}>{alertMessage}</Text>
+//                             <TouchableOpacity style={styles.alertButton} onPress={closeAlert}>
+//                                 <Text style={styles.alertButtonText}>OK</Text>
+//                             </TouchableOpacity>
+//                         </View>
+//                     </View>
+//                 </TouchableWithoutFeedback>
+//             </Modal>
+//         </SafeAreaView>
+//     );
+// };
+
+// export default LoginScreen;
+
+
+
+
 const LoginScreen = ({ navigation }: any) => {
+    const dispatch = useDispatch();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
-    const passwordRef = useRef<TextInput>(null);
+    const passwordRef = useRef(null);
     const [isModalVisible, setModalVisible] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState("Language");
+    const [selectedLanguage, setSelectedLanguage] = useState({ Code: '', Description: '', Alignment: '', Labels_Url: '' });
+    const { settings, changeLanguage } = useAppSettings();
     const [isOtpLogin, setOtpLogin] = useState(false);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [otp, setOtp] = useState('');
@@ -43,30 +477,35 @@ const LoginScreen = ({ navigation }: any) => {
     const [alertVisible, setAlertVisible] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
-    const { settings } = useAppSettings();
     const { userData, setUserData } = useUser();
+    const [labels, setLabels] = useState({});
     const [loginAPIReq, LoginAPIRes] = useRefAppLoginMutation();
     const [otpSendAPIReq] = useOtpSendMutation();
 
     const passwordPolicyMessages = settings?.Message?.[0]?.Password_Policy_Message ?? [];
-    const language: { Code: string; Description: string }[] =
-        Array.isArray(settings?.Message?.[0]?.Languages)
-            ? settings?.Message?.[0]?.Languages.map(lang =>
-                typeof lang === "object" && lang !== null ? lang : { Code: "", Description: "" })
-            : [];
-    const labels = settings?.Message?.[0]?.Labels || {};
+    const language = settings?.Message?.[0]?.Languages ?? [];
 
     const getLabel = (key: string) => {
-        return labels[key]?.defaultMessage || '';
+        return labels?.[key]?.defaultMessage || key;
+    };
+
+    const initializeLanguage = () => {
+        const defaultLanguageCode = settings?.Message?.[0]?.Mobile_App_Default_Language;
+        const defaultLanguage = language.find(lang => lang.Code === defaultLanguageCode) || { Code: '', Description: '', Alignment: '', Labels_Url: '' };
+        setSelectedLanguage(defaultLanguage);
+        fetchLabels(defaultLanguage.Labels_Url);
     };
 
     useEffect(() => {
-        // setLoading(LoginAPIRes.isLoading);
+        initializeLanguage();
+    }, [settings]);
 
-        if (LoginAPIRes.isSuccess && LoginAPIRes.data.SuccessFlag === "true" && LoginAPIRes.data.Code === 200) {
+
+    useEffect(() => {
+        if (LoginAPIRes?.isSuccess && LoginAPIRes?.data?.SuccessFlag === "true" && LoginAPIRes?.data?.Code === 200) {
             const userData = LoginAPIRes.data.Message[0];
             AsyncStorage.setItem('userData', JSON.stringify(userData));
-            AsyncStorage.removeItem('patientData')
+            AsyncStorage.removeItem('patientData');
             setUserData(userData);
             navigation.navigate('Bottom');
         } else if (LoginAPIRes.isError && LoginAPIRes?.data?.Message) {
@@ -86,6 +525,18 @@ const LoginScreen = ({ navigation }: any) => {
         retrieveUserData();
     }, [setUserData]);
 
+    const fetchLabels = async (url: string) => {
+        if (!url) return;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            setLabels(data);
+        } catch (error) {
+            console.error('Failed to fetch labels:', error);
+        }
+    };
+
+
     const showAlert = (title: string, message: string) => {
         setAlertTitle(title);
         setAlertMessage(message);
@@ -95,6 +546,10 @@ const LoginScreen = ({ navigation }: any) => {
     const closeAlert = () => {
         setAlertVisible(false);
     };
+
+    useEffect(() => {
+        dispatch(loadSelectedLanguage());
+    }, []);
 
     const validateInputs = async () => {
         setUserNameError('');
@@ -117,18 +572,17 @@ const LoginScreen = ({ navigation }: any) => {
                             Email_Id: userData?.Email || '',
                         }).unwrap();
 
-                        if (response.Code === 200) {
+                        if (response?.Code === 200) {
                             setOtpRequested(true);
                             Alert.alert('OTP Sent', 'OTP has been sent to your phone number.');
                         } else {
-                            // showAlert('Error', response.Message || 'Failed to send OTP');
+                            // showAlert('Error', response?.Message || 'Failed to send OTP');
                         }
                     } catch (error) {
                         showAlert('Error', 'An error occurred while sending OTP');
                     }
                 }
             } else {
-                // Validate OTP
                 if (!otp || otp.length === 0) {
                     setUserNameError('OTP is required');
                 } else {
@@ -136,7 +590,7 @@ const LoginScreen = ({ navigation }: any) => {
                         PhoneNumber: phoneNumber,
                         OTP: otp,
                     };
-                    const response = await loginAPIReq(loginReqObj);
+                    const response = await loginAPIReq(loginReqObj).unwrap();
                     console.log("Login API Request:", loginReqObj);
                     console.log("Login API Response:", response);
                 }
@@ -163,11 +617,8 @@ const LoginScreen = ({ navigation }: any) => {
         }
     };
 
-
-
     const handleForgotPasswordOrResendOtp = () => {
         if (isOtpLogin && otpRequested) {
-            // Resend OTP
             handleResendOTP();
         } else {
             navigation.navigate('ForgotPassword');
@@ -199,15 +650,24 @@ const LoginScreen = ({ navigation }: any) => {
         }
     };
 
-
     const navigateTermsAndConditionScreen = () => {
         Alert.alert('Registration', 'Navigate to registration screen');
     };
 
-    const handleSelectLanguage = (language: { Code: string; Description: string }) => {
-        setSelectedLanguage(language.Description);
+    const handleSelectLanguage = (language: any) => {
+        console.log("🌍 Selected Language:", language);
+        AsyncStorage.setItem("selectedLanguage", language)
+        if (!language || !language.Code) {
+            console.error("❌ Error: Language Code is missing!");
+            return;
+        }
+        console.log("🌍 Changing to Language Code:", language.Code);
+        setSelectedLanguage(language);
+        changeLanguage(language.Code);
+        fetchLabels(language.Labels_Url);
         setModalVisible(false);
     };
+
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!isPasswordVisible);
@@ -226,9 +686,9 @@ const LoginScreen = ({ navigation }: any) => {
                                 style={[styles.dropdownButton, {}]}
                                 onPress={() => setModalVisible(true)}
                             >
-                                <Text style={styles.dropdownButtonText}>{selectedLanguage}</Text>
+                                <Text style={styles.dropdownButtonText}>{selectedLanguage.Description}</Text>
                                 <Image
-                                    style={styles.nextImage}
+                                    style={styles.downImage}
                                     resizeMode="contain"
                                     source={require('../images/arrowDown.png')}
                                 />
@@ -252,7 +712,7 @@ const LoginScreen = ({ navigation }: any) => {
                                                         <Text style={styles.modalItemText}>{item.Description}</Text>
                                                     </TouchableOpacity>
                                                 )}
-                                                keyExtractor={(item, index) => item.Code || index.toString()}
+                                                keyExtractor={(item) => item.Code}
                                             />
                                         </View>
                                     </View>
@@ -273,7 +733,7 @@ const LoginScreen = ({ navigation }: any) => {
                             />
 
                             <Text style={[styles.placeholder, {
-                                textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                                textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
                             }]}
                             >
                                 {isOtpLogin ? getLabel('verifysrc_1') : getLabel('loginsrc_2')}
@@ -283,8 +743,10 @@ const LoginScreen = ({ navigation }: any) => {
                                 <>
                                     <View style={styles.inputContainer}>
                                         <TextInput
-                                            style={styles.inputs}
-                                            placeholder="Enter Phone Number"
+                                            style={[styles.inputs, {
+                                                textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
+                                            }]}
+                                            placeholder={getLabel('verifysrc_1')}
                                             placeholderTextColor={Constants.COLOR.FONT_HINT}
                                             value={phoneNumber}
                                             editable={true}
@@ -302,13 +764,15 @@ const LoginScreen = ({ navigation }: any) => {
                                     {otpRequested && (
                                         <>
                                             <Text style={[styles.placeholder, {
-                                                textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                                                textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
                                             }]}
                                             >{getLabel('verifysrc_4')}</Text>
                                             <View style={styles.inputContainer}>
                                                 <TextInput
-                                                    style={styles.inputs}
-                                                    placeholder="Enter OTP"
+                                                    style={[styles.inputs, {
+                                                        textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
+                                                    }]}
+                                                    placeholder={getLabel('verifysrc_4')}
                                                     placeholderTextColor={Constants.COLOR.FONT_HINT}
                                                     value={otp}
                                                     editable={true}
@@ -326,8 +790,10 @@ const LoginScreen = ({ navigation }: any) => {
                                 <>
                                     <View style={styles.inputContainer}>
                                         <TextInput
-                                            style={styles.inputs}
-                                            placeholder="Enter Username"
+                                            style={[styles.inputs, {
+                                                textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
+                                            }]}
+                                            placeholder={getLabel('loginsrc_2')}
                                             placeholderTextColor={Constants.COLOR.FONT_HINT}
                                             value={userName}
                                             editable={true}
@@ -343,17 +809,17 @@ const LoginScreen = ({ navigation }: any) => {
                                     ) : null}
 
                                     <Text style={[styles.placeholder, {
-                                        textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                                        textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
                                     }]}
                                     >{getLabel('loginsrc_3')}</Text>
                                     <View style={styles.inputContainer}>
                                         <TextInput
                                             ref={passwordRef}
                                             style={[styles.inputs, {
-                                                textAlign: selectedLanguage === 'Arabic' ? 'right' : 'left'
+                                                textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left'
                                             }]}
                                             value={password}
-                                            placeholder='Enter Password'
+                                            placeholder={getLabel('loginsrc_3')}
                                             placeholderTextColor={Constants.COLOR.FONT_HINT}
                                             keyboardType="default"
                                             secureTextEntry={!isPasswordVisible}
@@ -363,13 +829,18 @@ const LoginScreen = ({ navigation }: any) => {
                                             onChangeText={setPassword}
                                             onSubmitEditing={validateInputs}
                                         />
-                                        <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIconContainer}>
+                                        <TouchableOpacity onPress={togglePasswordVisibility} style={[styles.eyeIconContainer, {
+                                            position: 'absolute',
+                                            right: selectedLanguage.Alignment === 'ltr' ? 10 : undefined,
+                                            left: selectedLanguage.Alignment === 'ltr' ? undefined : 10,
+                                        }]}>
                                             <Image
                                                 source={isPasswordVisible ? require('../images/EyeView.png') : require('../images/EyeHidden.png')}
                                                 style={styles.eyeIcon}
                                             />
                                         </TouchableOpacity>
                                     </View>
+
                                     {passwordError ? (
                                         <Text style={styles.errorText}>{passwordError}</Text>
                                     ) : null}
@@ -398,8 +869,11 @@ const LoginScreen = ({ navigation }: any) => {
 
                             <TouchableOpacity onPress={validateInputs}>
                                 <Text style={styles.button}>
-                                    {isOtpLogin ? (otpRequested ? 'Login' : 'Get OTP') : 'Login'}
-                                </Text>
+                                    {isOtpLogin
+                                        ? otpRequested
+                                            ? getLabel('loginsrc_1')
+                                            : getLabel('verifysrc_7')
+                                        : getLabel('loginsrc_1') || getLabel('loginsrc_1')}</Text>
                             </TouchableOpacity>
 
                             {isError ? (
@@ -455,7 +929,6 @@ const LoginScreen = ({ navigation }: any) => {
 
 export default LoginScreen;
 
-
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
@@ -467,7 +940,7 @@ const styles = StyleSheet.create({
         borderBottomStartRadius: 15,
     },
     bodyContainerBottom: {
-        backgroundColor: '#fefefe',
+        // backgroundColor: '#fefefe',
         height: 450,
     },
     registerContainer: {
@@ -507,7 +980,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         textAlign: 'center',
         fontSize: Constants.FONT_SIZE.L,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyMedium,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
         color: Constants.COLOR.WHITE_COLOR,
         backgroundColor: Constants.COLOR.THEME_COLOR,
         borderColor: Constants.COLOR.THEME_COLOR,
@@ -526,7 +999,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         textAlign: 'center',
         fontSize: Constants.FONT_SIZE.L,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyMedium,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
         paddingTop: 13,
         paddingBottom: 13,
         borderRadius: 16,
@@ -546,13 +1019,13 @@ const styles = StyleSheet.create({
     link: {
         fontSize: Constants.FONT_SIZE.S,
         color: Constants.COLOR.BLACK_COLOR,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         textAlign: 'center',
         marginVertical: 5,
     },
     linkRegister: {
         fontSize: Constants.FONT_SIZE.S,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         color: "#130FA8",
         textAlign: 'center',
         marginVertical: 10,
@@ -560,7 +1033,7 @@ const styles = StyleSheet.create({
     },
     version: {
         fontSize: Constants.FONT_SIZE.S,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyMedium,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyMedium,
         textAlign: 'center',
         marginVertical: 5,
     },
@@ -575,7 +1048,7 @@ const styles = StyleSheet.create({
     },
     dropdownButton: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         alignItems: 'center',
         borderRadius: 4,
         flexDirection: 'row',
@@ -584,11 +1057,10 @@ const styles = StyleSheet.create({
     dropdownButtonText: {
         color: "#000000",
         fontSize: Constants.FONT_SIZE.SM,
-        alignItems:'center',
+        alignItems: 'center',
         fontFamily: Constants.FONT_FAMILY.fontFamilyMedium
     },
-    nextImage: {
-        color: "#000000",
+    downImage: {
         width: deviceHeight / 35,
         height: deviceHeight / 55,
     },
@@ -614,7 +1086,7 @@ const styles = StyleSheet.create({
     },
 
     otpModalContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         borderRadius: 10,
         padding: 20,
         width: "80%",
@@ -648,10 +1120,12 @@ const styles = StyleSheet.create({
         borderBottomColor: '#E0E0E0',
         backgroundColor: '#E0E0E0',
         borderRadius: 25,
-        paddingLeft: 10,
-        color: 'black',
+        // paddingLeft: 10,
+        paddingEnd: 10,
+        paddingStart: 10,
+        color: Constants.COLOR.BLACK_COLOR,
         fontSize: Constants.FONT_SIZE.SM,
-        fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -662,22 +1136,24 @@ const styles = StyleSheet.create({
     eyeIcon: {
         width: 20,
         height: 20,
-        resizeMode:'contain',
-        tintColor:'#000000'
+        resizeMode: 'contain',
+        tintColor: '#000000'
     },
     errorText: {
         color: 'red',
         marginTop: 5,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
+        paddingLeft: 10,
         fontSize: Constants.FONT_SIZE.S,
     },
     alertContainer: {
-        backgroundColor: 'white',
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
         borderRadius: 10,
         padding: 20,
         width: '80%',
         maxWidth: 400,
         alignItems: 'center',
-        elevation: 3, 
+        elevation: 3,
         shadowColor: Constants.COLOR.THEME_COLOR,
     },
     alertTitle: {

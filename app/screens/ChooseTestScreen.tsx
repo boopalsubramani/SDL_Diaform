@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, BackHandler, Dimensions, ScrollView, Image, Modal, Alert, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler, Dimensions, ScrollView, Image, Modal, Alert, TouchableWithoutFeedback, I18nManager } from 'react-native';
 import Constants from '../util/Constants';
 import { useCart } from '../common/CartContext';
 import { useNavigation } from '@react-navigation/native';
@@ -264,16 +264,22 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     const { selectedPatientDetails, selectedTests = [], totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [] } = route.params;
     const navigation = useNavigation<NavigationProp>();
-    const { settings } = useAppSettings();
+    const { settings, labels } = useAppSettings();
     const { cartItems, setCartItems } = useCart();
     const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
     const [isModalVisible, setModalVisible] = useState(false);
     const [imageUri, setImageUri] = useState(null);
     const { imageBase64, convertImageToBase64 } = useUser();
+    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+
 
     const updatedCart = useSelector(
         (state: RootState) => state.bookTestSearch.updatedCartData
     );
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     const handleRemoveImage = () => {
         setImageUri(null);
@@ -291,7 +297,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
         setTotalCartValue(initialTotalCartValue);
     }, [route.params, setCartItems, selectedTests, initialTotalCartValue]);
 
-    const labels = settings?.Message?.[0]?.Labels || {};
+    // const labels = settings?.Message?.[0]?.Labels || {};
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';

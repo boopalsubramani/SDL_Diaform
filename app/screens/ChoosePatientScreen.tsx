@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Image, Alert, I18nManager, Dimensions } from 'react-native';
 import Constants from '../util/Constants';
 import { useNavigation } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
@@ -25,9 +25,11 @@ type PatientPhysician = {
     name: string;
 };
 
+const { width, height } = Dimensions.get('window');
+
 const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const { userData } = useUser();
-    const { settings } = useAppSettings();
+    const { settings, labels, selectedLanguage } = useAppSettings();
     const navigation = useNavigation<NavigationProp>();
     const [codeQuery, setCodeQuery] = useState('');
     const [nameQuery, setNameQuery] = useState('');
@@ -48,7 +50,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     console.log('selectedPhysicianDetails', selectedPhysicianDetails)
     console.log('patientData', patientData)
 
-    const labels = settings?.Message?.[0]?.Labels || {};
+    // const labels = settings?.Message?.[0]?.Labels || {};
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
@@ -259,6 +261,14 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
         fetchPatientData();
     }, []);
 
+    useEffect(() => {
+        if (selectedLanguage.Alignment === 'rtl') {
+            I18nManager.forceRTL(true);
+        } else {
+            I18nManager.forceRTL(false);
+        }
+    }, [selectedLanguage]);
+
     return (
         <View style={styles.MainContainer}>
             {showHeader && (
@@ -273,13 +283,13 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                 keyboardOpeningTime={0}
                 extraScrollHeight={10}
             >
-                <View style={{ flex: 1, paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.WHITE_COLOR }}>
+                <View style={{  paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.WHITE_COLOR }}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={styles.headerTitle}>{getLabel('patinfo_4')}</Text>
+                        <Text style={[styles.headerTitle, { textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left' }]} >{getLabel('patinfo_4')}</Text>
                         {(patientData === null && selectedPatientDetails === null) && (
                             <TouchableOpacity onPress={handlePressAdd}>
-                                <Text style={styles.addText}>Add</Text>
+                                <Text style={styles.addText}>{getLabel('patinfo_5')}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -442,19 +452,17 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                         </View>
                     )}
                 </View>
-            </KeyboardAwareScrollView>
+            </KeyboardAwareScrollView >
             <View style={styles.navigationContainer}>
                 <TouchableOpacity onPress={handleNext}>
                     <ButtonNext />
                 </TouchableOpacity>
             </View>
-        </View>
+        </View >
     );
 };
 
 export default ChoosePatientScreen;
-
-
 
 const styles = StyleSheet.create({
     MainContainer: {
@@ -491,10 +499,12 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        gap: 10,
     },
     inputPatient: {
         borderRadius: 10,
         borderWidth: 0.5,
+        height: height * 0.06,
         paddingHorizontal: 10,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         fontSize: Constants.FONT_SIZE.S,
@@ -518,14 +528,13 @@ const styles = StyleSheet.create({
     },
     inputSmall: {
         flex: 1,
-        marginRight: 10,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-        fontSize: Constants.FONT_SIZE.M
+        fontSize: Constants.FONT_SIZE.SM
     },
     inputLarge: {
-        flex:2,
+        flex: 2,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-        fontSize: Constants.FONT_SIZE.M
+        fontSize: Constants.FONT_SIZE.SM
     },
     autocompleteContainer: {
         maxHeight: 150,
@@ -548,7 +557,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         padding: 16,
         backgroundColor: '#ECEEF5',
-        shadowColor:Constants.COLOR.THEME_COLOR,
+        shadowColor: Constants.COLOR.THEME_COLOR,
         elevation: 3,
         position: 'relative',
     },

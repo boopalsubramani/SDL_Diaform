@@ -1,0 +1,10 @@
+{
+    "mnt": 0,
+    "mnt_msg": "App is under maintanance",
+    "API_BASE_URL": "https://product.sukraa.in/SlimsMobile/api/",
+    "UPDATE_URL": "APP_STORE_OR_PLAY_STORE_LINK",
+    "vra": {
+        "lver": "1.0.0",
+        "1.0.0": true
+    }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image, TextInput, ScrollView, Alert, I18nManager } from 'react-native';
 import moment from 'moment';
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
@@ -20,9 +20,13 @@ interface Test {
   Amount: string;
 }
 
+interface Language {
+  Alignment: 'ltr' | 'rtl';
+}
+
 const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const { selectedTests = [], selectedPatientDetails, testData } = route?.params || {};
-  const { settings } = useAppSettings();
+  const { labels } = useAppSettings();
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [dateInput, setDateInput] = useState('');
@@ -30,15 +34,19 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const [selectedTime, setSelectedTime] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [currentYear, setCurrentYear] = useState(moment().year());
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
   const toggleCalendar = () => setShowCalendar(!showCalendar);
   const toggleTimePicker = () => setShowTimePicker(!showTimePicker);
 
-  const labels = settings?.Message?.[0]?.Labels || {};
 
   const updatedCart = useSelector(
     (state: RootState) => state.bookTestSearch.updatedCartData
   );
+
+  useEffect(() => {
+    I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+  }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';
@@ -156,7 +164,6 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
         <View style={styles.cartSection}>
           <Text style={styles.cartTitle}>{getLabel('labtsummary_5')}</Text>
           {updatedCart.map((test: Test, index: number) => {
-            console.log('77777777777777777777', test);
             return (
               <View key={index} style={styles.cartItem}>
                 <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
