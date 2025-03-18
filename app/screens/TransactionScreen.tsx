@@ -14,9 +14,14 @@ import {
   Alert,
   PermissionsAndroid,
   Platform,
+  I18nManager,
+  Linking,
+  Clipboard,
+  Share,
 } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from '../util/Constants';
+import FileViewer from 'react-native-file-viewer';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import Spinner from 'react-native-spinkit';
 import { useUser } from '../common/UserContext';
@@ -24,7 +29,10 @@ import { useTransactionDetailsMutation } from '../redux/service/TransactionDetai
 import { useAppSettings } from '../common/AppSettingContext';
 import { useInvoiceDownloadMutation } from '../redux/service/InvoiceDownloadService';
 import RNFS from 'react-native-fs';
+import RNFetchBlob from 'rn-fetch-blob';
 import CalendarModal from '../common/Calender';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
 
 const deviceHeight = Dimensions.get('window').height;
@@ -44,13 +52,17 @@ interface PayMode {
   PayDescription: string;
 }
 
+interface Language {
+  Alignment: 'ltr' | 'rtl';
+}
+
 const TransactionScreen = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [selectedPayMode, setSelectedPayMode] = useState({
     PayMode: '',
     PayDescription: 'Pay Mode',
   });
-  const { settings } = useAppSettings();
+  const { labels } = useAppSettings();
   const [selectedFromDate, setSelectedFromDate] = useState('');
   const [selectedToDate, setSelectedToDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
@@ -61,25 +73,32 @@ const TransactionScreen = () => {
   const [noDataFound, setNoDataFound] = useState(false);
   const [animatedValues, setAnimatedValues] = useState<Animated.Value[]>([]);
   const { userData } = useUser();
-
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
   const [fetchAPIReq] = useFetchApiMutation();
   const [transactionDetailsReq] = useTransactionDetailsMutation();
   const [invoiceDownloadReq] = useInvoiceDownloadMutation();
 
-  const labels = settings?.Message?.[0]?.Labels || {};
+  useEffect(() => {
+    I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+  }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';
   };
 
   const formatDate = (date: any) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.error("Invalid date object:", date);
+      return "Invalid Date";
+    }
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
-  const formatDateForRequest = (date: string) => {
+  const formatDateForRequest = (date: any) => {
     const [day, month, year] = date.split('/');
     return `${year}/${month}/${day}`;
   };
@@ -154,58 +173,41 @@ const TransactionScreen = () => {
     }
   };
 
+
   const downloadInvoice = async (invoiceNo: string, invoiceDate: string) => {
     setIsLoading(true);
+
     try {
-      const requestPayload = {
+      const response = await invoiceDownloadReq({
         Username: userData?.UserCode,
         Usertype: userData?.UserType,
         Firm_No: '01',
         Invoice_No: invoiceNo,
         Invoice_Date: invoiceDate,
-      };
-      console.log('Request Payload:', requestPayload);
+      }).unwrap();
 
-      const response = await invoiceDownloadReq(requestPayload).unwrap();
+      if (
+        response.SuccessFlag === 'true' &&
+        response.Message.length > 0 &&
+        response.Message[0]?.InvoiceReport_Url
+      ) {
+        let fileUrl = response.Message[0].InvoiceReport_Url.trim();
+        console.log('Opening URL in Browser:', fileUrl);
 
-      if (response.SuccessFlag === 'true') {
-        const fileUrl = response.FileUrl;
-        const fileExtension = fileUrl.split('.').pop();
-        const localFilepath = `${RNFS.DownloadDirectoryPath}/invoice_${invoiceNo}.${fileExtension}`;
-
-        if (Platform.OS === 'android') {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-            {
-              title: 'Storage Permission',
-              message: 'App needs access to your storage to download files',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'OK',
-            }
-          );
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            console.error('Storage permission denied');
-            Alert.alert('Permission Denied', 'Storage permission is required to download the invoice.');
-            return;
-          }
+        // Ensure URL starts with HTTP/HTTPS
+        if (!fileUrl.startsWith('http')) {
+          Alert.alert('Error', 'Invalid URL format: ' + fileUrl);
+          return;
         }
 
-        RNFS.downloadFile(fileUrl)
-          .promise.then(() => {
-            Alert.alert('Download Successful', 'Invoice has been saved to your gallery.');
-          })
-          .catch(error => {
-            console.error('Error downloading file:', error);
-            Alert.alert('Download Failed', 'There was an error downloading the invoice.');
-          });
+        // Open URL directly without checking canOpenURL
+        await Linking.openURL(fileUrl);
       } else {
-        console.error('Error downloading invoice:', response.Message[0].Message);
-        Alert.alert('Error', response.Message[0].Message);
+        Alert.alert('Error', 'Invalid response. No file URL found.');
       }
     } catch (error) {
-      console.error('Error downloading invoice:', error);
-      Alert.alert('Unexpected Error', 'An unexpected error occurred while downloading the invoice.');
+      console.error('Error:', error);
+      Alert.alert('Error', 'An unexpected error occurred while opening the invoice.');
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +215,6 @@ const TransactionScreen = () => {
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
-    fetchTransactionDetails();
   };
 
   const openCalendar = (type: any) => {
@@ -221,11 +222,12 @@ const TransactionScreen = () => {
     setShowCalendar(true);
   };
 
-  const handleDateSelection = (date: any) => {
+  const handleDateSelection = (selectedDate: any) => {
+    const formattedDate = formatDate(new Date(selectedDate));
     if (calendarType === 'from') {
-      setSelectedFromDate(formatDate(date));
+      setSelectedFromDate(formattedDate);
     } else {
-      setSelectedToDate(formatDate(date));
+      setSelectedToDate(formattedDate);
     }
     setShowCalendar(false);
     fetchTransactionDetails();
@@ -246,46 +248,43 @@ const TransactionScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <NavigationBar title="Transaction" />
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.row}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Payment</Text>
-            <View style={styles.card}>
-              <TouchableOpacity onPress={toggleDropdown} style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedPayMode.PayDescription}</Text>
-                <Image
-                  source={
-                    dropdownVisible
-                      ? require('../images/arrowUp.png')
-                      : require('../images/arrowDown.png')
-                  }
-                  style={styles.icon}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>From</Text>
-            <View style={styles.card}>
-              <TouchableOpacity onPress={() => openCalendar('from')} style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedFromDate}</Text>
-                <Image source={require('../images/calendar.png')} style={styles.icon} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>To</Text>
-            <View style={styles.card}>
-              <TouchableOpacity onPress={() => openCalendar('to')} style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedToDate}</Text>
-                <Image source={require('../images/calendar.png')} style={styles.icon} />
-              </TouchableOpacity>
-            </View>
+      <View style={styles.row}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Payment</Text>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={toggleDropdown} style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{selectedPayMode.PayDescription}</Text>
+              <Image
+                source={dropdownVisible ? require('../images/arrowUp.png') : require('../images/arrowDown.png')}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>From</Text>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={() => openCalendar('from')} style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{selectedFromDate}</Text>
+              <Image source={require('../images/calendar.png')} style={styles.icon} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>To</Text>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={() => openCalendar('to')} style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{selectedToDate}</Text>
+              <Image source={require('../images/calendar.png')} style={styles.icon} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+
+      <ScrollView contentContainerStyle={styles.container}>
         {noDataFound ? (
           <View style={styles.noDataContainer}>
             <Text style={styles.noDataText}>{getLabel('aboutscr_5')}</Text>
@@ -306,11 +305,13 @@ const TransactionScreen = () => {
                 >
                   <View style={styles.detailHeader}>
                     <View style={styles.detailSection}>
-                      <Text style={styles.detailLabel}>No : </Text>
+                      <Text style={styles.detailLabel}>No</Text>
+                      <Text style={styles.detailColen}>:</Text>
                       <Text style={styles.detailValue}>{item.Sid_No}</Text>
                     </View>
                     <View style={styles.detailSection}>
-                      <Text style={styles.detailLabel}>Date : </Text>
+                      <Text style={styles.detailLabel}>Date</Text>
+                      <Text style={styles.detailColen}>:</Text>
                       <Text style={styles.detailValue}>{item.Sid_Date}</Text>
                     </View>
                     <TouchableOpacity
@@ -322,27 +323,32 @@ const TransactionScreen = () => {
                   </View>
                   <View style={styles.detailBody}>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Firm : </Text>
+                      <Text style={styles.detailLabel}>Firm</Text>
+                      <Text style={styles.detailColen}>:</Text>
                       <Text style={styles.detailValue}>{item.Firm_Name}</Text>
                     </View>
                     <View style={styles.detailRow}>
                       <View style={styles.detailColumn}>
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Due : </Text>
+                          <Text style={styles.detailLabel}>Due</Text>
+                          <Text style={styles.detailColen}>:</Text>
                           <Text style={styles.detailValue}>{item.Due}</Text>
                         </View>
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Total : </Text>
+                          <Text style={styles.detailLabel}>Total</Text>
+                          <Text style={styles.detailColen}>:</Text>
                           <Text style={styles.detailValue}>{item.Due}</Text>
                         </View>
                       </View>
                       <View style={styles.detailColumn}>
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Paid : </Text>
+                          <Text style={styles.detailLabel}>Paid</Text>
+                          <Text style={styles.detailColen}>:</Text>
                           <Text style={styles.detailValuePaid}>{item.Paid}</Text>
                         </View>
                         <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Status : </Text>
+                          <Text style={styles.detailLabel}>Status</Text>
+                          <Text style={styles.detailColen}>:</Text>
                           <Text style={styles.detailValue}>{item.Result}</Text>
                         </View>
                       </View>
@@ -401,6 +407,7 @@ const TransactionScreen = () => {
 
 export default TransactionScreen;
 
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -412,24 +419,30 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   inputContainer: {
     flex: 1,
+    marginHorizontal: 5,
+    marginVertical: 10
   },
   card: {
     backgroundColor: Constants.COLOR.WHITE_COLOR,
     borderRadius: 8,
     shadowColor: Constants.COLOR.THEME_COLOR,
     elevation: 3,
-    padding: 6,
-    marginRight: 5,
+    padding: 10,
+    width: '100%',
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dropdown: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
   },
   dropdownText: {
     fontSize: Constants.FONT_SIZE.XS,
@@ -463,11 +476,9 @@ const styles = StyleSheet.create({
   },
   detailBody: {
     paddingHorizontal: 10,
-    alignItems: 'center',
   },
   detailRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 5,
   },
   detailColumn: {
@@ -478,6 +489,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailLabel: {
+    width: 45,
+    fontSize: Constants.FONT_SIZE.S,
+    color: Constants.COLOR.BLACK_COLOR,
+    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
+  },
+  detailColen: {
     fontSize: Constants.FONT_SIZE.S,
     color: Constants.COLOR.BLACK_COLOR,
     fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,

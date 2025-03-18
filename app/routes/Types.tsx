@@ -9,8 +9,8 @@ export type RootStackParamList = {
   BookTestSearch: {
     selectedPatientDetails: any;
     selectedTests: any;
-    totalCartValue:any;
-    
+    totalCartValue: any;
+
   };
   ChooseTest: {
     selectedTests: { Service_Name: string; Amount: number }[];
@@ -31,6 +31,10 @@ export type RootStackParamList = {
     imageUri: any[];
   };
   BookTest: any;
+  Collection: any[];
+  Transaction: any;
+  PaymentFailure: any;
+
 
 
 

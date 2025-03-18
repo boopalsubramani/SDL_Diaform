@@ -10,11 +10,12 @@ import {
   Platform,
   Modal,
   I18nManager,
+  FlexAlignType,
+  ViewStyle,
 } from 'react-native';
 import moment from 'moment';
 import Constants from '../util/Constants';
 import NavigationBar from '../common/NavigationBar';
-import { Calendar } from 'react-native-calendars';
 import { useBookingListMutation } from '../redux/service/BookingListService';
 import Spinner from 'react-native-spinkit';
 import LinearGradient from 'react-native-linear-gradient';
@@ -24,6 +25,8 @@ import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
 import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
+
 
 
 const { height: deviceHeight, } = Dimensions.get('window');
@@ -47,11 +50,16 @@ interface BookingItem {
   Firm_No: string;
 }
 
+interface Language {
+  Alignment: 'ltr' | 'rtl';
+  Code: string
+}
+
 
 // const BookingScreen = ({ navigation, route }: any) => {
 //   const { userData } = useUser();
-//   const { settings } = useAppSettings();
-//   const [bookingListAPIReq, bookingListAPIRes] = useBookingListMutation();
+//   const { labels } = useAppSettings();
+//   const [bookingListAPIReq] = useBookingListMutation();
 //   const [bookingData, setBookingData] = useState<BookingItem[]>([]);
 //   const [loading, setLoading] = useState<boolean>(true);
 //   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -65,11 +73,16 @@ interface BookingItem {
 //   const [status, setStatus] = useState<any[]>([]);
 //   const [firmNo, setFirmNo] = useState('');
 //   const [isLoading, setIsLoading] = useState(false);
+//   const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+
 
 //   const [fetchAPIReq] = useFetchApiMutation();
 //   const branchCode = userData?.Branch_Code;
 
-//   const labels = settings?.Message?.[0]?.Labels || {};
+//   useEffect(() => {
+//     I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+//   }, [selectedLanguage]);
+
 
 //   const getLabel = (key: string) => {
 //     return labels[key]?.defaultMessage || '';
@@ -82,7 +95,7 @@ interface BookingItem {
 //     setSelectedDate(formatDate(currentDate));
 //     fetchData('branch');
 //     fetchData('status');
-//     fetchBookingData(); // Fetch all data initially
+//     fetchBookingData();
 //   }, []);
 
 //   const fetchData = async (type: 'branch' | 'status', branchNo = branchCode) => {
@@ -170,7 +183,7 @@ interface BookingItem {
 
 //   const handleRefresh = async () => {
 //     setRefreshing(true);
-//     await fetchBookingData(); // Call fetchBookingData directly to ensure filtering
+//     await fetchBookingData();
 //     setRefreshing(false);
 //   };
 
@@ -195,14 +208,7 @@ interface BookingItem {
 //       <TouchableOpacity onPress={() => handleBookingDetail(item)}>
 //         <LinearGradient
 //           colors={['white', 'white']}
-//           style={[
-//             styles.CardContainer,
-//             { backgroundColor: item.BookingType_ColorCode },
-//             isCollectionCompleted && {
-//               borderColor: '#71b4d2',
-//               borderWidth: 2,
-//             },
-//           ]}
+//           style={[styles.CardContainer]}
 //           start={{ x: 0, y: 0 }}
 //           end={{ x: 1, y: 1 }}
 //         >
@@ -239,7 +245,14 @@ interface BookingItem {
 //             </View>
 
 //             <View style={styles.StatusAndPayContainer}>
-//               <Text style={styles.StatusText} numberOfLines={1}>
+//               <Text style={[
+//                 styles.StatusText,
+//                 isCollectionCompleted && {
+//                   backgroundColor: item.BookingType_ColorCode,
+//                   color: 'black',
+//                 },
+//               ]}
+//                 numberOfLines={1}>
 //                 {item.Booking_Status_Desc}
 //               </Text>
 //               <TouchableOpacity style={styles.ButtonPayNowView}>
@@ -247,7 +260,7 @@ interface BookingItem {
 //               </TouchableOpacity>
 //             </View>
 
-//             {item.Booking_Status_Desc === 'Cancel' && (
+//             {item.Is_Cancelled === 'True' && (
 //               <View style={styles.CancelRemarks}>
 //                 <Text style={styles.CancelText}>
 //                   Remarks: {item.Remarks || 'No remarks available'}
@@ -269,7 +282,7 @@ interface BookingItem {
 //           onPress={() => toggleDropdown('branch')}
 //           style={styles.dropdown}
 //         >
-//           <Text style={styles.text}>{selectedBranch || 'Select Branch'}</Text>
+//           <Text style={styles.text}>{selectedBranch || getLabel('managebrscr_1')}</Text>
 //           <Image
 //             source={
 //               dropdownType === 'branch' && dropdownVisible
@@ -309,23 +322,25 @@ interface BookingItem {
 //             />
 //           </TouchableOpacity>
 //           {showCalendar && (
-//             <Modal transparent animationType="fade">
-//               <TouchableOpacity
-//                 style={styles.overlay}
-//                 onPress={() => setShowCalendar(false)}
-//               />
-//               <View style={styles.calendarContainer}>
-//                 <Calendar
-//                   onDayPress={(day: any) => {
-//                     const formattedDate = formatDate(
-//                       new Date(day.year, day.month - 1, day.day)
-//                     );
-//                     setSelectedDate(formattedDate);
-//                     setShowCalendar(false);
-//                   }}
-//                 />
-//               </View>
-//             </Modal>
+//             // <CalendarModal
+//             //   isVisible={showCalendar}
+//             //   onConfirm={(day: any) => {
+//             //     const date = new Date(day);
+//             //     if (!isNaN(date.getTime())) {
+//             //       const formattedDate = formatDate(date);
+//             //       setSelectedDate(formattedDate);
+//             //       setShowCalendar(false);
+//             //     } else {
+//             //       console.error("Invalid date string:", day);
+//             //     }
+//             //   }}
+//             //   onCancel={() => setShowCalendar(false)}
+//             //   mode="date"  
+//             // />
+
+//             <CalendarModal 
+//             selectedLanguage={selectedLanguage}/>
+
 //           )}
 //         </View>
 //       </View>
@@ -386,7 +401,7 @@ interface BookingItem {
 //                 <SpinnerIndicator />
 //               ) : (
 //                 <View style={{ flex: 1 }}>
-//                   <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular', }}>{getLabel('aboutscr_5')}</Text>
+//                   <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular, }}>{getLabel('aboutscr_5')}</Text>
 //                 </View>
 //               )}
 //             </View>
@@ -401,7 +416,7 @@ interface BookingItem {
 
 const BookingScreen = ({ navigation, route }: any) => {
   const { userData } = useUser();
-  const { settings, labels } = useAppSettings();
+  const { labels } = useAppSettings();
   const [bookingListAPIReq] = useBookingListMutation();
   const [bookingData, setBookingData] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -416,14 +431,13 @@ const BookingScreen = ({ navigation, route }: any) => {
   const [status, setStatus] = useState<any[]>([]);
   const [firmNo, setFirmNo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
-
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
   const [fetchAPIReq] = useFetchApiMutation();
   const branchCode = userData?.Branch_Code;
 
   useEffect(() => {
-    I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
   }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
@@ -437,8 +451,28 @@ const BookingScreen = ({ navigation, route }: any) => {
     setSelectedDate(formatDate(currentDate));
     fetchData('branch');
     fetchData('status');
-    fetchBookingData(); // Fetch all data initially
+    fetchBookingData();
   }, []);
+
+
+  const getColumn1Style = (selectedLanguage: any): ViewStyle => {
+    const isRTL = selectedLanguage?.Code === 'ar-SA';
+    return {
+      flexDirection: 'column',
+      backgroundColor: Constants.COLOR.THEME_COLOR,
+      borderTopLeftRadius: isRTL ? 0 : 15,
+      borderBottomLeftRadius: isRTL ? 0 : 15,
+      borderTopRightRadius: isRTL ? 15 : 0,
+      borderBottomRightRadius: isRTL ? 15 : 0,
+      justifyContent: 'space-between',
+      // alignItems: 'flex-end',
+      alignItems: 'flex-end' as FlexAlignType,
+      width: '30%',
+      paddingBottom: 4,
+      overflow: 'hidden',
+    };
+  };
+
 
   const fetchData = async (type: 'branch' | 'status', branchNo = branchCode) => {
     setIsLoading(true);
@@ -525,7 +559,7 @@ const BookingScreen = ({ navigation, route }: any) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchBookingData(); // Call fetchBookingData directly to ensure filtering
+    await fetchBookingData();
     setRefreshing(false);
   };
 
@@ -546,22 +580,17 @@ const BookingScreen = ({ navigation, route }: any) => {
     const formattedBookingDateAndYear = moment(item.Booking_Date, 'YYYY/MM/DD').format('D, YYYY');
     const isCollectionCompleted = item.Booking_Status_Desc === 'Collection Completed';
 
+
     return (
       <TouchableOpacity onPress={() => handleBookingDetail(item)}>
         <LinearGradient
           colors={['white', 'white']}
-          style={[
-            styles.CardContainer,
-            { backgroundColor: item.BookingType_ColorCode },
-            isCollectionCompleted && {
-              borderColor: '#71b4d2',
-              borderWidth: 2,
-            },
-          ]}
+          style={[styles.CardContainer]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <View style={styles.Column1}>
+          {/* <View style={styles.Column1}> */}
+          <View style={getColumn1Style(selectedLanguage)}>
             <View style={styles.ServiceContainer}>
               <Text style={styles.ServiceText}>Service</Text>
               <Text style={styles.ServiceText}>No & Date</Text>
@@ -594,7 +623,14 @@ const BookingScreen = ({ navigation, route }: any) => {
             </View>
 
             <View style={styles.StatusAndPayContainer}>
-              <Text style={styles.StatusText} numberOfLines={1}>
+              <Text style={[
+                styles.StatusText,
+                isCollectionCompleted && {
+                  backgroundColor: item.BookingType_ColorCode,
+                  color: 'black',
+                },
+              ]}
+                numberOfLines={1}>
                 {item.Booking_Status_Desc}
               </Text>
               <TouchableOpacity style={styles.ButtonPayNowView}>
@@ -663,13 +699,13 @@ const BookingScreen = ({ navigation, route }: any) => {
               style={styles.CalenderImg}
             />
           </TouchableOpacity>
-          {showCalendar && (
+          {/* {showCalendar && (
             <CalendarModal
+              selectedLanguage={selectedLanguage}
               isVisible={showCalendar}
+              onClose={() => setShowCalendar(false)}
               onConfirm={(day: any) => {
-                // Parse the ISO 8601 string into a Date object
                 const date = new Date(day);
-                // Check if the date is valid
                 if (!isNaN(date.getTime())) {
                   const formattedDate = formatDate(date);
                   setSelectedDate(formattedDate);
@@ -678,10 +714,29 @@ const BookingScreen = ({ navigation, route }: any) => {
                   console.error("Invalid date string:", day);
                 }
               }}
-              onCancel={() => setShowCalendar(false)}
-              mode="date"
+            />
+          )} */}
+
+          {showCalendar && (
+            <CalendarModal
+              locale={selectedLanguage?.Code || "en"}
+              selectedLanguage={selectedLanguage}
+              isVisible={showCalendar}
+              onClose={() => setShowCalendar(false)}
+              onConfirm={(day: any) => {
+                const date = moment(day, "YYYY-MM-DD", true).toDate();
+                if (!isNaN(date.getTime())) {
+                  moment.locale(selectedLanguage?.Code || "en");
+                  const formattedDate = moment(date).format("YYYY/MM/DD");
+                  setSelectedDate(formattedDate);
+                  setShowCalendar(false);
+                } else {
+                  console.error("Invalid date string:", day);
+                }
+              }}
             />
           )}
+
         </View>
       </View>
 
@@ -753,6 +808,7 @@ const BookingScreen = ({ navigation, route }: any) => {
 };
 
 export default BookingScreen;
+
 
 const styles = StyleSheet.create({
   ScreenContainer: {
@@ -983,3 +1039,4 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
 });
+

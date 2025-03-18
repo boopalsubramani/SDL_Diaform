@@ -4,17 +4,23 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
 const deviceHeight = Dimensions.get('window').height;
 
+interface Language {
+  Alignment: 'ltr' | 'rtl';
+}
+
 const UploadPrescriptionScreen = ({ navigation }: any) => {
-  const { settings, labels } = useAppSettings();
-  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+  const { labels } = useAppSettings();
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-   useEffect(() => {
-      I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
-    }, [selectedLanguage]);
+  useEffect(() => {
+    console.log('useEffect called:', selectedLanguage);
+    I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+  }, [selectedLanguage]);
 
   const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
@@ -40,7 +46,24 @@ const UploadPrescriptionScreen = ({ navigation }: any) => {
     }
   };
 
+  // const handleImagePickerResponse = (response: any) => {
+  //   if (response.didCancel) {
+  //     console.log('User cancelled image picker');
+  //     return;
+  //   } else if (response.errorCode) {
+  //     console.log('ImagePicker Error:', response.errorMessage);
+  //     return;
+  //   }
+
+  //   const uri = response.assets?.[0]?.uri;
+  //   if (!uri) return;
+
+  //   setImageUri(uri);
+  //   navigation.navigate('ChooseTest', { imageUri: uri });
+  // };
+
   const handleImagePickerResponse = (response: any) => {
+    console.log('Image Picker Response:', response);
     if (response.didCancel) {
       console.log('User cancelled image picker');
       return;
@@ -48,14 +71,19 @@ const UploadPrescriptionScreen = ({ navigation }: any) => {
       console.log('ImagePicker Error:', response.errorMessage);
       return;
     }
-
+  
     const uri = response.assets?.[0]?.uri;
-    if (!uri) return;
-
+    if (!uri) {
+      console.log('No URI found in response');
+      return;
+    }
+  
+    console.log('Setting image URI:', uri);
     setImageUri(uri);
+    console.log('Image URI state updated:', uri);
+
     navigation.navigate('ChooseTest', { imageUri: uri });
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>

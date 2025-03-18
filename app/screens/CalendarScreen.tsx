@@ -17,7 +17,7 @@ const deviceHeight = Dimensions.get('window').height;
 
 interface Test {
   Service_Name: string;
-  Amount: string;
+  Amount: number;
 }
 
 interface Language {
@@ -39,10 +39,9 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const toggleCalendar = () => setShowCalendar(!showCalendar);
   const toggleTimePicker = () => setShowTimePicker(!showTimePicker);
 
-
   const updatedCart = useSelector(
     (state: RootState) => state.bookTestSearch.updatedCartData
-  );
+  ) as Test[];
 
   useEffect(() => {
     I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
@@ -167,14 +166,17 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
             return (
               <View key={index} style={styles.cartItem}>
                 <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
-                <Text style={styles.cartItemPrice}>P {test.Amount}</Text>
+                <Text style={styles.cartItemPrice}>{test.Amount}</Text>
               </View>
             );
           })}
           <View style={styles.cartSubtotal}>
             <Text style={styles.cartSubtotalLabel}>{getLabel('labtsummary_6')}</Text>
+            {/* <Text style={styles.cartSubtotalAmount}>
+              (P) {updatedCart.reduce((acc: number, test: Test) => acc + parseFloat(test.Amount || '0'), 0).toFixed(2)}
+            </Text> */}
             <Text style={styles.cartSubtotalAmount}>
-              P {updatedCart.reduce((acc: number, test: Test) => acc + parseFloat(test.Amount || '0'), 0).toFixed(2)}
+              (P) {updatedCart.reduce((acc: number, test: Test) => acc + test.Amount, 0).toFixed(2).toString()}
             </Text>
           </View>
         </View>
@@ -270,11 +272,11 @@ const styles = StyleSheet.create({
   },
   cartItemName: {
     fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    flex: 1
   },
   cartItemPrice: {
     fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    color: Constants.COLOR.FONT_COLOR_DEFAULT
+    color: Constants.COLOR.FONT_COLOR_DEFAULT,
+
   },
   cartSubtotal: {
     flexDirection: 'row',
@@ -284,11 +286,15 @@ const styles = StyleSheet.create({
   },
   cartSubtotalLabel: {
     fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
-    color: Constants.COLOR.THEME_COLOR
+    color: Constants.COLOR.FONT_COLOR_DEFAULT,
+    flex: 0.6,
+    textAlign: 'right',
   },
   cartSubtotalAmount: {
     fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    color: Constants.COLOR.FONT_COLOR_DEFAULT
+    color: Constants.COLOR.THEME_COLOR,
+    flex: 0.3,
+    textAlign: 'right',
   },
   labelAndCheckboxContainer: {
     flexDirection: 'row',

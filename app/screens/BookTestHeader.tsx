@@ -3,14 +3,18 @@ import { Text, View, StyleSheet, I18nManager } from 'react-native';
 import { useAppSettings } from '../common/AppSettingContext';
 import Constants from '../util/Constants';
 import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
+interface Language {
+  Alignment: 'ltr' | 'rtl';
+}
 
 const BookTestHeader = ({ selectValue }: any) => {
-  const { settings, labels } = useAppSettings();
-  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+  const { labels } = useAppSettings();
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
   useEffect(() => {
-    I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
   }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
@@ -88,20 +92,20 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   selectedTextStyle: {
-    fontSize: 15,
-    color: 'white',
+    fontSize: Constants.FONT_SIZE.SM,
+    color: Constants.COLOR.WHITE_COLOR,
     alignSelf: 'center',
     padding: 5,
   },
   unselectedTextStyle: {
-    fontSize: 15,
-    color: 'black',
+    fontSize: Constants.FONT_SIZE.SM,
+    color: Constants.COLOR.BLACK_COLOR,
     alignSelf: 'center',
     padding: 5,
   },
   dottedStyle: {
     height: 1,
-    width: '68%',
+    width: '75%',
     borderRadius: 1,
     borderWidth: 1,
     borderColor: 'black',
@@ -111,10 +115,10 @@ const styles = StyleSheet.create({
   },
   statusLabelStyle: {
     alignSelf: 'center',
-    fontSize: 12,
+    fontSize: Constants.FONT_SIZE.S,
     marginVertical: 4,
-    color: 'black',
-    fontFamily: 'Poppins-Regular',
+    color: Constants.COLOR.BLACK_COLOR,
+    fontFamily:Constants.FONT_FAMILY.fontFamilyRegular,
   },
   itemView: {
     flexDirection: 'row',

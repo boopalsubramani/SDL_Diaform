@@ -20,6 +20,7 @@ import { useCollectionDetailsMutation } from '../redux/service/CollectionDetails
 import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
+import moment from 'moment';
 
 
 interface TransactionDetail {
@@ -46,6 +47,301 @@ interface PayMode {
   PayMode: string;
   PayDescription: string;
 }
+
+
+// const CollectionScreen = () => {
+//   const [dropdownVisible, setDropdownVisible] = useState(false);
+//   const [selectedPayMode, setSelectedPayMode] = useState({
+//     PayMode: '',
+//     PayDescription: 'Pay Mode',
+//   });
+//   const { settings } = useAppSettings();
+//   const [selectedFromDate, setSelectedFromDate] = useState('');
+//   const [selectedToDate, setSelectedToDate] = useState('');
+//   const [showCalendar, setShowCalendar] = useState(false);
+//   const [calendarType, setCalendarType] = useState('');
+//   const [payModes, setPayModes] = useState<PayMode[]>([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [noDataFound, setNoDataFound] = useState(false);
+//   const [animatedValues, setAnimatedValues] = useState<Animated.Value[]>([]);
+//   const { userData } = useUser();
+//   const [collectionDetails, setCollectionDetails] = useState<TransactionDetail[]>([]);
+
+//   const [fetchAPIReq] = useFetchApiMutation();
+//   const [collectionDetailsReq] = useCollectionDetailsMutation();
+
+//   const labels = settings?.Message?.[0]?.Labels || {};
+
+//   const getLabel = (key: any) => {
+//     return labels[key]?.defaultMessage || '';
+//   };
+
+//   const formatDate = (date: any) => {
+//     const day = String(date.getDate()).padStart(2, '0');
+//     const month = String(date.getMonth() + 1).padStart(2, '0');
+//     const year = date.getFullYear();
+//     return `${day}/${month}/${year}`;
+//   };
+
+//   const formatDateForRequest = (date: any) => {
+//     const [day, month, year] = date.split('/');
+//     return `${year}/${month}/${day}`;
+//   };
+
+//   useEffect(() => {
+//     const currentDate = new Date();
+//     setSelectedFromDate(formatDate(currentDate));
+//     setSelectedToDate(formatDate(currentDate));
+//     fetchPayModeList();
+//   }, []);
+
+//   useEffect(() => {
+//     // Initialize animated values when transactionDetails change
+//     setAnimatedValues(collectionDetails.map(() => new Animated.Value(0)));
+//   }, [collectionDetails])
+
+//   useEffect(() => {
+//     Animated.stagger(100, animatedValues.map((animatedValue) => {
+//       return Animated.timing(animatedValue, {
+//         toValue: 1,
+//         duration: 500,
+//         useNativeDriver: true,
+//       });
+//     })).start();
+//   }, [animatedValues]);
+
+//   const fetchPayModeList = async () => {
+//     setIsLoading(true);
+//     try {
+//       const fetchTitleObj = {
+//         Mode: 'Y',
+//         Command: 'OLXV65571F',
+//       };
+//       const response = await fetchAPIReq(fetchTitleObj).unwrap();
+//       if (response?.TableData?.Paymodes) {
+//         setPayModes(response.TableData.Paymodes);
+//       } else {
+//         console.warn('No Paymodes found in response');
+//       }
+//     } catch (error) {
+//       console.error('Error fetching pay modes:', error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const fetchCollectionDetails = async () => {
+//     setIsLoading(true);
+//     setNoDataFound(false);
+//     try {
+//       const requestPayload = {
+//         Usertype: userData?.UserType,
+//         Username: userData?.UserCode,
+//         Firm_No: '01',
+//         From_Date: formatDateForRequest(selectedFromDate),
+//         To_Date: formatDateForRequest(selectedToDate),
+//         Pay_Type: selectedPayMode.PayMode,
+//       };
+//       const response = await collectionDetailsReq(requestPayload).unwrap();
+//       if (response.SuccessFlag === 'true') {
+//         if (response.Message.length > 0) {
+//           setCollectionDetails(response.Message);
+//         } else {
+//           setNoDataFound(true);
+//         }
+//       } else {
+//         console.warn('Failed to fetch collection details');
+//       }
+//     } catch (error) {
+//       console.error('Error fetching collection details:', error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const toggleDropdown = () => {
+//     setDropdownVisible(!dropdownVisible);
+//   };
+
+//   const openCalendar = (type: any) => {
+//     setCalendarType(type);
+//     setShowCalendar(true);
+//   };
+
+
+//   const handleDateSelection = (date: any) => {
+//     if (calendarType === 'from') {
+//       setSelectedFromDate(formatDate(date));
+//     } else {
+//       setSelectedToDate(formatDate(date));
+//     }
+//     setShowCalendar(false);
+//     fetchCollectionDetails();
+//   };
+
+
+
+//   return (
+//     <SafeAreaView style={styles.safeArea}>
+//       <NavigationBar title="Collection" />
+//       <View style={styles.row}>
+//         <View style={styles.inputContainer}>
+//           <Text style={styles.label}>Payment</Text>
+//           <View style={styles.card}>
+//             <TouchableOpacity onPress={toggleDropdown} style={styles.dropdown}>
+//               <Text style={styles.dropdownText}>{selectedPayMode.PayDescription}</Text>
+//               <Image
+//                 source={dropdownVisible ? require('../images/arrowUp.png') : require('../images/arrowDown.png')}
+//                 style={styles.icon}
+//               />
+//             </TouchableOpacity>
+//           </View>
+//         </View>
+
+//         <View style={styles.inputContainer}>
+//           <Text style={styles.label}>From</Text>
+//           <View style={styles.card}>
+//             <TouchableOpacity onPress={() => openCalendar('from')} style={styles.dropdown}>
+//               <Text style={styles.dropdownText}>{selectedFromDate}</Text>
+//               <Image source={require('../images/calendar.png')} style={styles.icon} />
+//             </TouchableOpacity>
+//           </View>
+//         </View>
+
+//         <View style={styles.inputContainer}>
+//           <Text style={styles.label}>To</Text>
+//           <View style={styles.card}>
+//             <TouchableOpacity onPress={() => openCalendar('to')} style={styles.dropdown}>
+//               <Text style={styles.dropdownText}>{selectedToDate}</Text>
+//               <Image source={require('../images/calendar.png')} style={styles.icon} />
+//             </TouchableOpacity>
+//           </View>
+//         </View>
+//       </View>
+
+//       <ScrollView contentContainerStyle={styles.container}>
+//         {noDataFound ? (
+//           <View style={styles.noDataContainer}>
+//             <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular' }}>
+//               {getLabel('aboutscr_5')}
+//             </Text>
+//           </View>
+//         ) : (
+//           collectionDetails && collectionDetails.length > 0 ? (
+//             <View style={styles.detailsContainer}>
+//               {collectionDetails.map((detail, index) => (
+//                 <Animated.View
+//                   key={index}
+//                   style={[
+//                     styles.detailCard,
+//                     {
+//                       opacity: animatedValues[index],
+//                     },
+//                   ]}
+//                 >
+
+//                   <View style={{ flexDirection: "row" }}>
+//                     <View style={styles.Column1}>
+//                       <Text style={styles.CardBookingNo}>Branch</Text>
+//                       <Text style={styles.CardBookingNo}>SID No & Date</Text>
+//                       <Text style={styles.CardBookingNo}>Ref Type</Text>
+//                       <Text style={styles.CardBookingNo}>Ref Name</Text>
+//                       <Text style={styles.CardBookingNo}>Patient</Text>
+//                     </View>
+//                     <View style={styles.Column2}>
+//                       <View style={styles.columnContainer}>
+//                         <Text style={styles.detailValue}>{detail.Branch_Desc}</Text>
+//                         <Text style={styles.detailValue}>{detail.Sid_No} & {detail.Sid_Date}</Text>
+//                         <Text style={styles.detailValue}>{detail.Ref_Type}</Text>
+//                         <Text style={styles.detailValue}>{detail.Ref_Name}</Text>
+//                         <Text style={styles.detailValue}>{detail.PName}</Text>
+//                       </View>
+//                     </View>
+//                   </View>
+
+//                   <View style={{ flexDirection: 'row', }}>
+//                     {/* Bill Mode & Bill Time in Column */}
+//                     <View style={styles.Row1}>
+//                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+//                         <Text style={styles.BillText}>Bill Mode </Text>
+//                         <Text style={styles.BillTextValue}>{detail.Pay_Mode}</Text>
+//                       </View>
+//                       <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
+//                         <Text style={styles.BillText}>Bill Time </Text>
+//                         <Text style={styles.BillTextValue}>{detail.Bill_Time}</Text>
+//                       </View>
+//                     </View>
+
+//                     <View style={styles.Row2}>
+//                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+//                         <Text style={styles.BillText}>Bill Date </Text>
+//                         <Text style={styles.BillTextValue}>{detail.Bill_Date}</Text>
+//                       </View>
+//                       <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
+//                         <Text style={styles.BillText}>Bill No </Text>
+//                         <Text style={styles.BillTextValue}>{detail.Bill_No}</Text>
+//                       </View>
+//                       <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
+//                         <Text style={styles.BillText}>Bill Amount</Text>
+//                         <Text style={styles.BillTextValue}>{detail.Bill_Amount}.00</Text>
+//                       </View>
+//                     </View>
+//                   </View>
+//                 </Animated.View>
+//               ))}
+//             </View>
+//           ) : (
+//             <View style={styles.noDataContainer}>
+//               <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular' }}>
+//                 {getLabel('aboutscr_5')}
+//               </Text>
+//             </View>
+//           )
+//         )}
+//       </ScrollView>
+
+//       {/* Dropdown Modal */}
+//       <Modal visible={dropdownVisible} transparent animationType="fade">
+//         <TouchableOpacity style={styles.overlay} onPress={() => setDropdownVisible(false)} />
+//         <View style={styles.dropdownMenu}>
+//           {isLoading ? (
+//             <Spinner
+//               isVisible={true}
+//               size={40}
+//               type={'Wave'}
+//               color={Constants.COLOR.THEME_COLOR}
+//             />
+//           ) : (
+//             <FlatList
+//               data={payModes}
+//               keyExtractor={(item) => item.PayMode}
+//               renderItem={({ item }) => (
+//                 <TouchableOpacity
+//                   style={styles.dropdownItem}
+//                   onPress={() => {
+//                     setSelectedPayMode(item);
+//                     setDropdownVisible(false);
+//                     fetchCollectionDetails();
+//                   }}
+//                 >
+//                   <Text style={styles.dropdownItemText}>{item.PayDescription}</Text>
+//                 </TouchableOpacity>
+//               )}
+//             />
+//           )}
+//         </View>
+//       </Modal>
+
+//       {/* Calendar Modal */}
+//       <CalendarModal
+//         isVisible={showCalendar}
+//         onConfirm={handleDateSelection}
+//         onCancel={() => setShowCalendar(false)}
+//         mode="date"
+//       />
+//     </SafeAreaView>
+//   );
+// };
 
 
 const CollectionScreen = () => {
@@ -76,6 +372,11 @@ const CollectionScreen = () => {
   };
 
   const formatDate = (date: any) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.error("Invalid date object:", date);
+      return "Invalid Date";
+    }
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -97,7 +398,7 @@ const CollectionScreen = () => {
   useEffect(() => {
     // Initialize animated values when transactionDetails change
     setAnimatedValues(collectionDetails.map(() => new Animated.Value(0)));
-  }, [collectionDetails])
+  }, [collectionDetails]);
 
   useEffect(() => {
     Animated.stagger(100, animatedValues.map((animatedValue) => {
@@ -160,7 +461,6 @@ const CollectionScreen = () => {
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
-    fetchCollectionDetails();
   };
 
   const openCalendar = (type: any) => {
@@ -168,11 +468,12 @@ const CollectionScreen = () => {
     setShowCalendar(true);
   };
 
-  const handleDateSelection = (day: any) => {
+  const handleDateSelection = (selectedDate: any) => {
+    const formattedDate = formatDate(new Date(selectedDate));
     if (calendarType === 'from') {
-      setSelectedFromDate(day.dateString.split('-').reverse().join('/'));
+      setSelectedFromDate(formattedDate);
     } else {
-      setSelectedToDate(day.dateString.split('-').reverse().join('/'));
+      setSelectedToDate(formattedDate);
     }
     setShowCalendar(false);
     fetchCollectionDetails();
@@ -181,46 +482,42 @@ const CollectionScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <NavigationBar title="Collection" />
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Payment</Text>
-            <View style={styles.card}>
-              <TouchableOpacity onPress={toggleDropdown} style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedPayMode.PayDescription}</Text>
-                <Image
-                  source={
-                    dropdownVisible
-                      ? require('../images/arrowUp.png')
-                      : require('../images/arrowDown.png')
-                  }
-                  style={styles.icon}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>From</Text>
-            <View style={styles.card}>
-              <TouchableOpacity onPress={() => openCalendar('from')} style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedFromDate}</Text>
-                <Image source={require('../images/calendar.png')} style={styles.icon} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>To</Text>
-            <View style={styles.card}>
-              <TouchableOpacity onPress={() => openCalendar('to')} style={styles.dropdown}>
-                <Text style={styles.dropdownText}>{selectedToDate}</Text>
-                <Image source={require('../images/calendar.png')} style={styles.icon} />
-              </TouchableOpacity>
-            </View>
+      <View style={styles.row}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Payment</Text>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={toggleDropdown} style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{selectedPayMode.PayDescription}</Text>
+              <Image
+                source={dropdownVisible ? require('../images/arrowUp.png') : require('../images/arrowDown.png')}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>From</Text>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={() => openCalendar('from')} style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{selectedFromDate}</Text>
+              <Image source={require('../images/calendar.png')} style={styles.icon} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>To</Text>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={() => openCalendar('to')} style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{selectedToDate}</Text>
+              <Image source={require('../images/calendar.png')} style={styles.icon} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.container}>
         {noDataFound ? (
           <View style={styles.noDataContainer}>
             <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular' }}>
@@ -240,7 +537,6 @@ const CollectionScreen = () => {
                     },
                   ]}
                 >
-
                   <View style={{ flexDirection: "row" }}>
                     <View style={styles.Column1}>
                       <Text style={styles.CardBookingNo}>Branch</Text>
@@ -261,7 +557,6 @@ const CollectionScreen = () => {
                   </View>
 
                   <View style={{ flexDirection: 'row', }}>
-                    {/* Bill Mode & Bill Time in Column */}
                     <View style={styles.Row1}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Text style={styles.BillText}>Bill Mode </Text>
@@ -301,7 +596,6 @@ const CollectionScreen = () => {
         )}
       </ScrollView>
 
-      {/* Dropdown Modal */}
       <Modal visible={dropdownVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.overlay} onPress={() => setDropdownVisible(false)} />
         <View style={styles.dropdownMenu}>
@@ -333,7 +627,6 @@ const CollectionScreen = () => {
         </View>
       </Modal>
 
-      {/* Calendar Modal */}
       <CalendarModal
         isVisible={showCalendar}
         onConfirm={handleDateSelection}
@@ -355,15 +648,24 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    flex: 1,
+    marginHorizontal: 5,
+    marginVertical: 10
   },
   card: {
     backgroundColor: Constants.COLOR.WHITE_COLOR,
     borderRadius: 8,
     shadowColor: Constants.COLOR.THEME_COLOR,
     elevation: 3,
-    padding: 6,
-    marginRight: 5
+    padding: 10,
+    width: '100%',
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   label: {
     fontSize: Constants.FONT_SIZE.S,
@@ -373,6 +675,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
   },
   dropdownText: {
     fontSize: Constants.FONT_SIZE.XS,

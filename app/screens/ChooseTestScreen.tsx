@@ -11,7 +11,7 @@ import ButtonNext from '../common/NextButton';
 import { useAppSettings } from '../common/AppSettingContext';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from '../routes/Types';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
 import { useUser } from '../common/UserContext';
 
@@ -20,19 +20,34 @@ const deviceWidth = Dimensions.get('window').width;
 
 type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 
+interface Language {
+    Alignment: 'ltr' | 'rtl';
+}
+
 // const ChooseTestScreen = ({ route, showHeader = true }: any) => {
-//     const { selectedPatientDetails, imageUri: initialImageUri, totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [] } = route.params;
+//     const { selectedPatientDetails, selectedTests = [], totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [] } = route.params;
 //     const navigation = useNavigation<NavigationProp>();
-//     const { settings } = useAppSettings();
+//     const { labels } = useAppSettings();
 //     const { cartItems, setCartItems } = useCart();
 //     const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
 //     const [isModalVisible, setModalVisible] = useState(false);
-//     const [imageUri, setImageUri] = useState(initialImageUri);
+//     const [imageUri, setImageUri] = useState(null);
 //     const { imageBase64, convertImageToBase64 } = useUser();
+//     const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+
+//     console.log('Route Params in ChooseTestScreen:', route.params);
 
 //     const updatedCart = useSelector(
 //         (state: RootState) => state.bookTestSearch.updatedCartData
 //     );
+
+//     useEffect(() => {
+//         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+//     }, [selectedLanguage]);
+
+//     const getLabel = (key: string) => {
+//         return labels[key]?.defaultMessage || '';
+//     };
 
 //     const handleRemoveImage = () => {
 //         setImageUri(null);
@@ -45,17 +60,10 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 //     }, [imageUri]);
 
 //     useEffect(() => {
-//         // Clear the cart when the component mounts or route params change
-//         setCartItems([]);
-//         setTotalCartValue(0);
-//     }, [route.params, setCartItems]);
-
-
-//     const labels = settings?.Message?.[0]?.Labels || {};
-
-//     const getLabel = (key: string) => {
-//         return labels[key]?.defaultMessage || '';
-//     };
+//         // Initialize cart items from selectedTests
+//         setCartItems(selectedTests.map(test => test.Service_Name));
+//         setTotalCartValue(initialTotalCartValue);
+//     }, [route.params, setCartItems, selectedTests, initialTotalCartValue]);
 
 //     useEffect(() => {
 //         const handleBackPress = () => true;
@@ -74,7 +82,9 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 //     };
 
 //     const handleSearchTest = () => {
-//         navigation.navigate('BookTestSearch', { selectedPatientDetails });
+//         const updatedTotal = calculateTotalCartValue(cartItems); 
+
+//         navigation.navigate('BookTestSearch', { selectedPatientDetails, selectedTests: updatedCart, totalCartValue: updatedTotal });
 //     };
 
 //     const handleCartClick = () => {
@@ -98,7 +108,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 //             const updatedCartItems = prevCartItems.includes(itemName)
 //                 ? prevCartItems.filter(item => item !== itemName)
 //                 : [...prevCartItems, itemName];
-//             calculateTotalCartValue(updatedCartItems);
+//             // const updateTotal = calculateTotalCartValue(updatedCartItems);
 //             return updatedCartItems;
 //         });
 //     };
@@ -127,10 +137,9 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 //         navigation.navigate('Calender', { selectedPatientDetails, totalCartValue, testData, selectedTests: cartItems });
 //     };
 
-
 //     const handleProceedClick = () => {
-//         if (cartItems.length > 0) {
-//             const selectedTests = cartItems.map(itemName => {
+//         if (updatedCart.length > 0) {
+//             const selectedTests = updatedCart.map(itemName => {
 //                 const item = Array.isArray(testData) ? testData.find((test: { Service_Name: string; }) => test.Service_Name === itemName) : null;
 //                 return {
 //                     Service_Name: item?.Service_Name,
@@ -261,25 +270,29 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "ChooseTest">;
 
 // export default ChooseTestScreen;
 
+
 const ChooseTestScreen = ({ route, showHeader = true }: any) => {
-    const { selectedPatientDetails, selectedTests = [], totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [] } = route.params;
+    const { selectedPatientDetails, selectedTests = [], totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [], imageUri: passedImageUri } = route.params;
     const navigation = useNavigation<NavigationProp>();
-    const { settings, labels } = useAppSettings();
+    const { labels } = useAppSettings();
     const { cartItems, setCartItems } = useCart();
     const [totalCartValue, setTotalCartValue] = useState(initialTotalCartValue);
     const [isModalVisible, setModalVisible] = useState(false);
-    const [imageUri, setImageUri] = useState(null);
+    const [imageUri, setImageUri] = useState(passedImageUri);
     const { imageBase64, convertImageToBase64 } = useUser();
-    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
-
+    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
     const updatedCart = useSelector(
         (state: RootState) => state.bookTestSearch.updatedCartData
     );
 
     useEffect(() => {
-        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
     }, [selectedLanguage]);
+
+    const getLabel = (key: string) => {
+        return labels[key]?.defaultMessage || '';
+    };
 
     const handleRemoveImage = () => {
         setImageUri(null);
@@ -292,16 +305,10 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     }, [imageUri]);
 
     useEffect(() => {
-        // Initialize cart items from selectedTests
-        setCartItems(selectedTests.map(test => test.Service_Name));
+        setCartItems(selectedTests.map((test: { Service_Name: any; }) => test.Service_Name));
         setTotalCartValue(initialTotalCartValue);
-    }, [route.params, setCartItems, selectedTests, initialTotalCartValue]);
+    }, [setCartItems, initialTotalCartValue]);
 
-    // const labels = settings?.Message?.[0]?.Labels || {};
-
-    const getLabel = (key: string) => {
-        return labels[key]?.defaultMessage || '';
-    };
 
     useEffect(() => {
         const handleBackPress = () => true;
@@ -309,9 +316,11 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
 
         if (shouldNavigateToCalender) {
             const timer = setTimeout(handleProceedClick, 1000);
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(timer);
+                backHandler.remove();
+            };
         }
-
         return () => backHandler.remove();
     }, [shouldNavigateToCalender]);
 
@@ -320,7 +329,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     };
 
     const handleSearchTest = () => {
-        const updatedTotal = calculateTotalCartValue(cartItems);  // Ensure total is correct
+        const updatedTotal = calculateTotalCartValue(cartItems);
 
         navigation.navigate('BookTestSearch', { selectedPatientDetails, selectedTests: updatedCart, totalCartValue: updatedTotal });
     };
@@ -405,8 +414,10 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                     <Text style={styles.testPrice}>{item.Amount} INR</Text>
                     <TouchableOpacity onPress={() => handleToggleCart(item.Service_Name)}>
                         <View style={styles.addToCartContainer}>
-                            <Image source={require('../images/addCart.png')} style={styles.CartIcon} />
-                            <Text style={{ fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyMedium, color: Constants.COLOR.WHITE_COLOR }}>Remove</Text>
+                            <Image
+                                source={Math.random() > 0.5 ? require('../images/removeCart.png') : require('../images/addCart.png')}
+                                style={styles.CartIcon}
+                            />
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -447,10 +458,10 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                     </View>
 
                     {/* Move the selected image above upload prescription */}
-                    {imageBase64 && (
+                    {imageUri && (
                         <View style={styles.imageContainer}>
                             <Image
-                                source={{ uri: `data:image/png;base64,${imageBase64}` }}
+                                source={{ uri: imageUri }}
                                 style={styles.selectedImage}
                             />
                             <TouchableOpacity style={styles.removeImageButton} onPress={handleRemoveImage}>
@@ -493,6 +504,8 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                         </View>
                     </TouchableWithoutFeedback>
                 </Modal>
+
+
             )}
             <View style={styles.navigationContainer}>
                 <TouchableOpacity onPress={handleBack}>
@@ -599,7 +612,7 @@ const styles = StyleSheet.create({
         fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold
     },
     uploadContainer: {
-
+        margin: 10
     },
     uploadButtonView: {
         marginTop: 20,
