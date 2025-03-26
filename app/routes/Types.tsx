@@ -10,6 +10,7 @@ export type RootStackParamList = {
     selectedPatientDetails: any;
     selectedTests: any;
     totalCartValue: any;
+    patientData: any;
 
   };
   ChooseTest: {
@@ -18,22 +19,26 @@ export type RootStackParamList = {
     totalCartValue: number;
     shouldNavigateToCalender: boolean;
     testData: any[];
+    patientData: any;
   };
   Calender: {
     selectedTests: { Service_Name: string; Amount: number }[];
     selectedPatientDetails: any;
     totalCartValue: number;
     testData: any[];
+    patientData: any;
 
   };
   PaymentDetail: {
     testData: any[];
     imageUri: any[];
+    patientData: any;
   };
   BookTest: any;
   Collection: any[];
   Transaction: any;
   PaymentFailure: any;
+  Payment: any;
 
 
 

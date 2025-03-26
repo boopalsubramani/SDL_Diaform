@@ -10,44 +10,59 @@ import {
     Dimensions,
     I18nManager,
 } from 'react-native';
-import ImagePicker from 'react-native-image-picker';
-import Constants from "../util/Constants";
 import { useSelector } from 'react-redux';
-import { RootState } from '../redux/Store';
 import { useAppSettings } from '../common/AppSettingContext';
+import { useUser } from '../common/UserContext';
+import Constants from "../util/Constants";
+import { RootState } from '../redux/Store';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get("window").width;
+
 interface Language {
     Alignment: 'ltr' | 'rtl';
 }
 
+const InputField = ({ label, value, onChangeText, placeholder, keyboardType, editable }: any) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.label}>{label}</Text>
+        <TextInput
+            style={styles.input}
+            placeholder={placeholder}
+            value={value}
+            onChangeText={onChangeText}
+            keyboardType={keyboardType}
+            editable={editable}
+        />
+    </View>
+);
+
 const ProfileScreen = ({ navigation }: any) => {
     const { labels } = useAppSettings();
-    const [fullName, setFullName] = useState('John Doe');
-    const [email, setEmail] = useState('johndoe@example.com');
+    const { userData } = useUser();
+    const [fullName, setFullName] = useState(userData?.Names || '');
+    const [email, setEmail] = useState(userData?.Email || '');
     const [dob, setDOB] = useState('1990-01-01');
-    const [mobileNumber, setMobileNumber] = useState('1234567890');
+    const [mobileNumber, setMobileNumber] = useState(userData?.Mobile || '');
     const [isEditMode, setIsEditMode] = useState(false);
     const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
-
     useEffect(() => {
         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
-    }, [selectedLanguage]);
+        updateUserData(userData);
+    }, [selectedLanguage, userData]);
 
-    const getLabel = (key: string) => {
-        return labels[key]?.defaultMessage || '';
+    const updateUserData = (data: any) => {
+        setFullName(data?.Names || '');
+        setEmail(data?.Email || '');
+        setMobileNumber(data?.Mobile || '');
     };
 
+    const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
-    const handleCross = () => {
-        navigation.goBack();
-    };
+    const handleCross = () => navigation.goBack();
 
-    const handleEditProfile = () => {
-        setIsEditMode(!isEditMode);
-    };
+    const handleEditProfile = () => setIsEditMode(!isEditMode);
 
     const handleUpdate = () => {
         if (isEditMode) {
@@ -61,16 +76,9 @@ const ProfileScreen = ({ navigation }: any) => {
     return (
         <View style={styles.mainContainer}>
             <View style={styles.myProfileView}>
-                <Text style={{
-                    fontSize: Constants.FONT_SIZE.L,
-                    color: Constants.COLOR.WHITE_COLOR,
-                    fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold
-                }}>My Profile</Text>
+                <Text style={styles.headerText}>My Profile</Text>
                 <TouchableOpacity onPress={handleCross}>
-                    <Image
-                        source={require('../images/black_cross.png')}
-                        style={styles.crossImg}
-                    />
+                    <Image source={require('../images/black_cross.png')} style={styles.crossImg} />
                 </TouchableOpacity>
             </View>
             <View style={styles.divider} />
@@ -83,70 +91,51 @@ const ProfileScreen = ({ navigation }: any) => {
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity>
-                        <Image
-                            style={styles.headerRightImage}
-                            source={require('../images/profileImg.png')}
-                        />
+                        <Image style={styles.headerRightImage} source={require('../images/profileImg.png')} />
                     </TouchableOpacity>
                 </View>
             </View>
-
-
             <View style={styles.secondInnerContainer}>
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>{getLabel('proscr_4')}</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your name"
-                        value={fullName}
-                        onChangeText={setFullName}
-                        editable={isEditMode}
-                    />
-                </View>
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>{getLabel('proscr_8')}</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your email"
-                        keyboardType="email-address"
-                        value={email}
-                        onChangeText={text => setEmail(text.toLowerCase())}
-                        autoCapitalize="none"
-                        editable={isEditMode}
-                    />
-                </View>
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>{getLabel('proscr_9')}</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your DOB"
-                        keyboardType="numeric"
-                        value={dob}
-                        onChangeText={setDOB}
-                        editable={isEditMode}
-                    />
-                </View>
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Phone Number</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your phone number"
-                        keyboardType="phone-pad"
-                        value={mobileNumber}
-                        onChangeText={setMobileNumber}
-                        editable={isEditMode}
-                    />
-                </View>
+                <InputField
+                    label={getLabel('proscr_4')}
+                    value={fullName}
+                    onChangeText={setFullName}
+                    placeholder="Enter your name"
+                    editable={isEditMode}
+                />
+                <InputField
+                    label={getLabel('proscr_8')}
+                    value={email}
+                    onChangeText={(text: string) => setEmail(text.toLowerCase())}
+                    placeholder="Enter your email"
+                    keyboardType="email-address"
+                    editable={isEditMode}
+                />
+                <InputField
+                    label={getLabel('proscr_9')}
+                    value={dob}
+                    onChangeText={setDOB}
+                    placeholder="Enter your DOB"
+                    keyboardType="numeric"
+                    editable={isEditMode}
+                />
+                <InputField
+                    label="Phone Number"
+                    value={mobileNumber}
+                    onChangeText={setMobileNumber}
+                    placeholder="Enter your phone number"
+                    keyboardType="phone-pad"
+                    editable={isEditMode}
+                />
             </View>
             <TouchableOpacity onPress={handleUpdate} style={styles.HomeButton}>
-                <Text style={styles.HomeButtonText}>
-                    {isEditMode ? 'Update' : 'Home'}
-                </Text>
-                {/* <ButtonHome title={isEditMode ? "Update" : "Home"} /> */}
+                <Text style={styles.HomeButtonText}>{isEditMode ? 'Update' : 'Home'}</Text>
             </TouchableOpacity>
-        </View >
+        </View>
     );
 };
+
+export default ProfileScreen;
 
 const styles = StyleSheet.create({
     mainContainer: {
@@ -159,16 +148,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         alignItems: 'center',
         height: 60,
-        backgroundColor: Constants.COLOR.THEME_COLOR
+        backgroundColor: Constants.COLOR.THEME_COLOR,
+    },
+    headerText: {
+        fontSize: Constants.FONT_SIZE.L,
+        color: Constants.COLOR.WHITE_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
     },
     crossImg: {
         width: deviceHeight / 35,
         height: deviceHeight / 35,
-        tintColor: Constants.COLOR.WHITE_COLOR
+        tintColor: Constants.COLOR.WHITE_COLOR,
     },
-    divider: {
-
-    },
+    divider: {},
     editProfileContainer: {
         alignItems: 'center',
     },
@@ -190,7 +182,6 @@ const styles = StyleSheet.create({
         fontSize: Constants.FONT_SIZE.SM,
         marginVertical: 8,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-
     },
     secondInnerContainer: {
         flexDirection: 'column',
@@ -241,5 +232,3 @@ const styles = StyleSheet.create({
         height: deviceHeight / 8,
     },
 });
-
-export default ProfileScreen;

@@ -12,28 +12,20 @@ import {
   ScrollView,
   Animated,
   Alert,
-  PermissionsAndroid,
-  Platform,
   I18nManager,
   Linking,
-  Clipboard,
-  Share,
 } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from '../util/Constants';
-import FileViewer from 'react-native-file-viewer';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import Spinner from 'react-native-spinkit';
 import { useUser } from '../common/UserContext';
 import { useTransactionDetailsMutation } from '../redux/service/TransactionDetailsService';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useInvoiceDownloadMutation } from '../redux/service/InvoiceDownloadService';
-import RNFS from 'react-native-fs';
-import RNFetchBlob from 'rn-fetch-blob';
 import CalendarModal from '../common/Calender';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
-
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -543,11 +535,6 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: Constants.FONT_SIZE.XS,
     fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-  },
-  calendarContainer: {
-    flex: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 10,
   },
   label: {
     fontSize: Constants.FONT_SIZE.S,

@@ -10,6 +10,7 @@ import BookTestHeader from './BookTestHeader';
 import ButtonBack from '../common/BackButton';
 import ButtonNext from '../common/NextButton';
 import { useSelector } from 'react-redux';
+import { Checkbox } from 'react-native-paper';
 import { RootState } from '../redux/Store';
 import CalendarModal from '../common/Calender';
 
@@ -25,7 +26,7 @@ interface Language {
 }
 
 const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
-  const { selectedTests = [], selectedPatientDetails, testData } = route?.params || {};
+  const { selectedTests = [], selectedPatientDetails, testData, patientData } = route?.params || {};
   const { labels } = useAppSettings();
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
@@ -35,13 +36,13 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const [isChecked, setIsChecked] = useState(false);
   const [currentYear, setCurrentYear] = useState(moment().year());
   const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
-
-  const toggleCalendar = () => setShowCalendar(!showCalendar);
-  const toggleTimePicker = () => setShowTimePicker(!showTimePicker);
-
   const updatedCart = useSelector(
     (state: RootState) => state.bookTestSearch.updatedCartData
   ) as Test[];
+  const toggleCalendar = () => setShowCalendar(!showCalendar);
+  const toggleTimePicker = () => setShowTimePicker(!showTimePicker);
+
+  console.log('patientDataCalender', patientData);
 
   useEffect(() => {
     I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
@@ -51,11 +52,11 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
     return labels[key]?.defaultMessage || '';
   };
 
-  const handleDateInputChange = (text: any) => {
+  const handleDateInputChange = (text: string) => {
     setDateInput(text);
   };
 
-  const handleTimeSelected = (time: any) => {
+  const handleTimeSelected = (time: moment.MomentInput) => {
     const now = moment();
     const selectedMoment = moment(time);
     if (selectedDate === now.format('YYYY-MM-DD') && selectedMoment.isBefore(now, 'minute')) {
@@ -70,7 +71,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
     setDateInput(`${selectedDate || now.format('YYYY-MM-DD')} ${formattedTime}`);
   };
 
-  const handleDateSelection = (date: any) => {
+  const handleDateSelection = (date: moment.MomentInput) => {
     if (!date) {
       console.error('Invalid date object:', date);
       return;
@@ -128,7 +129,6 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
       return;
     }
 
-    // Check if date and time are selected
     if (!selectedDate || !selectedTime) {
       Alert.alert(
         Constants.ALERT.TITLE.INFO,
@@ -137,7 +137,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
       return;
     }
 
-    navigation.navigate('PaymentDetail', { selectedTests, selectedDate, selectedTime, selectedPatientDetails, testData });
+    navigation.navigate('PaymentDetail', { selectedTests, selectedDate, selectedTime, selectedPatientDetails, testData, patientData });
   };
 
   useEffect(() => {
@@ -162,7 +162,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.cartSection}>
           <Text style={styles.cartTitle}>{getLabel('labtsummary_5')}</Text>
-          {updatedCart.map((test: Test, index: number) => {
+          {updatedCart.map((test, index) => {
             return (
               <View key={index} style={styles.cartItem}>
                 <Text style={styles.cartItemName} numberOfLines={2}>{test.Service_Name}</Text>
@@ -172,11 +172,8 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           })}
           <View style={styles.cartSubtotal}>
             <Text style={styles.cartSubtotalLabel}>{getLabel('labtsummary_6')}</Text>
-            {/* <Text style={styles.cartSubtotalAmount}>
-              (P) {updatedCart.reduce((acc: number, test: Test) => acc + parseFloat(test.Amount || '0'), 0).toFixed(2)}
-            </Text> */}
             <Text style={styles.cartSubtotalAmount}>
-              (P) {updatedCart.reduce((acc: number, test: Test) => acc + test.Amount, 0).toFixed(2).toString()}
+              (P) {updatedCart.reduce((acc, test) => acc + test.Amount, 0).toFixed(2).toString()}
             </Text>
           </View>
         </View>
@@ -186,11 +183,10 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
 
           {/* Checkbox Row */}
           <View style={styles.checkboxRow}>
-            <TouchableOpacity onPress={handleCheckboxToggle} style={styles.checkboxContainer}>
-              <View style={[styles.checkbox, isChecked && styles.checkedCheckbox]}>
-                {isChecked && <View style={styles.checkmark} />}
-              </View>
-            </TouchableOpacity>
+            <Checkbox
+              status={isChecked ? 'checked' : 'unchecked'}
+              onPress={handleCheckboxToggle}
+            />
             <Text style={styles.checkboxText}>Current date and time</Text>
           </View>
         </View>

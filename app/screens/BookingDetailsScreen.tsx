@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        width:'90%',
+        width: '90%',
         fontSize: Constants.FONT_SIZE.SM,
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
     },

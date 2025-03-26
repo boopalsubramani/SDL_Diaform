@@ -29,7 +29,7 @@ const { width, height } = Dimensions.get('window');
 
 const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const { userData } = useUser();
-    const { settings, labels, selectedLanguage } = useAppSettings();
+    const { labels, selectedLanguage } = useAppSettings();
     const navigation = useNavigation<NavigationProp>();
     const [codeQuery, setCodeQuery] = useState('');
     const [nameQuery, setNameQuery] = useState('');
@@ -49,8 +49,6 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     console.log('SelectedPatientDetails', selectedPatientDetails)
     console.log('selectedPhysicianDetails', selectedPhysicianDetails)
     console.log('patientData', patientData)
-
-    // const labels = settings?.Message?.[0]?.Labels || {};
 
     const getLabel = (key: string) => {
         return labels[key]?.defaultMessage || '';
@@ -236,7 +234,8 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                 selectedTests: [],
                 totalCartValue: 0,
                 shouldNavigateToCalender: false,
-                fromChoosePatient: true
+                fromChoosePatient: true,
+                patientData,
             });
         } else {
             Alert.alert(
@@ -283,7 +282,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                 keyboardOpeningTime={0}
                 extraScrollHeight={10}
             >
-                <View style={{  paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.WHITE_COLOR }}>
+                <View style={{ paddingHorizontal: 10, paddingVertical: 10, backgroundColor: Constants.COLOR.WHITE_COLOR }}>
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={[styles.headerTitle, { textAlign: selectedLanguage.Alignment === 'rtl' ? 'right' : 'left' }]} >{getLabel('patinfo_4')}</Text>
@@ -380,9 +379,34 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
                                         style={styles.closeIcon}
                                     />
                                 </TouchableOpacity>
-                                <Text>Name: {patientData.Pt_Name}</Text>
-                                <Text>Phone: {patientData.Mobile_No}</Text>
-                                <Text>Dob: {patientData.Dob}</Text>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Name:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.Pt_Name}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Phone:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.Mobile_No}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Dob:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.Dob}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Patient_Type:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.Patient_Type}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>IP_No:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.IP_No}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Ward_Code:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.Ward_Code}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', }}>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Ref_No:</Text>
+                                    <Text style={[styles.patientDetailText, {}]}>{patientData.Ref_No}</Text>
+                                </View>
                             </View>
                         )}
                     </View>

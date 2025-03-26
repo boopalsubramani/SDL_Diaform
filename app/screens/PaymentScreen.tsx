@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, TextInput, Dimensions, FlatList } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from "../util/Constants";
@@ -8,8 +8,9 @@ import { useUser } from '../common/UserContext';
 import { usePaymentGatewayMutation } from '../redux/service/PatmentGatewayService';
 import SpinnerIndicator from '../common/SpinnerIndicator';
 import { Checkbox } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../routes/Types';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -19,6 +20,10 @@ interface Invoice {
   InvoiceNo: string;
   InvoiceDate: string;
   PatientDue: number;
+  Pat_Due: string;
+  Inv_No: string;
+  Inv_Firm: string;
+  Inv_Date: string;
 }
 
 interface PaymentItem {
@@ -26,7 +31,6 @@ interface PaymentItem {
   Pat_Due: string;
   Inv_Firm: string;
   Inv_Date: string;
-  // Add other properties as needed
 }
 
 interface WithoutInvoice {
@@ -39,13 +43,15 @@ interface Deposit {
 
 type PaymentData = Invoice[] | WithoutInvoice | Deposit;
 
-
 const PaymentScreen = () => {
   const navigation = useNavigation();
   const [selectedOption, setSelectedOption] = useState('With invoice');
   const [showInvoice, setShowInvoice] = useState(true);
   const { userData } = useUser();
   const [showWithoutInvoice, setShowWithoutInvoice] = useState(false);
+  const [payAmountInvoice, setPayAmountInvoice] = useState('0.00');
+  const [payAmountWithoutInvoice, setPayAmountWithoutInvoice] = useState('');
+  const [payAmountDeposit, setPayAmountDeposit] = useState('');
   const [payAmount, setPayAmount] = useState('');
   const [showDeposit, setShowDeposit] = useState(false);
   const [paymentData, setPaymentData] = useState<PaymentData>([]);
@@ -57,6 +63,7 @@ const PaymentScreen = () => {
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [selectedPayments, setSelectedPayments] = useState<{ [key: string]: string }>({});
+  const [canGoBack, setCanGoBack] = useState(false);
 
   const handleWebViewNavigationStateChange = (newNavState: any) => {
     const { url } = newNavState;
@@ -75,7 +82,7 @@ const PaymentScreen = () => {
         const response = await paymentDetailsReq({
           UserType: userData?.UserType,
           Username: userData?.UserCode,
-          PaymentType: selectedOption === 'With invoice' ? 'WI' : selectedOption === 'Without invoice' ? 'WOI' : 'D'
+          PaymentType: selectedOption === 'With invoice' ? 'WI' : selectedOption === 'Without invoice' ? 'WOI' : 'DP'
         });
         if (response.data && response.data.SuccessFlag === "true") {
           setPaymentData(response.data.Message);
@@ -106,23 +113,17 @@ const PaymentScreen = () => {
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedInvoices([]);
+      setPayAmountInvoice('0.00'); // Reset total for invoice
     } else {
-      const allInvoiceNos = paymentData.map((item: any) => item.Inv_No);
-      setSelectedInvoices(allInvoiceNos);
+      if (Array.isArray(paymentData)) {
+        const allInvoiceNos = paymentData.map((item: any) => item.Inv_No);
+        setSelectedInvoices(allInvoiceNos);
+
+        const totalAmount = paymentData.reduce((total, item) => total + parseFloat(item.Pat_Due), 0);
+        setPayAmountInvoice(totalAmount.toFixed(2)); // Only set for invoice
+      }
     }
     setSelectAll(!selectAll);
-  };
-
-  const handlePayAll = () => {
-    const totalDue = paymentData.reduce((total: number, item: { Inv_No: string; Pat_Due: string; }) => {
-      if (selectedInvoices.includes(item.Inv_No)) {
-        return total + parseFloat(item.Pat_Due);
-      }
-      return total;
-    }, 0);
-
-    setPayAmount(totalDue.toString());
-    handlePayment();
   };
 
   const handleInvoiceSelect = (invoiceNo: string) => {
@@ -135,11 +136,21 @@ const PaymentScreen = () => {
         updatedSelection = [...prevSelected, invoiceNo];
       }
 
-      setSelectAll(updatedSelection.length === paymentData.length);
+      if (Array.isArray(paymentData)) {
+        setSelectAll(updatedSelection.length === paymentData.length);
+
+        const totalAmount = paymentData
+          .filter((item: any) => updatedSelection.includes(item.Inv_No))
+          .reduce((total, item) => total + parseFloat(item.Pat_Due), 0);
+
+        setPayAmountInvoice(totalAmount.toFixed(2));
+      }
 
       return updatedSelection;
     });
   };
+
+
 
   const handlePaymentInputChange = (invoiceNo: string, value: string) => {
     setSelectedPayments((prev) => ({
@@ -152,105 +163,45 @@ const PaymentScreen = () => {
     navigation.navigate('Collection');
   };
 
-  const handleWithInvoice = () => {
-    navigation.navigate('Transaction');
+  const handlePayAll = () => {
+    if (Array.isArray(paymentData)) {
+      const totalDue = paymentData.reduce((total, item) => {
+        if (selectedInvoices.includes(item.Inv_No)) {
+          const amount = selectedPayments[item.Inv_No] ? parseFloat(selectedPayments[item.Inv_No]) : parseFloat(item.Pat_Due);
+          return total + amount;
+        }
+        return total;
+      }, 0);
+      console.log('totalDue', totalDue);
+      setPayAmount(totalDue.toString());
+      handlePayment();
+    }
   };
-
-  const failure = () => {
-    navigation.navigate('PaymentFailure');
-  };
-
-  // const handlePayment = async () => {
-  //   setLoading(true);
-
-  //   // Calculate the total amount from the input fields for selected invoices
-  //   const totalAmount = selectedOption === 'With invoice'
-  //     ? selectedInvoices.reduce((total, invoiceNo) => {
-  //       const amount = parseFloat(selectedPayments[invoiceNo] || '0');
-  //       return total + (isNaN(amount) ? 0 : amount);
-  //     }, 0)
-  //     : parseFloat(payAmount);
-
-  //   const requestBody = {
-  //     userType: userData?.UserType,
-  //     userCode: "01000175",
-  //     firmNo: "01",
-  //     name: userData?.Names,
-  //     phone: userData?.Mobile,
-  //     email: userData?.Email,
-  //     product:
-  //       selectedOption === "With invoice"
-  //         ? "Due Payment"
-  //         : selectedOption === "Without invoice"
-  //           ? "WOI Payment"
-  //           : "Deposit Payment",
-  //     amount: totalAmount,
-  //     paymentType:
-  //       selectedOption === "With invoice"
-  //         ? "WI"
-  //         : selectedOption === "Without invoice"
-  //           ? "WOI"
-  //           : "D",
-  //     invoices: selectedOption === 'With invoice' ? selectedInvoices : [],
-  //   };
-
-  //   console.log("🔵 Sending Payment API Request:", JSON.stringify(requestBody));
-
-  //   try {
-  //     const response = await paymentGatewayReq(requestBody);
-
-  //     console.log(" Payment API Response:", response);
-
-  //     if (response?.data?.SuccessFlag === "true") {
-  //       const paymentUrl = response?.data?.Message?.paymentUrlList?.[0]?.redirectUrl;
-
-  //       if (paymentUrl) {
-  //         console.log("🔗 Redirecting to Payment URL:", paymentUrl);
-  //         setPaymentUrl(paymentUrl);
-  //         // Linking.openURL(paymentUrl);
-
-  //         // Update the remaining due amounts for "With Invoice"
-  //         if (selectedOption === 'With invoice') {
-  //           const updatedPaymentData = paymentData.map((item: any) => {
-  //             if (selectedInvoices.includes(item.Inv_No)) {
-  //               const paidAmount = parseFloat(selectedPayments[item.Inv_No] || '0');
-  //               const remainingDue = parseFloat(item.Pat_Due) - paidAmount;
-  //               return {
-  //                 ...item,
-  //                 Pat_Due: remainingDue.toFixed(2),
-  //               };
-  //             }
-  //             return item;
-  //           });
-
-  //           setPaymentData(updatedPaymentData);
-  //           setSelectedPayments({}); // Clear the payment inputs
-  //         }
-  //       } else {
-  //         console.error("❌ Payment URL is missing in response");
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("❌ Payment API Request Failed:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handlePayment = async () => {
     setLoading(true);
-  
+
+    // Construct the array of invoice details
+    const invoiceDetails = selectedInvoices.map((invoiceNo) => {
+      const item = paymentData.find((item: { Inv_No: string; }) => item.Inv_No === invoiceNo);
+      const amount = selectedPayments[invoiceNo] ? parseFloat(selectedPayments[invoiceNo]) : parseFloat(item.Pat_Due);
+      return {
+        invoiceNo: item.Inv_No,
+        date: item.Inv_Date,
+        amount: amount,
+        firmNo: item.Billing_Firm_No,
+      };
+    });
+
     // Calculate the total amount from the input fields for selected invoices
     const totalAmount = selectedOption === 'With invoice'
-      ? selectedInvoices.reduce((total, invoiceNo) => {
-        const amount = parseFloat(selectedPayments[invoiceNo] || '0');
-        return total + (isNaN(amount) ? 0 : amount);
-      }, 0)
+      ? invoiceDetails.reduce((total, invoice) => total + invoice.amount, 0)
       : parseFloat(payAmount);
-  
+    console.log("Total Amount:", totalAmount);
+
     const requestBody = {
       userType: userData?.UserType,
-      userCode: "01000175",
+      userCode: userData?.UserCode,
       firmNo: "01",
       name: userData?.Names,
       phone: userData?.Mobile,
@@ -267,17 +218,17 @@ const PaymentScreen = () => {
           ? "WI"
           : selectedOption === "Without invoice"
             ? "WOI"
-            : "D",
-      invoices: selectedOption === 'With invoice' ? selectedInvoices : [],
+            : "DP",
+      invoices: selectedOption === 'With invoice' ? invoiceDetails : [],
     };
-  
+
     console.log("🔵 Sending Payment API Request:", JSON.stringify(requestBody));
-  
+
     try {
       const response = await paymentGatewayReq(requestBody);
-  
+
       console.log(" Payment API Response:", response);
-  
+
       if (response?.data?.SuccessFlag === "true") {
         const paymentUrl = response?.data?.Message?.paymentUrlList?.[0]?.redirectUrl;
         const timeoutDuration = response?.data?.Message?.timeout || 300;
@@ -287,9 +238,9 @@ const PaymentScreen = () => {
           // Linking.openURL(paymentUrl);
           // Update the remaining due amounts for "With Invoice"
           if (selectedOption === 'With invoice') {
-            const updatedPaymentData = paymentData.map((item: any) => {
+            const updatedPaymentData = paymentData.map((item: { Inv_No: string; Pat_Due: string; }) => {
               if (selectedInvoices.includes(item.Inv_No)) {
-                const paidAmount = parseFloat(selectedPayments[item.Inv_No] || '0');
+                const paidAmount = selectedPayments[item.Inv_No] ? parseFloat(selectedPayments[item.Inv_No]) : parseFloat(item.Pat_Due);
                 const remainingDue = parseFloat(item.Pat_Due) - paidAmount;
                 return {
                   ...item,
@@ -299,7 +250,7 @@ const PaymentScreen = () => {
               return item;
             });
             setPaymentData(updatedPaymentData);
-            setSelectedPayments({}); 
+            setSelectedPayments({});
           }
           // Set a timeout to check the payment status
           setTimeout(() => {
@@ -321,14 +272,25 @@ const PaymentScreen = () => {
       setLoading(false);
     }
   };
-  
+
 
   if (paymentUrl) {
     return (
       <SafeAreaView style={{ flex: 1 }}>
-        <WebView source={{ uri: paymentUrl }}
+        <WebView
+          source={{ uri: paymentUrl }}
           onNavigationStateChange={handleWebViewNavigationStateChange}
-          startInLoadingState renderLoading={() => <SpinnerIndicator />} />
+          startInLoadingState
+          renderLoading={() => <SpinnerIndicator />}
+        />
+        {canGoBack && (
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={{ fontSize: 18, color: 'blue' }}>Back</Text>
+          </TouchableOpacity>
+        )}
       </SafeAreaView>
     );
   }
@@ -377,9 +339,6 @@ const PaymentScreen = () => {
             <Text style={styles.invoiceLabel}>Total</Text>
             <Text style={styles.invoiceLabelValue}>{item.Pat_Due}</Text>
           </View>
-          <TouchableOpacity style={[styles.payButton, { flex: 1 }]} onPress={handlePayment}>
-            <Text style={styles.payButtonText}>Pay Now</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -411,19 +370,11 @@ const PaymentScreen = () => {
           ))}
         </View>
 
-        <View style={styles.iconGroup}>
-          <TouchableOpacity style={styles.iconButton} onPress={failure}>
-            <Image source={require('../images/search.png')} style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={require('../images/calenderBlack.png')} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
 
         {/* Custom Checkbox and Pay Now Button */}
         {selectedOption === 'With invoice' && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', width: '40%' }}>
               <Checkbox.Android
                 status={selectAll ? 'checked' : 'unchecked'}
                 onPress={handleSelectAll}
@@ -431,6 +382,10 @@ const PaymentScreen = () => {
                 uncheckedColor={Constants.COLOR.BLACK_COLOR}
               />
               <Text onPress={() => setChecked(!checked)}>Select All</Text>
+            </View>
+            <View style={{ width: '25%' }}>
+              <Text>Total:</Text>
+              <Text style={{ fontWeight: 'bold', color: Constants.COLOR.THEME_COLOR }}>{payAmountInvoice}</Text>
             </View>
             <TouchableOpacity style={styles.payButton} onPress={handlePayAll}>
               <Text style={styles.payButtonText}>Pay Now</Text>
@@ -457,7 +412,7 @@ const PaymentScreen = () => {
               <Text style={styles.invoiceLabel}>Total Due</Text>
               <TouchableOpacity onPress={handleWithoutInvoice} style={{ flex: 1 }}>
                 <Text style={[styles.invoiceLabel, styles.totalDue]}>
-                  {(paymentData as WithoutInvoice).DueAmount ? (paymentData as WithoutInvoice).DueAmount : '0.00'}
+                  {(paymentData as WithoutInvoice).DueAmount || '0.00'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -467,8 +422,8 @@ const PaymentScreen = () => {
                 style={styles.input}
                 placeholder="Enter amount"
                 keyboardType="numeric"
-                value={payAmount}
-                onChangeText={setPayAmount}
+                value={payAmountWithoutInvoice}
+                onChangeText={setPayAmountWithoutInvoice} // Separate state
               />
             </View>
             <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
@@ -484,7 +439,7 @@ const PaymentScreen = () => {
             <View style={styles.invoiceRow}>
               <Text style={styles.invoiceLabel}>Current Balance</Text>
               <Text style={[styles.invoiceLabel, styles.totalDue]}>
-                {(paymentData as Deposit).CurrentBalance ? (paymentData as Deposit).CurrentBalance : '0.00'}
+                {(paymentData as Deposit).CurrentBalance || '0.00'}
               </Text>
             </View>
             <View style={styles.invoiceRow}>
@@ -493,8 +448,8 @@ const PaymentScreen = () => {
                 style={styles.input}
                 placeholder="Enter amount"
                 keyboardType="numeric"
-                value={payAmount}
-                onChangeText={setPayAmount}
+                value={payAmountDeposit}
+                onChangeText={setPayAmountDeposit} // Separate state
               />
             </View>
             <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
@@ -508,7 +463,6 @@ const PaymentScreen = () => {
 };
 
 export default PaymentScreen;
-
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Constants.COLOR.WHITE_COLOR },
@@ -638,11 +592,11 @@ const styles = StyleSheet.create({
   payButton: {
     backgroundColor: Constants.COLOR.THEME_COLOR,
     paddingVertical: 5,
+    marginVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
     alignSelf: 'center',
   },
   payButtonText: {

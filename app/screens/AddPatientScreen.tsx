@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -12,7 +12,6 @@ import {
     Dimensions,
 } from 'react-native';
 import Constants from '../util/Constants';
-import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFetchApiMutation } from '../redux/service/FetchApiService';
 import { useUser } from '../common/UserContext';
@@ -53,6 +52,13 @@ const AddPatientScreen = ({ navigation }: any) => {
     const [dropDownVisibleTitle, setDropdownVisibleTitle] = useState(false);
     const [genderData, setGenderData] = useState<GenderData[]>([]);
     const [titleData, setTitleData] = useState<TitleData[]>([]);
+    const [patientType, setPatientType] = useState('OP');
+    const [IP_No, setIPNo] = useState('');
+    const [Ward_Code, setWardCode] = useState('');
+    const [Bed_No, setBedNo] = useState('');
+    const [Ref_No, setRefNo] = useState('');
+    const [dropDownVisibleType, setDropdownVisibleType] = useState(false);
+
 
     // Fetch API for gender and patient_relation
     const [fetchAPIReq] = useFetchApiMutation();
@@ -77,14 +83,8 @@ const AddPatientScreen = ({ navigation }: any) => {
         }
     };
 
-    // const handleDateSelect = (day: Day) => {
-    //     const formattedDate = `${day.year}/${padZero(day.month)}/${padZero(day.day)}`;
-    //     setSelectedDate(formattedDate);
-    //     setShowCalendar(false);
-    // };
-
-    const handleDateSelect = (date: Date) => {
-        if (!date) return;
+    const handleDateSelect = (dateString: any) => {
+        const date = new Date(dateString);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (date > today) {
@@ -95,6 +95,7 @@ const AddPatientScreen = ({ navigation }: any) => {
         setSelectedDate(formattedDate);
         setShowCalendar(false);
     };
+
 
     const handleTitleArrow = async () => {
         if (!dropDownVisibleTitle) {
@@ -109,29 +110,6 @@ const AddPatientScreen = ({ navigation }: any) => {
         }
         setDropdownVisible(!dropDownVisible);
     };
-
-
-    // const handleSubmit = async () => {
-    //     if (!phoneNumber || !title || !firstName || !surName || !selectedDate || !sex) {
-    //         Alert.alert('Error', 'Please fill in all mandatory fields before submitting.');
-    //         return;
-    //     }
-
-    //     const addMemberObj = {
-    //         Dob: selectedDate,
-    //         Gender: sex,
-    //         Mobile_No: phoneNumber,
-    //         Pt_Name: firstName,
-    //     };
-
-    //     try {
-    //         await AsyncStorage.setItem('patientData', JSON.stringify(addMemberObj));
-    //         Alert.alert('Success', 'Member added successfully.');
-    //         navigation.navigate('ChoosePatient');
-    //     } catch (error) {
-    //         console.error('Failed to save data:', error);
-    //     }
-    // };
 
     const handleSubmit = async () => {
         if (!phoneNumber) {
@@ -164,7 +142,13 @@ const AddPatientScreen = ({ navigation }: any) => {
             Gender: sex,
             Mobile_No: phoneNumber,
             Pt_Name: firstName,
+            Patient_Type: patientType,
+            IP_No,
+            Ward_Code,
+            Bed_No,
+            Ref_No,
         };
+
 
         try {
             await AsyncStorage.setItem('patientData', JSON.stringify(addMemberObj));
@@ -208,7 +192,7 @@ const AddPatientScreen = ({ navigation }: any) => {
 
                 <View style={styles.dropdownContainer}>
                     <TouchableOpacity style={styles.touchableContainer} onPress={handleTitleArrow}>
-                        <Text style={styles.input}>{title  || 'Title *'}</Text>
+                        <Text style={styles.input}>{title || 'Title *'}</Text>
                         <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
                     </TouchableOpacity>
                     {dropDownVisibleTitle && (
@@ -283,17 +267,12 @@ const AddPatientScreen = ({ navigation }: any) => {
                         <Image source={require('../images/calendar.png')} style={styles.CalenderImg} />
                     </TouchableOpacity>
                     {showCalendar && (
-                        // <Calendar
-                        //     onDayPress={handleDateSelect}
-                        //     maxDate={new Date().toISOString().split('T')[0]}
-                        // />
-
                         <CalendarModal
                             isVisible={showCalendar}
                             onConfirm={handleDateSelect}
                             onCancel={() => setShowCalendar(false)}
                             mode="date"
-                            maximumDate={new Date()}  
+                            maximumDate={new Date()}
                         />
 
                     )}
@@ -321,6 +300,47 @@ const AddPatientScreen = ({ navigation }: any) => {
                             </ScrollView>
                         </View>
                     )}
+                </View>
+
+                <View style={styles.dropdownContainer}>
+                    <TouchableOpacity style={styles.touchableContainer} onPress={() => setDropdownVisibleType(!dropDownVisibleType)}>
+                        <Text style={styles.input}>{patientType || 'Patient Type *'}</Text>
+                        <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
+                    </TouchableOpacity>
+                    {dropDownVisibleType && (
+                        <View style={styles.dropdownCard}>
+                            <ScrollView>
+                                {['OP', 'IP'].map((type, index) => (
+                                    <TouchableOpacity key={index} onPress={() => {
+                                        setPatientType(type);
+                                        setDropdownVisibleType(false);
+                                    }}>
+                                        <Text style={styles.dropdownItem}>{type}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <Text style={styles.placeholder}>IP No.</Text>
+                    <TextInput style={styles.input} onChangeText={setIPNo} value={IP_No} />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <Text style={styles.placeholder}>Ward Code</Text>
+                    <TextInput style={styles.input} onChangeText={setWardCode} value={Ward_Code} />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <Text style={styles.placeholder}>Bed No.</Text>
+                    <TextInput style={styles.input} onChangeText={setBedNo} value={Bed_No} />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <Text style={styles.placeholder}>Ref No.</Text>
+                    <TextInput style={styles.input} onChangeText={setRefNo} value={Ref_No} />
                 </View>
 
                 <TouchableOpacity onPress={handleSubmit}>

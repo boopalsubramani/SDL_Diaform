@@ -173,7 +173,6 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
             fetchLabels(selectedLanguage.Labels_Url)
                 .then((labels) => {
                     setLabels(labels);
-                    console.log("✅ Updated Labels:", labels);
                 })
                 .catch(err => console.error("❌ Label Fetch Error:", err));
         }
@@ -182,10 +181,8 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const fetchLabels = async (url: string) => {
         if (url) {
             try {
-                console.log('Fetching labels from:', url);
                 const response = await fetch(url);
                 const data = await response.json();
-                console.log('Fetched labels:', data);
                 return data;
             } catch (error) {
                 console.error('Failed to fetch labels:', error);

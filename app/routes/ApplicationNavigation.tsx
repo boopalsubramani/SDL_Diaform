@@ -18,9 +18,7 @@ import ForgetPasswordScreen from '../screens/ForgotPasswordScreen';
 import ChoosePatientScreen from '../screens/ChoosePatientScreen';
 import ChooseTestScreen from '../screens/ChooseTestScreen';
 import CalendarScreen from '../screens/CalendarScreen';
-import FilterScreen from '../screens/CollectionScreen';
 import PaymentDetailScreen from '../screens/PaymentDetailScreen';
-import FinalPaymentScreen from '../screens/FinalPaymentScreen';
 import LedgerDetailsScreen from '../screens/LedgerDetailsScreen';
 import BookTestScreen from '../screens/BookTestScreen';
 import PaymentFailureScreen from '../screens/PaymentFailureScreen';
@@ -48,13 +46,9 @@ const ApplicationNavigation = () => {
         <Stack.Screen name="ChoosePatient" component={ChoosePatientScreen} />
         <Stack.Screen name="ChooseTest" component={ChooseTestScreen} />
         <Stack.Screen name="Calender" component={CalendarScreen} />
-        <Stack.Screen name="Filter" component={FilterScreen} />
         <Stack.Screen name="PaymentDetail" component={PaymentDetailScreen} />
-        <Stack.Screen name="FinalPayment" component={FinalPaymentScreen} />
         <Stack.Screen name="Ledger" component={LedgerDetailsScreen} />
         <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
-
-
       </Stack.Navigator>
     </NavigationContainer>
   );

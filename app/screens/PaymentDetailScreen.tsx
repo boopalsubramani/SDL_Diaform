@@ -77,19 +77,19 @@ interface Language {
 
 const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const { userData, imageBase64 } = useUser();
-    const { labels } = useAppSettings();
+    const { settings, labels } = useAppSettings();
     const {
         selectedTests = [],
         selectedDate,
         selectedTime,
         selectedPatientDetails,
+        patientData,
         testData,
         booking,
         selectedTestDetails,
         showCancel = false,
         fromBookingScreen = false
     } = route?.params || {};
-
     const [paymentMethod, setPaymentMethod] = useState('');
     const [bookingResponse, setBookingResponse] = useState(null);
     const [isChecked, setIsChecked] = useState(false);
@@ -103,6 +103,12 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const [serviceBookingAPIReq] = useServiceBookingMutation();
     const [serviceBookingCancelApiReq] = useServiceBookingCancelMutation();
     const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+
+    console.log('patientDataPaymentdetails', patientData);
+
+    // const paymentRequired = settings?.Message?.[0]?.Payment_Required;
+
+    // const arePaymentOptionsDisabled = paymentRequired === 'Y';
 
     useEffect(() => {
         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
@@ -134,7 +140,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                 }
             }
         };
-
         fetchBookingDetails();
     }, [fromBookingScreen, booking, bookingDetailAPIReq, userData]);
 
@@ -142,21 +147,118 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         setIsChecked(!isChecked);
     };
 
+    // const handleUpdate = async () => {
+    //     setIsLoading(true);
+    //     const formData = new FormData();
+    //     formData.append("Ref_Code", userData?.UserCode);
+    //     formData.append("Ref_Type", userData?.UserType);
+    //     formData.append("Pt_Code", selectedPatientDetails?.PtCode);
+    //     formData.append("Firm_No", "01");
+    //     formData.append("Name", selectedPatientDetails?.PtName);
+    //     formData.append("Dob", selectedPatientDetails?.DOB || '');
+    //     formData.append("Age", selectedPatientDetails?.Age);
+    //     formData.append("Gender", selectedPatientDetails?.Gender);
+    //     formData.append("Title_Code", selectedPatientDetails?.Title_Code);
+    //     formData.append("Title_Desc", selectedPatientDetails?.Title_Desc);
+    //     formData.append("Phone", selectedPatientDetails?.Mobile_No);
+    //     formData.append("NationalityCode", selectedPatientDetails?.Nationality);
+    //     formData.append("File_Extension1", "png");
+    //     formData.append("File_Extension2", "");
+    //     formData.append("Paid_Amount", "636.0");
+    //     formData.append("Bill_Amount", "530.0");
+    //     formData.append("DiscountAmount", "0");
+    //     formData.append("DueAmount", "0");
+    //     formData.append("Pay_No", "6548561564154");
+    //     formData.append("Pay_Status", "C");
+    //     formData.append("Pay_Mode", paymentMethod === 'online' ? "O" : "C");
+    //     formData.append("Zero_Payment", "1");
+    //     formData.append("Promo_Code", "");
+    //     formData.append("Medical_Aid_No", "");
+    //     formData.append("Coverage", "");
+    //     formData.append("Package_Code", "");
+    //     formData.append("Sponsor_Paid", "0");
+    //     formData.append("Place", selectedPatientDetails?.State);
+    //     formData.append("City", selectedPatientDetails?.Street);
+    //     formData.append("Email", selectedPatientDetails?.Email_Id);
+
+    //     // Append the base64 string directly
+    //     formData.append("Prescription_File1", imageBase64);
+    //     formData.append("Prescription_File2", null);
+
+    //     const selectedTestDetails = updatedCart.map((test: any) => {
+    //         return {
+    //             TESTTYPE: test?.Service_Type,
+    //             TESTCODE: test?.Service_Code,
+    //             SERVICE_AMOUNT: test?.Amount,
+    //             SERVICE_DISCOUNT: test?.Discount_Amount,
+    //             PRIMARY_SHARE: test?.Primary_Share,
+    //             PATIENT_SHARE: test?.Patient_Share,
+    //             TEST_VAT: test?.Test_VAT,
+    //             PATIENT_VAT: test?.Patient_VAT,
+    //             AID_VAT: test?.Aid_VAT,
+    //             T_ROUND_OFF: test?.T_Round_off,
+    //             PROF_CODE: test?.Service_Code,
+    //         };
+    //     });
+
+    //     formData.append("Services", JSON.stringify(selectedTestDetails));
+
+    //     try {
+    //         const response = await serviceBookingAPIReq(formData).unwrap();
+    //         if (response?.Code === 200 && response?.SuccessFlag === "true") {
+    //             const message = response.Message[0]?.Description || "Booking Successful";
+    //             Alert.alert(message);
+    //             setBookingResponse(response);
+    //             setBookingNo(response.Message[0]?.Booking_No);
+    //             setIsFinalPayment(true);
+    //         } else {
+    //             Alert.alert("Error: Something went wrong.");
+    //         }
+    //     } catch (error) {
+    //         console.error(JSON.stringify(error));
+    //         Alert.alert("Error", "Something went wrong!");
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
+
     const handleUpdate = async () => {
         setIsLoading(true);
+    
+        // Ensure patientData is valid before merging
+        const validPatientData = patientData || {};
+    
+        // Merging patient details to avoid missing fields
+        const mergedPatient = {
+            PtCode: selectedPatientDetails?.PtCode || validPatientData?.Pt_Code || "",
+            Name: selectedPatientDetails?.PtName || validPatientData?.Pt_Name || "",
+            Dob: validPatientData?.Dob ? validPatientData.Dob.replace(/\//g, "-") : selectedPatientDetails?.DOB || "",
+            Age: selectedPatientDetails?.Age || validPatientData?.Age || "0",  
+            Gender: validPatientData?.Gender === "Male" ? "M" : validPatientData?.Gender === "Female" ? "F" : selectedPatientDetails?.Gender || "",
+            Title_Code: selectedPatientDetails?.Title_Code || "",
+            Title_Desc: selectedPatientDetails?.Title_Desc || "MR.",  
+            Phone: selectedPatientDetails?.Mobile_No || validPatientData?.Mobile_No || "",
+            NationalityCode: selectedPatientDetails?.Nationality || "",
+            Place: selectedPatientDetails?.Place || validPatientData?.Place || "",
+            City: selectedPatientDetails?.City || validPatientData?.Street || "",
+            Email: selectedPatientDetails?.Email_Id || "",
+        };
+    
+        console.log("Merged Patient Details:", mergedPatient);
+    
         const formData = new FormData();
         formData.append("Ref_Code", userData?.UserCode);
         formData.append("Ref_Type", userData?.UserType);
-        formData.append("Pt_Code", selectedPatientDetails?.PtCode);
+        formData.append("Pt_Code", mergedPatient.PtCode);
         formData.append("Firm_No", "01");
-        formData.append("Name", selectedPatientDetails?.PtName);
-        formData.append("Dob", selectedPatientDetails?.DOB || '');
-        formData.append("Age", selectedPatientDetails?.Age);
-        formData.append("Gender", selectedPatientDetails?.Gender);
-        formData.append("Title_Code", selectedPatientDetails?.Title_Code);
-        formData.append("Title_Desc", selectedPatientDetails?.Title_Desc);
-        formData.append("Phone", selectedPatientDetails?.Mobile_No);
-        formData.append("NationalityCode", selectedPatientDetails?.Nationality);
+        formData.append("Name", mergedPatient.Name);
+        formData.append("Dob", mergedPatient.Dob);
+        formData.append("Age", mergedPatient.Age); 
+        formData.append("Gender", mergedPatient.Gender);
+        formData.append("Title_Code", mergedPatient.Title_Code);
+        formData.append("Title_Desc", mergedPatient.Title_Desc); 
+        formData.append("Phone", mergedPatient.Phone);
+        formData.append("NationalityCode", mergedPatient.NationalityCode);
         formData.append("File_Extension1", "png");
         formData.append("File_Extension2", "");
         formData.append("Paid_Amount", "636.0");
@@ -172,34 +274,35 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         formData.append("Coverage", "");
         formData.append("Package_Code", "");
         formData.append("Sponsor_Paid", "0");
-        formData.append("Place", "tirupathi");
-        formData.append("City", "tirupathi");
-        formData.append("Email", selectedPatientDetails?.Email_Id);
-
+        formData.append("Place", mergedPatient.Place);
+        formData.append("City", mergedPatient.City);
+        formData.append("Email", mergedPatient.Email);
+    
         // Append the base64 string directly
         formData.append("Prescription_File1", imageBase64);
         formData.append("Prescription_File2", null);
-
-        const selectedTestDetails = updatedCart.map((test: any) => {
-            return {
-                TESTTYPE: test?.Service_Type,
-                TESTCODE: test?.Service_Code,
-                SERVICE_AMOUNT: test?.Amount,
-                SERVICE_DISCOUNT: test?.Discount_Amount,
-                PRIMARY_SHARE: test?.Primary_Share,
-                PATIENT_SHARE: test?.Patient_Share,
-                TEST_VAT: test?.Test_VAT,
-                PATIENT_VAT: test?.Patient_VAT,
-                AID_VAT: test?.Aid_VAT,
-                T_ROUND_OFF: test?.T_Round_off,
-                PROF_CODE: test?.Service_Code,
-            };
-        });
-
+    
+        const selectedTestDetails = updatedCart.map((test: any) => ({
+            TESTTYPE: test?.Service_Type,
+            TESTCODE: test?.Service_Code,
+            SERVICE_AMOUNT: test?.Amount,
+            SERVICE_DISCOUNT: test?.Discount_Amount,
+            PRIMARY_SHARE: test?.Primary_Share,
+            PATIENT_SHARE: test?.Patient_Share,
+            TEST_VAT: test?.Test_VAT,
+            PATIENT_VAT: test?.Patient_VAT,
+            AID_VAT: test?.Aid_VAT,
+            T_ROUND_OFF: test?.T_Round_off,
+            PROF_CODE: test?.Service_Code,
+        }));
+    
         formData.append("Services", JSON.stringify(selectedTestDetails));
-
+    
         try {
             const response = await serviceBookingAPIReq(formData).unwrap();
+    
+            console.log("API Response:", response);
+    
             if (response?.Code === 200 && response?.SuccessFlag === "true") {
                 const message = response.Message[0]?.Description || "Booking Successful";
                 Alert.alert(message);
@@ -207,22 +310,23 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                 setBookingNo(response.Message[0]?.Booking_No);
                 setIsFinalPayment(true);
             } else {
-                Alert.alert("Error: Something went wrong.");
+                Alert.alert(`Error: ${response?.Message[0]?.Message || "Something went wrong."}`);
             }
         } catch (error) {
-            console.error(error);
+            console.error("API Error:", JSON.stringify(error));
             Alert.alert("Error", "Something went wrong!");
         } finally {
             setIsLoading(false);
         }
     };
+    
 
     const handleCancelBooking = async () => {
         setIsLoading(true);
         const requestBody = {
             Ref_Code: userData?.UserCode,
             Ref_Type: userData?.UserType,
-            Firm_No: "01",
+            Firm_No: "08",
             Service_No: bookingDetails?.Booking_No,
             Service_Date: bookingDetails?.Booking_Date,
             Cancel_Remarks: remark
@@ -231,9 +335,10 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         try {
             const response = await serviceBookingCancelApiReq(requestBody).unwrap();
             if (response?.Code === 200 && response?.SuccessFlag === "true") {
-                setCancellationRemarks(remark); // Store the cancellation remarks
+                setCancellationRemarks(remark);
                 Alert.alert("Booking Cancelled", response.Message[0]?.Description);
-                navigation.navigate('Bottom');
+                // navigation.navigate('Bottom');
+                navigation.navigate('Bottom', { cancelRemark: remark });
             } else {
                 Alert.alert("Error", "Failed to cancel the booking.");
             }
@@ -315,7 +420,8 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             bookingResponse,
             selectedTestDetails,
             fromBookingScreen,
-            bookingDetails, // Pass the entire bookingDetails object
+            bookingDetails,
+            fromPaymentDetailsScreen: true,
         });
     };
 
@@ -332,7 +438,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             const netPayable = subTotal + vatAmount - discount;
             return { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable };
         } else {
-            const amountDataDetails = updatedCart.map((test: Test) => {
+            const amountDataDetails = updatedCart.map((test) => {
                 const amountData = updatedCart.find(
                     (data: any) => data.Service_Name === test.Service_Name
                 );
@@ -498,7 +604,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                                     </Text>
                                 </View>
                             ))
-                            : updatedCart.map((test, index) => (
+                            : updatedCart.map((test: any, index) => (
                                 <View key={index} style={styles.cartItem}>
                                     <Text style={styles.cartItemName} numberOfLines={2}>
                                         {test.Service_Name}
@@ -579,6 +685,36 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                                 </TouchableOpacity>
                             </View>
                         </>
+                        // <View>
+                        //     <Text style={styles.paymentHeader}>Payment Mode</Text>
+                        //     {arePaymentOptionsDisabled ? (
+                        //         <View style={styles.paymentContainer}>
+                        //             <TouchableOpacity
+                        //                 style={[styles.paymentOption, styles.paymentOptionDisabled]}
+                        //                 disabled={true}
+                        //             >
+                        //                 <View style={styles.radioButton} />
+                        //                 <Text style={styles.paymentTextDisabled}>Online Payment</Text>
+                        //             </TouchableOpacity>
+
+                        //             <TouchableOpacity
+                        //                 style={[styles.paymentOption, styles.paymentOptionDisabled]}
+                        //                 disabled={true}
+                        //             // onPress={() => setPaymentMethod('cash')}
+                        //             >
+                        //                 <View style={styles.radioButton} />
+                        //                 <Text style={styles.paymentTextDisabled}>Cash Payment</Text>
+                        //             </TouchableOpacity>
+                        //         </View>
+                        //     ) : (
+                        //         <TouchableOpacity
+                        //             style={styles.saveButton}
+                        //             onPress={() => setPaymentMethod('cash')}
+                        //         >
+                        //             <Text style={styles.saveButtonText}>Save</Text>
+                        //         </TouchableOpacity>
+                        //     )}
+                        // </View>
                     )}
                 </ScrollView>
             )}
@@ -813,6 +949,26 @@ const styles = StyleSheet.create({
     HomeButton: {
         marginBottom: 35,
         marginTop: 15
+    },
+    saveButton: {
+        backgroundColor: 'blue',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 20,
+    },
+    saveButtonDisabled: {
+        backgroundColor: 'gray',
+    },
+    saveButtonText: {
+        color: 'white',
+        textAlign: 'center',
+    },
+    paymentOptionDisabled: {
+        opacity: 0.5,
+    },
+    paymentTextDisabled: {
+        fontSize: 16,
+        color: 'gray',
     },
 });
 
