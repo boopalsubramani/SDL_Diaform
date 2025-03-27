@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { height: deviceHeight, } = Dimensions.get('window');
 const { width, height } = Dimensions.get('window');
@@ -55,9 +56,8 @@ interface Language {
 
 
 const BookingScreen = ({ navigation, route }: any) => {
-  const { cancelRemark } = route.params || {};
   const { userData } = useUser();
-  const { labels } = useAppSettings();
+  const { labels, settings } = useAppSettings();
   const [bookingListAPIReq] = useBookingListMutation();
   const [bookingData, setBookingData] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -134,11 +134,6 @@ const BookingScreen = ({ navigation, route }: any) => {
     }
   };
 
-  useEffect(() => {
-    if (cancelRemark) {
-      console.log("Received Cancel Remark:", cancelRemark);
-    }
-  }, [cancelRemark]);
 
   const toggleDropdown = (type: string) => {
     setDropdownType(type);
@@ -165,6 +160,50 @@ const BookingScreen = ({ navigation, route }: any) => {
     fetchBookingData();
   }, [selectedBranch, selectedStatus, firmNo, selectedDate]);
 
+  // const fetchBookingData = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const payload = {
+  //       App_Type: 'R',
+  //       UserType: userData?.UserType,
+  //       Username: userData?.UserCode,
+  //       Branch: selectedBranch || '',
+  //       Status: selectedStatus || '',
+  //       Firm_No: firmNo || '',
+  //     };
+
+  //     const response = await bookingListAPIReq(payload).unwrap();
+  //     if (response?.Message?.length > 0) {
+  //       let allBookings = response.Message[0].Booking_Detail || [];
+  //       if (selectedBranch || selectedStatus || selectedDate || firmNo) {
+  //         allBookings = allBookings.filter((item: { Branch_Name: string; Booking_Status_Desc: string; Firm_No: string; Booking_Date: string; }) => {
+  //           const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
+  //           const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
+  //           const firmMatch = !firmNo || item.Firm_No === firmNo;
+  //           const bookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('YYYY/MM/DD');
+  //           const selectedDateFormatted = moment(selectedDate, 'YYYY/MM/DD').format('YYYY/MM/DD');
+  //           const dateMatch = !selectedDate || bookingDate === selectedDateFormatted;
+  //           return branchMatch && statusMatch && firmMatch && dateMatch;
+  //         });
+  //       }
+  //       setBookingData(allBookings);
+  //     } else {
+  //       setBookingData([]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching booking data:', error);
+  //     setBookingData([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     fetchBookingData();
+  //   }, [selectedBranch, selectedStatus, firmNo, selectedDate])
+  // );
   const fetchBookingData = async () => {
     setLoading(true);
     try {
@@ -180,8 +219,15 @@ const BookingScreen = ({ navigation, route }: any) => {
       const response = await bookingListAPIReq(payload).unwrap();
       if (response?.Message?.length > 0) {
         let allBookings = response.Message[0].Booking_Detail || [];
+
         if (selectedBranch || selectedStatus || selectedDate || firmNo) {
-          allBookings = allBookings.filter((item: { Branch_Name: string; Booking_Status_Desc: string; Firm_No: string; Booking_Date: string; }) => {
+          allBookings = allBookings.filter((item: {
+            Branch_Name: string;
+            Booking_Status_Desc: string;
+            Firm_No: string;
+            Booking_Date: string;
+            Cancel_Remarks?: string;
+          }) => {
             const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
             const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
             const firmMatch = !firmNo || item.Firm_No === firmNo;
@@ -226,6 +272,7 @@ const BookingScreen = ({ navigation, route }: any) => {
     const formattedBookingDateAndYear = moment(item.Booking_Date, 'YYYY/MM/DD').format('D, YYYY');
     const isCollectionCompleted = item.Booking_Status_Desc === 'Collection Completed';
 
+    console.log('cancelleed', item.Is_Cancelled, item.Booking_No);
 
     return (
       <TouchableOpacity onPress={() => handleBookingDetail(item)}>
@@ -273,22 +320,22 @@ const BookingScreen = ({ navigation, route }: any) => {
                 styles.StatusText,
                 isCollectionCompleted && {
                   backgroundColor: item.BookingType_ColorCode,
-                  color: 'black',
+                  color: Constants.COLOR.BLACK_COLOR,
                 },
               ]}
                 numberOfLines={1}>
                 {item.Booking_Status_Desc}
               </Text>
-              <TouchableOpacity style={styles.ButtonPayNowView}>
-                <Text style={styles.ButtonPayNow}>{getLabel('bkrow_9')}</Text>
-              </TouchableOpacity>
+              {settings?.Enable_Paymode === 'Y' && (
+                <TouchableOpacity style={styles.ButtonPayNowView}>
+                  <Text style={styles.ButtonPayNow}>{getLabel('bkrow_9')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
-
-            {item.Is_Cancelled === 'True' && (
+            {item?.Is_Cancelled && (
               <View style={styles.CancelRemarks}>
                 <Text style={styles.CancelText}>
-                  {/* Remarks: {item.Remarks || 'No remarks available'} */}
-                  Remarks: {item.Remarks?.trim() ? item.Remarks : 'No remarks available'}
+                  Remarks: {'No remarks available'}
                 </Text>
               </View>
             )}
@@ -346,24 +393,6 @@ const BookingScreen = ({ navigation, route }: any) => {
               style={styles.CalenderImg}
             />
           </TouchableOpacity>
-          {/* {showCalendar && (
-            <CalendarModal
-              selectedLanguage={selectedLanguage}
-              isVisible={showCalendar}
-              onClose={() => setShowCalendar(false)}
-              onConfirm={(day: any) => {
-                const date = new Date(day);
-                if (!isNaN(date.getTime())) {
-                  const formattedDate = formatDate(date);
-                  setSelectedDate(formattedDate);
-                  setShowCalendar(false);
-                } else {
-                  console.error("Invalid date string:", day);
-                }
-              }}
-            />
-          )} */}
-
           {showCalendar && (
             <CalendarModal
               locale={selectedLanguage?.Code || "en"}

@@ -59,7 +59,6 @@ const AddPatientScreen = ({ navigation }: any) => {
     const [Ref_No, setRefNo] = useState('');
     const [dropDownVisibleType, setDropdownVisibleType] = useState(false);
 
-
     // Fetch API for gender and patient_relation
     const [fetchAPIReq] = useFetchApiMutation();
 
@@ -148,8 +147,6 @@ const AddPatientScreen = ({ navigation }: any) => {
             Bed_No,
             Ref_No,
         };
-
-
         try {
             await AsyncStorage.setItem('patientData', JSON.stringify(addMemberObj));
             Alert.alert('Success', 'Member added successfully.');
@@ -158,6 +155,7 @@ const AddPatientScreen = ({ navigation }: any) => {
             console.error('Failed to save data:', error);
         }
     };
+  
 
     const handleCross = () => {
         navigation.goBack('');

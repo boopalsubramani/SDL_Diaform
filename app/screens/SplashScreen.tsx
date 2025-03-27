@@ -124,7 +124,7 @@ export default SplashScreen;
 //     const checkForUpdate = async () => {
 //       try {
 //         const response = await axios.get(`${config.API_BASE_URL}`);
-//         const { mnt, mnt_msg, vra } = response.data; 
+//         const { mnt, mnt_msg, vra } = response.data;
 
 //         // Check for maintenance mode
 //         if (mnt === 1) {
@@ -136,11 +136,11 @@ export default SplashScreen;
 //         const latestVersion = vra?.lver;
 //         if (latestVersion && latestVersion !== currentVersion) {
 //           Alert.alert(
-//             'Update Available',
-//             'A new version of the app is available. Please update for the best experience.',
+//              settings?.splashsrc_3 || 'New Version Available',
+//              settings?.splashsrc_4 || 'There is a new version available for download! Please update the app',
 //             [
-//               { text: 'Update', onPress: () => Linking.openURL(config.UPDATE_URL) },
-//               { text: 'Later', onPress: () => navigation.replace("Login") },
+//             { text: settings?.splashsrc_5 || 'Update', onPress: () => Linking.openURL(config.UPDATE_URL) },
+//             { text: settings?.splashsrc_8 || 'No Thanks', onPress: () => navigation.replace("Login") },
 //             ]
 //           );
 //         } else {
@@ -148,7 +148,7 @@ export default SplashScreen;
 //         }
 //       } catch (error) {
 //         console.error('Error checking version:', error);
-//         setTimeout(() => navigation.replace("Login"), 3000);
+//         Alert.alert(settings?.splashsrc_1 || 'Error checking version', 'Please try again later.');
 //       }
 //     };
 

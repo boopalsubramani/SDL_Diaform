@@ -451,20 +451,22 @@ const styles = StyleSheet.create({
   },
   detailCard: {
     backgroundColor: Constants.COLOR.WHITE_COLOR,
-    borderRadius: 8,
+    borderRadius: 10,
     shadowColor: Constants.COLOR.THEME_COLOR,
     elevation: 3,
-    borderWidth: 0.2,
+    borderWidth: 0.5,
+    borderColor: '#ddd',
     marginBottom: 15,
+    padding: 15,
   },
   detailHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
-    paddingHorizontal: 10,
-    backgroundColor: '#ECEEF5',
-    borderWidth: 0.2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingBottom: 10,
   },
   detailBody: {
     paddingHorizontal: 10,
@@ -541,6 +543,4 @@ const styles = StyleSheet.create({
     fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
   },
 });
-
-
 

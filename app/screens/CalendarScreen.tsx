@@ -27,7 +27,7 @@ interface Language {
 
 const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
   const { selectedTests = [], selectedPatientDetails, testData, patientData } = route?.params || {};
-  const { labels } = useAppSettings();
+  const { labels, settings } = useAppSettings();
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [dateInput, setDateInput] = useState('');
@@ -129,7 +129,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
       return;
     }
 
-    if (!selectedDate || !selectedTime) {
+    if (settings?.CollectDate_Mandatory === 'Y' && (!selectedDate || !selectedTime)) {
       Alert.alert(
         Constants.ALERT.TITLE.INFO,
         Constants.VALIDATION_MSG.NO_DATE_TIME_SELECTED,
@@ -178,18 +178,20 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           </View>
         </View>
 
-        <View style={styles.labelAndCheckboxContainer}>
-          <Text style={styles.label}>Collect Date and Time</Text>
-
-          {/* Checkbox Row */}
-          <View style={styles.checkboxRow}>
-            <Checkbox
-              status={isChecked ? 'checked' : 'unchecked'}
-              onPress={handleCheckboxToggle}
-            />
-            <Text style={styles.checkboxText}>Current date and time</Text>
-          </View>
-        </View>
+        {settings?.CollectDate_Mandatory === 'Y' && (
+          <>
+            <View style={styles.labelAndCheckboxContainer}>
+              <Text style={styles.label}>Collect Date and Time</Text>
+              <View style={styles.checkboxRow}>
+                <Checkbox
+                  status={isChecked ? 'checked' : 'unchecked'}
+                  onPress={handleCheckboxToggle}
+                />
+                <Text style={styles.checkboxText}>Current date and time</Text>
+              </View>
+            </View>
+          </>
+        )}
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -231,6 +233,7 @@ const CalendarScreen = ({ navigation, route, showHeader = true }: any) => {
           mode="time"
           minimumDate={selectedDate === moment().format('YYYY-MM-DD') ? new Date() : undefined}
         />
+
       </ScrollView>
       <View style={styles.navigationContainer}>
         <TouchableOpacity onPress={handleBack}>

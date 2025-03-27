@@ -27,7 +27,7 @@ type PatientPhysician = {
 
 const { width, height } = Dimensions.get('window');
 
-const ChoosePatientScreen = ({ showHeader = true }: any) => {
+const ChoosePatientScreen = ({ showHeader = true, route,}: any) => {
     const { userData } = useUser();
     const { labels, selectedLanguage } = useAppSettings();
     const navigation = useNavigation<NavigationProp>();
@@ -58,6 +58,7 @@ const ChoosePatientScreen = ({ showHeader = true }: any) => {
     const [fetchAPIReq] = useFetchApiMutation();
     const branchCode = userData?.Branch_Code;
 
+   
     // Reusable search and fetch logic
     const fetchData = async (fetchObj: object, filterFunc: (item: any, query: string) => boolean, setFilteredData: React.Dispatch<React.SetStateAction<PatientPhysician[]>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, query: string) => {
         setIsLoading(true);

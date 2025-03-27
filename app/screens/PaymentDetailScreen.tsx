@@ -23,9 +23,12 @@ import { useServiceBookingMutation } from '../redux/service/ServiceBookingServic
 import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useBookingDetailMutation } from '../redux/service/BookingDetailService';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
 import { useServiceBookingCancelMutation } from '../redux/service/ServiceBookingCancelService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
+import { clearCart } from '../redux/slice/BookTestSearchSlice';
 
 const deviceHeight = Dimensions.get('window').height;
 const tickImage = require('../images/roundTick.png');
@@ -77,6 +80,7 @@ interface Language {
 
 const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const { userData, imageBase64 } = useUser();
+    const dispatch = useDispatch();
     const { settings, labels } = useAppSettings();
     const {
         selectedTests = [],
@@ -98,7 +102,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
     const [isFinalPayment, setIsFinalPayment] = useState(false);
     const [bookingNo, setBookingNo] = useState('');
-    const [cancellationRemarks, setCancellationRemarks] = useState('');
     const [bookingDetailAPIReq] = useBookingDetailMutation();
     const [serviceBookingAPIReq] = useServiceBookingMutation();
     const [serviceBookingCancelApiReq] = useServiceBookingCancelMutation();
@@ -106,9 +109,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
 
     console.log('patientDataPaymentdetails', patientData);
 
-    // const paymentRequired = settings?.Message?.[0]?.Payment_Required;
-
-    // const arePaymentOptionsDisabled = paymentRequired === 'Y';
 
     useEffect(() => {
         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
@@ -224,28 +224,28 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
 
     const handleUpdate = async () => {
         setIsLoading(true);
-    
+
         // Ensure patientData is valid before merging
         const validPatientData = patientData || {};
-    
+
         // Merging patient details to avoid missing fields
         const mergedPatient = {
             PtCode: selectedPatientDetails?.PtCode || validPatientData?.Pt_Code || "",
             Name: selectedPatientDetails?.PtName || validPatientData?.Pt_Name || "",
             Dob: validPatientData?.Dob ? validPatientData.Dob.replace(/\//g, "-") : selectedPatientDetails?.DOB || "",
-            Age: selectedPatientDetails?.Age || validPatientData?.Age || "0",  
+            Age: selectedPatientDetails?.Age || validPatientData?.Age || "0",
             Gender: validPatientData?.Gender === "Male" ? "M" : validPatientData?.Gender === "Female" ? "F" : selectedPatientDetails?.Gender || "",
             Title_Code: selectedPatientDetails?.Title_Code || "",
-            Title_Desc: selectedPatientDetails?.Title_Desc || "MR.",  
+            Title_Desc: selectedPatientDetails?.Title_Desc || "MR.",
             Phone: selectedPatientDetails?.Mobile_No || validPatientData?.Mobile_No || "",
             NationalityCode: selectedPatientDetails?.Nationality || "",
             Place: selectedPatientDetails?.Place || validPatientData?.Place || "",
             City: selectedPatientDetails?.City || validPatientData?.Street || "",
             Email: selectedPatientDetails?.Email_Id || "",
         };
-    
+
         console.log("Merged Patient Details:", mergedPatient);
-    
+
         const formData = new FormData();
         formData.append("Ref_Code", userData?.UserCode);
         formData.append("Ref_Type", userData?.UserType);
@@ -253,10 +253,10 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         formData.append("Firm_No", "01");
         formData.append("Name", mergedPatient.Name);
         formData.append("Dob", mergedPatient.Dob);
-        formData.append("Age", mergedPatient.Age); 
+        formData.append("Age", mergedPatient.Age);
         formData.append("Gender", mergedPatient.Gender);
         formData.append("Title_Code", mergedPatient.Title_Code);
-        formData.append("Title_Desc", mergedPatient.Title_Desc); 
+        formData.append("Title_Desc", mergedPatient.Title_Desc);
         formData.append("Phone", mergedPatient.Phone);
         formData.append("NationalityCode", mergedPatient.NationalityCode);
         formData.append("File_Extension1", "png");
@@ -277,11 +277,11 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         formData.append("Place", mergedPatient.Place);
         formData.append("City", mergedPatient.City);
         formData.append("Email", mergedPatient.Email);
-    
+
         // Append the base64 string directly
         formData.append("Prescription_File1", imageBase64);
         formData.append("Prescription_File2", null);
-    
+
         const selectedTestDetails = updatedCart.map((test: any) => ({
             TESTTYPE: test?.Service_Type,
             TESTCODE: test?.Service_Code,
@@ -295,14 +295,14 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             T_ROUND_OFF: test?.T_Round_off,
             PROF_CODE: test?.Service_Code,
         }));
-    
+
         formData.append("Services", JSON.stringify(selectedTestDetails));
-    
+
         try {
             const response = await serviceBookingAPIReq(formData).unwrap();
-    
+
             console.log("API Response:", response);
-    
+
             if (response?.Code === 200 && response?.SuccessFlag === "true") {
                 const message = response.Message[0]?.Description || "Booking Successful";
                 Alert.alert(message);
@@ -319,7 +319,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             setIsLoading(false);
         }
     };
-    
+
 
     const handleCancelBooking = async () => {
         setIsLoading(true);
@@ -335,10 +335,8 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         try {
             const response = await serviceBookingCancelApiReq(requestBody).unwrap();
             if (response?.Code === 200 && response?.SuccessFlag === "true") {
-                setCancellationRemarks(remark);
                 Alert.alert("Booking Cancelled", response.Message[0]?.Description);
-                // navigation.navigate('Bottom');
-                navigation.navigate('Bottom', { cancelRemark: remark });
+                navigation.navigate('Bottom');
             } else {
                 Alert.alert("Error", "Failed to cancel the booking.");
             }
@@ -349,6 +347,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             setIsLoading(false);
         }
     };
+
 
     const handleBack = async () => {
         const state = await NetInfo.fetch();
@@ -375,7 +374,8 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             await handleCancelBooking();
             return;
         }
-        if (!paymentMethod) {
+        // If Enable_Paymode is not 'Y', skip payment method validation
+        if (settings?.Enable_Paymode === 'Y' && !paymentMethod) {
             Alert.alert(
                 Constants.ALERT.TITLE.INFO,
                 Constants.VALIDATION_MSG.NO_PAYMENT_MSG,
@@ -483,9 +483,11 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
 
     const handleFinalPaymentUpdate = async () => {
         try {
+            dispatch(clearCart());
+            await AsyncStorage.multiRemove(['patientData', 'cartData']);
             navigation.navigate('Bottom');
         } catch (error) {
-            Alert.alert("Error", "There was an issue processing the payment.");
+            Alert.alert("Error", "Payment failed");
         }
     };
 
@@ -571,13 +573,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                         </Text>
                     </View>
 
-                    {cancellationRemarks && (
-                        <View style={styles.cancellationRemarksContainer}>
-                            <Text style={styles.cancellationRemarksTitle}>Cancellation Remarks:</Text>
-                            <Text style={styles.cancellationRemarksText}>{cancellationRemarks}</Text>
-                        </View>
-                    )}
-
                     <TouchableOpacity onPress={handleFinalPaymentUpdate} style={styles.HomeButton}>
                         <ButtonHome />
                     </TouchableOpacity>
@@ -660,61 +655,30 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                             )}
                         </>
                     )}
-                    {!showCancel && (
-                        <>
-                            <Text style={styles.paymentHeader}>Payment Mode</Text>
-                            <View style={styles.paymentContainer}>
-                                <TouchableOpacity
-                                    style={styles.paymentOption}
-                                    onPress={() => setPaymentMethod('online')}
-                                >
-                                    <View
-                                        style={[styles.radioButton, paymentMethod === 'online' && styles.radioSelected]}
-                                    />
-                                    <Text style={styles.paymentText}>Online Payment</Text>
-                                </TouchableOpacity>
+                    {settings?.Enable_Paymode === 'Y' && !showCancel && (<>
+                        <Text style={styles.paymentHeader}>Payment Mode</Text>
+                        <View style={styles.paymentContainer}>
+                            <TouchableOpacity
+                                style={styles.paymentOption}
+                                onPress={() => setPaymentMethod('online')}
+                            >
+                                <View
+                                    style={[styles.radioButton, paymentMethod === 'online' && styles.radioSelected]}
+                                />
+                                <Text style={styles.paymentText}>Online Payment</Text>
+                            </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={styles.paymentOption}
-                                    onPress={() => setPaymentMethod('cash')}
-                                >
-                                    <View
-                                        style={[styles.radioButton, paymentMethod === 'cash' && styles.radioSelected]}
-                                    />
-                                    <Text style={styles.paymentText}>Cash Payment</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </>
-                        // <View>
-                        //     <Text style={styles.paymentHeader}>Payment Mode</Text>
-                        //     {arePaymentOptionsDisabled ? (
-                        //         <View style={styles.paymentContainer}>
-                        //             <TouchableOpacity
-                        //                 style={[styles.paymentOption, styles.paymentOptionDisabled]}
-                        //                 disabled={true}
-                        //             >
-                        //                 <View style={styles.radioButton} />
-                        //                 <Text style={styles.paymentTextDisabled}>Online Payment</Text>
-                        //             </TouchableOpacity>
-
-                        //             <TouchableOpacity
-                        //                 style={[styles.paymentOption, styles.paymentOptionDisabled]}
-                        //                 disabled={true}
-                        //             // onPress={() => setPaymentMethod('cash')}
-                        //             >
-                        //                 <View style={styles.radioButton} />
-                        //                 <Text style={styles.paymentTextDisabled}>Cash Payment</Text>
-                        //             </TouchableOpacity>
-                        //         </View>
-                        //     ) : (
-                        //         <TouchableOpacity
-                        //             style={styles.saveButton}
-                        //             onPress={() => setPaymentMethod('cash')}
-                        //         >
-                        //             <Text style={styles.saveButtonText}>Save</Text>
-                        //         </TouchableOpacity>
-                        //     )}
-                        // </View>
+                            <TouchableOpacity
+                                style={styles.paymentOption}
+                                onPress={() => setPaymentMethod('cash')}
+                            >
+                                <View
+                                    style={[styles.radioButton, paymentMethod === 'cash' && styles.radioSelected]}
+                                />
+                                <Text style={styles.paymentText}>Cash Payment</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
                     )}
                 </ScrollView>
             )}
@@ -971,4 +935,5 @@ const styles = StyleSheet.create({
         color: 'gray',
     },
 });
+
 

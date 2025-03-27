@@ -170,7 +170,6 @@ export const bookTestSearchSlice = createSlice({
         },
         updateBookingDetails: (state, action) => {
             state.bookingDetails = action.payload;
-            console.log('555555555555',state.bookingDetails)
             state.totalBookingValue = action.payload.reduce((sum: any, item: any) => sum + (item.Service_Amount || 0), 0);
             AsyncStorage.setItem('bookingDetails', JSON.stringify(state.bookingDetails));
         },
@@ -191,7 +190,8 @@ export const bookTestSearchSlice = createSlice({
             state.bookingDetails = [];
             state.totalBookingValue = 0;
             AsyncStorage.removeItem('bookingDetails');
-        }
+        },
+      
     },
     extraReducers: builder => {
         builder.addMatcher(

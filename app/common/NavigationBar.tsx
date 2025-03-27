@@ -89,7 +89,7 @@ const NavigationBar = ({ title }: any) => {
           <Text style={styles.headingText}>{title}</Text>
         </View>
         <View style={styles.rightView}>
-          <TouchableOpacity onPress={_navigateSOSScreen}>
+          {/* <TouchableOpacity onPress={_navigateSOSScreen}>
             <Image
               style={[
                 styles.headerRightImage,
@@ -114,7 +114,7 @@ const NavigationBar = ({ title }: any) => {
               />
             </View>
             {_renderNotificationCount()}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity onPress={_navigateProfileScreen}>
             {_showProfileIcon()}
