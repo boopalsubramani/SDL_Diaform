@@ -16,7 +16,6 @@ const App = () => {
             <ApplicationNavigation />
           </AppSettingsProvider>
         </UserProvider>
-
       </CartProvider>
     </Provider >
   );

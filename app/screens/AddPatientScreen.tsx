@@ -111,8 +111,8 @@ const AddPatientScreen = ({ navigation }: any) => {
     };
 
     const handleSubmit = async () => {
-        if (!phoneNumber) {
-            Alert.alert('Error', 'Phone Number is required.');
+        if (phoneNumber.length !== 10) {
+            Alert.alert('Error', 'Phone Number must be exactly 10 digits.');
             return;
         }
         if (!title) {
@@ -155,7 +155,7 @@ const AddPatientScreen = ({ navigation }: any) => {
             console.error('Failed to save data:', error);
         }
     };
-  
+
 
     const handleCross = () => {
         navigation.goBack('');
@@ -180,7 +180,12 @@ const AddPatientScreen = ({ navigation }: any) => {
                     <TextInput
                         style={styles.input}
                         keyboardType="number-pad"
-                        onChangeText={setPhoneNumber}
+                        maxLength={10}
+                        // onChangeText={setPhoneNumber}
+                        onChangeText={(text) => {
+                            const sanitizedText = text.replace(/[^0-9]/g, ''); // Allow only numbers
+                            setPhoneNumber(sanitizedText);
+                        }}
                         value={phoneNumber}
                     />
                     <TouchableOpacity style={styles.touchableContainer}>

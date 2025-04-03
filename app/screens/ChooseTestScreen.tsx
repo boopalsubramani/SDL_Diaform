@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, BackHandler, Dimensions, ScrollView, Image, Modal, Alert, TouchableWithoutFeedback, I18nManager } from 'react-native';
 import Constants from '../util/Constants';
 import { useCart } from '../common/CartContext';
@@ -25,7 +26,7 @@ interface Language {
 }
 
 const ChooseTestScreen = ({ route, showHeader = true }: any) => {
-    const { selectedPatientDetails, patientData, selectedTests = [], totalCartValue: initialTotalCartValue, shouldNavigateToCalender, testData = [], imageUri: passedImageUri } = route.params;
+    const { selectedPatientDetails, patientData, selectedTests = [], totalCartValue: initialTotalCartValue, fromPaymentDetailsScreen, shouldNavigateToCalender, testData = [], imageUri: passedImageUri } = route.params;
     const navigation = useNavigation<NavigationProp>();
     const { labels } = useAppSettings();
     const { cartItems, setCartItems } = useCart();
@@ -34,29 +35,20 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     const [imageUri, setImageUri] = useState(passedImageUri);
     const { imageBase64, convertImageToBase64 } = useUser();
     const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+    const updatedCart = useSelector((state: RootState) => state.bookTestSearch.updatedCartData);
 
-    console.log('patientdataChoosetest',patientData);
-    
-    const updatedCart = useSelector(
-        (state: RootState) => state.bookTestSearch.updatedCartData
-    );
+    console.log('selectedpattientinchoosetestscreen', selectedPatientDetails);
 
     useEffect(() => {
         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
     }, [selectedLanguage]);
 
-    const getLabel = (key: string) => {
-        return labels[key]?.defaultMessage || '';
-    };
+    const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
-    const handleRemoveImage = () => {
-        setImageUri(null);
-    };
+    const handleRemoveImage = () => setImageUri(null);
 
     useEffect(() => {
-        if (imageUri) {
-            convertImageToBase64(imageUri);
-        }
+        if (imageUri) convertImageToBase64(imageUri);
     }, [imageUri]);
 
     useEffect(() => {
@@ -64,11 +56,9 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
         setTotalCartValue(initialTotalCartValue);
     }, [setCartItems, initialTotalCartValue]);
 
-
     useEffect(() => {
         const handleBackPress = () => true;
         const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-
         if (shouldNavigateToCalender) {
             const timer = setTimeout(handleProceedClick, 1000);
             return () => {
@@ -79,13 +69,10 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
         return () => backHandler.remove();
     }, [shouldNavigateToCalender]);
 
-    const handleUploadPrescription = () => {
-        navigation.navigate('UploadPrescription');
-    };
+    const handleUploadPrescription = () => navigation.navigate('UploadPrescription', { selectedPatientDetails });
 
     const handleSearchTest = () => {
         const updatedTotal = calculateTotalCartValue(cartItems);
-
         navigation.navigate('BookTestSearch', { selectedPatientDetails, patientData, selectedTests: updatedCart, totalCartValue: updatedTotal });
     };
 
@@ -103,6 +90,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
             return acc + (item?.Amount || 0);
         }, 0);
         setTotalCartValue(total);
+        return total;
     };
 
     const handleToggleCart = (itemName: string) => {
@@ -110,7 +98,6 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
             const updatedCartItems = prevCartItems.includes(itemName)
                 ? prevCartItems.filter(item => item !== itemName)
                 : [...prevCartItems, itemName];
-            // const updateTotal = calculateTotalCartValue(updatedCartItems);
             return updatedCartItems;
         });
     };
@@ -129,14 +116,12 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
             Alert.alert("Error", "Please add at least one item to the cart or select an image.");
             return;
         }
-
         const state = await NetInfo.fetch();
         if (!state.isConnected) {
             Alert.alert(Constants.ALERT.TITLE.ERROR, Constants.VALIDATION_MSG.NO_INTERNET);
             return;
         }
-
-        navigation.navigate('Calender', { selectedPatientDetails, patientData, totalCartValue, testData, selectedTests: cartItems });
+        navigation.navigate('Calender', { selectedPatientDetails, patientData, totalCartValue, testData, selectedTests: cartItems, fromPaymentDetailsScreen, imageUri });
     };
 
     const handleProceedClick = () => {
@@ -154,7 +139,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
         }
     };
 
-    const renderCartItems = () => {
+    const renderCartItems = useMemo(() => {
         if (cartItems.length === 0) {
             return (
                 <View style={styles.emptyCartContainer}>
@@ -162,23 +147,21 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                 </View>
             );
         }
-        return updatedCart.map((item, index) => {
-            return (
-                <View style={styles.testItemContainer} key={index}>
-                    <Text style={styles.testName}>{item.Service_Name}</Text>
-                    <Text style={styles.testPrice}>{item.Amount} INR</Text>
-                    <TouchableOpacity onPress={() => handleToggleCart(item.Service_Name)}>
-                        <View style={styles.addToCartContainer}>
-                            <Image
-                                source={Math.random() > 0.5 ? require('../images/removeCart.png') : require('../images/addCart.png')}
-                                style={styles.CartIcon}
-                            />
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            );
-        });
-    };
+        return updatedCart.map((item, index) => (
+            <View style={styles.testItemContainer} key={index}>
+                <Text style={styles.testName}>{item.Service_Name}</Text>
+                <Text style={styles.testPrice}>{item.Amount} INR</Text>
+                <TouchableOpacity onPress={() => handleToggleCart(item.Service_Name)}>
+                    <View style={styles.addToCartContainer}>
+                        <Image
+                            source={Math.random() > 0.5 ? require('../images/removeCart.png') : require('../images/addCart.png')}
+                            style={styles.CartIcon}
+                        />
+                    </View>
+                </TouchableOpacity>
+            </View>
+        ));
+    }, [cartItems, updatedCart]);
 
     return (
         <View style={styles.MainContainer}>
@@ -212,7 +195,6 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                         )}
                     </View>
 
-                    {/* Move the selected image above upload prescription */}
                     {imageUri && (
                         <View style={styles.imageContainer}>
                             <Image
@@ -232,7 +214,6 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                         </TouchableOpacity>
                     </View>
                 </View>
-
             </ScrollView>
             {isModalVisible && (
                 <Modal animationType="slide" transparent={true} visible={isModalVisible} onRequestClose={() => setModalVisible(false)}>
@@ -241,7 +222,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                             <TouchableWithoutFeedback>
                                 <View style={styles.modalBackground}>
                                     <View style={styles.modalContent}>
-                                        {renderCartItems()}
+                                        {renderCartItems}
                                         <Text style={styles.bottomText}>Total Cart Value INR {totalCartValue}</Text>
                                         {updatedCart.length > 0 && (
                                             <TouchableOpacity onPress={handleProceedClick}>
@@ -259,8 +240,6 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                         </View>
                     </TouchableWithoutFeedback>
                 </Modal>
-
-
             )}
             <View style={styles.navigationContainer}>
                 <TouchableOpacity onPress={handleBack}>
@@ -275,8 +254,6 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
 };
 
 export default ChooseTestScreen;
-
-
 
 const styles = StyleSheet.create({
     MainContainer: {
@@ -333,9 +310,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     CartIconTop: { marginVertical: 16, marginHorizontal: 10, width: deviceHeight / 50, height: deviceHeight / 50, alignSelf: 'center' },
-
     CartIcon: { marginLeft: 10, marginRight: 15, width: deviceHeight / 35, height: deviceHeight / 35, alignSelf: 'center', tintColor: Constants.COLOR.WHITE_COLOR },
-
     searchLabel: {
         fontSize: Constants.FONT_SIZE.SM,
         alignSelf: 'center',
@@ -441,22 +416,16 @@ const styles = StyleSheet.create({
     },
     emptyCartText: { fontSize: Constants.FONT_SIZE.M, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
     testItemContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10 },
-
     testName: { width: '40%', color: '#3C3636', fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
     testPrice: { width: '20%', fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, fontSize: Constants.FONT_SIZE.M },
-
     bottomText: {
         fontSize: Constants.FONT_SIZE.M,
         alignSelf: 'center',
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
     },
-
     SubmitButtonView: { borderRadius: 25, width: deviceWidth / 1.2, backgroundColor: Constants.COLOR.THEME_COLOR, marginTop: 16, alignSelf: 'center' },
-
     ButtonText: { color: Constants.COLOR.WHITE_COLOR, fontFamily: Constants.FONT_FAMILY.fontFamilyMedium, fontSize: Constants.FONT_SIZE.M, padding: 12, alignSelf: 'center' },
-
     addToCartContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: Constants.COLOR.THEME_COLOR, marginVertical: 10, padding: 6, borderRadius: 5, },
-
     navigationContainer: {
         flexDirection: 'row',
         position: 'absolute',
@@ -466,6 +435,4 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
 });
-
-
 

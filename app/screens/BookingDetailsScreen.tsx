@@ -53,7 +53,7 @@ const BookingDetailsScreen = ({ navigation }: any) => {
                 App_Type: "R",
                 Username: userData?.UserCode,
                 Booking_Type: "R",
-                Firm_No: "01",
+                Firm_No: userData?.Branch_Code,
                 Booking_Date: booking.Booking_Date,
                 Booking_No: booking.Booking_No
             };

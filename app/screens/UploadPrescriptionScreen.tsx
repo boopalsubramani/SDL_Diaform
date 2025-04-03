@@ -12,13 +12,13 @@ interface Language {
   Alignment: 'ltr' | 'rtl';
 }
 
-const UploadPrescriptionScreen = ({ navigation }: any) => {
+const UploadPrescriptionScreen = ({ navigation, route }: any) => {
+  const { selectedPatientDetails } = route.params;
   const { labels } = useAppSettings();
   const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('useEffect called:', selectedLanguage);
     I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
   }, [selectedLanguage]);
 
@@ -30,7 +30,7 @@ const UploadPrescriptionScreen = ({ navigation }: any) => {
 
   const openCamera = async () => {
     try {
-      const result = await launchCamera({ mediaType: 'photo' });
+      const result = await launchCamera({ mediaType: 'photo', quality: 1 });
       handleImagePickerResponse(result);
     } catch (error) {
       console.error('Failed to launch camera:', error);
@@ -39,50 +39,32 @@ const UploadPrescriptionScreen = ({ navigation }: any) => {
 
   const openImageLibrary = async () => {
     try {
-      const result = await launchImageLibrary({ mediaType: 'photo' });
+      const result = await launchImageLibrary({ mediaType: 'photo', quality: 1 });
       handleImagePickerResponse(result);
     } catch (error) {
       console.error('Failed to launch image library:', error);
     }
   };
 
-  // const handleImagePickerResponse = (response: any) => {
-  //   if (response.didCancel) {
-  //     console.log('User cancelled image picker');
-  //     return;
-  //   } else if (response.errorCode) {
-  //     console.log('ImagePicker Error:', response.errorMessage);
-  //     return;
-  //   }
-
-  //   const uri = response.assets?.[0]?.uri;
-  //   if (!uri) return;
-
-  //   setImageUri(uri);
-  //   navigation.navigate('ChooseTest', { imageUri: uri });
-  // };
-
   const handleImagePickerResponse = (response: any) => {
     console.log('Image Picker Response:', response);
     if (response.didCancel) {
       console.log('User cancelled image picker');
       return;
-    } else if (response.errorCode) {
+    } else if (response.errorMessage) {
       console.log('ImagePicker Error:', response.errorMessage);
       return;
     }
-  
+
     const uri = response.assets?.[0]?.uri;
     if (!uri) {
       console.log('No URI found in response');
       return;
     }
-  
     console.log('Setting image URI:', uri);
     setImageUri(uri);
     console.log('Image URI state updated:', uri);
-
-    navigation.navigate('ChooseTest', { imageUri: uri });
+    navigation.navigate('ChooseTest', { imageUri: uri, selectedPatientDetails });
   };
   return (
     <View style={styles.container}>

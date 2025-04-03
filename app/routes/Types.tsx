@@ -11,6 +11,7 @@ export type RootStackParamList = {
     selectedTests: any;
     totalCartValue: any;
     patientData: any;
+    fromPaymentDetailsScreen:any
 
   };
   ChooseTest: {
@@ -20,6 +21,7 @@ export type RootStackParamList = {
     shouldNavigateToCalender: boolean;
     testData: any[];
     patientData: any;
+    fromPaymentDetailsScreen:any
   };
   Calender: {
     selectedTests: { Service_Name: string; Amount: number }[];
@@ -39,9 +41,5 @@ export type RootStackParamList = {
   Transaction: any;
   PaymentFailure: any;
   Payment: any;
-
-
-
-
   // Add other screens as needed
 };

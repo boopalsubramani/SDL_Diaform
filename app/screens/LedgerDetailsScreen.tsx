@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Image, Modal, FlatList } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, FlatList, ScrollView, Alert } from 'react-native';
 import { useLedgerDateWiseMutation } from '../redux/service/LedgerDateWiseService';
 import { useLedgerMonthWiseMutation } from '../redux/service/LedgerMonthWiseService';
 import { useUser } from '../common/UserContext';
@@ -53,14 +52,6 @@ const LedgerDetailsScreen = () => {
 
     const getLabel = (key: string) => labels[key]?.defaultMessage || "";
 
-    useEffect(() => {
-        const currentDate = new Date();
-        const formattedDate = formatDate(currentDate);
-        setSelectedFromDate(formattedDate);
-        setSelectedToDate(formattedDate);
-        fetchData(formattedDate, formattedDate);
-    }, []);
-
     const formatDate = (date: any) => {
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -73,60 +64,57 @@ const LedgerDetailsScreen = () => {
         return `${year}-${month}-${day}`;
     };
 
-    const fetchData = useCallback(async (fromDate: string, toDate: string) => {
-        setLoading(true);
-        setNoData(false);
-
-        const formattedFromDate = formatDateForRequest(fromDate);
-        const formattedToDate = formatDateForRequest(toDate);
-
-        try {
-            if (viewMode === "date") {
-                const response = await ledgerDateWiseApiReq({
-                    Usertype: userData?.UserType,
-                    Username: userData?.UserCode,
-                    Firm_No: "01",
-                    From_Date: formattedFromDate,
-                    To_Date: formattedToDate,
-                }).unwrap();
-                console.log("Date-wise API Response:", response);
-
-                const hasData = response?.SuccessFlag === "true" && Array.isArray(response.Message) && response.Message.length > 0;
-                setDateWiseData(hasData ? response.Message : []);
-                setNoData(!hasData);
-            } else {
-                const response = await ledgerMonthWiseApiReq({
-                    Usertype: userData?.UserType,
-                    Username: userData?.UserCode,
-                    Firm_No: "01",
-                    From_Date: formattedFromDate,
-                    To_Date: formattedToDate,
-                }).unwrap();
-
-                console.log("Month-wise API Response:", response);
-
-                const hasData = response?.SuccessFlag === "true" && Array.isArray(response.Message) && response.Message.length > 0;
-                setMonthWiseData(hasData ? response.Message : []);
-                setNoData(!hasData);
-            }
-        } catch (error) {
-            console.error("Error fetching ledger data:", error);
-            setDateWiseData([]);
-            setMonthWiseData([]);
-            setNoData(true);
-        }
-        setLoading(false);
-    }, [userData, viewMode]);
-
     useEffect(() => {
-        if (selectedFromDate && selectedToDate) {
-            const timer = setTimeout(() => {
-                fetchData(selectedFromDate, selectedToDate);
-            }, 100);
-
-            return () => clearTimeout(timer);
+        const currentDate = new Date();
+        const formattedDate = formatDate(currentDate);
+        if (!selectedFromDate || !selectedToDate) {
+            setSelectedFromDate(formattedDate);
+            setSelectedToDate(formattedDate);
         }
-    }, [selectedFromDate, selectedToDate, fetchData]);
+        const fetchLedgerData = async () => {
+            if (selectedFromDate && selectedToDate) {
+                setLoading(true);
+                setNoData(false);
+                try {
+                    const formattedFromDate = formatDateForRequest(selectedFromDate);
+                    const formattedToDate = formatDateForRequest(selectedToDate);
+                    const response = await (viewMode === "date"
+                        ? ledgerDateWiseApiReq({
+                            Usertype: userData?.UserType,
+                            Username: userData?.UserCode,
+                            Firm_No: userData?.Branch_Code,
+                            From_Date: formattedFromDate,
+                            To_Date: formattedToDate,
+                        }).unwrap()
+                        : ledgerMonthWiseApiReq({
+                            Usertype: userData?.UserType,
+                            Username: userData?.UserCode,
+                            Firm_No: userData?.Branch_Code,
+                            From_Date: formattedFromDate,
+                            To_Date: formattedToDate,
+                        }).unwrap());
+
+                    console.log(`${viewMode === "date" ? "Date-wise" : "Month-wise"} API Response:`, response);
+
+                    const hasData = response?.SuccessFlag === "true" && Array.isArray(response.Message) && response.Message.length > 0;
+                    if (viewMode === "date") {
+                        setDateWiseData(hasData ? response.Message : []);
+                    } else {
+                        setMonthWiseData(hasData ? response.Message : []);
+                    }
+                    setNoData(!hasData);
+                } catch (error) {
+                    console.error("Error fetching ledger data:", error);
+                    setDateWiseData([]);
+                    setMonthWiseData([]);
+                    setNoData(true);
+                }
+                setLoading(false);
+            }
+        };
+        const timer = setTimeout(fetchLedgerData, 100);
+        return () => clearTimeout(timer);
+    }, [selectedFromDate, selectedToDate, viewMode, userData, ledgerDateWiseApiReq, ledgerMonthWiseApiReq]);
 
     const openCalendar = (type: string) => {
         setCalendarType(type);
@@ -135,19 +123,27 @@ const LedgerDetailsScreen = () => {
 
     const handleDateSelection = (selectedDate: any) => {
         const formattedDate = formatDate(new Date(selectedDate));
-        if (calendarType === "from") {
+        const selectedDateObj = new Date(selectedDate);
+        if (calendarType === 'from') {
+            const toDateObj = new Date(selectedToDate.split('/').reverse().join('-'));
+            if (selectedDateObj > toDateObj) {
+                Alert.alert('Invalid Date Range', 'The "From" date cannot be later than the "To" date.');
+                return;
+            }
             setSelectedFromDate(formattedDate);
-            fetchData(formattedDate, selectedToDate);
         } else {
+            const fromDateObj = new Date(selectedFromDate.split('/').reverse().join('-'));
+            if (selectedDateObj < fromDateObj) {
+                Alert.alert('Invalid Date Range', 'The "To" date must be greater than or equal to the "From" date.');
+                return;
+            }
             setSelectedToDate(formattedDate);
-            fetchData(selectedFromDate, formattedDate);
         }
         setShowCalendar(false);
     };
 
     const handleIndexChange = (index: number) => {
         setViewMode(index === 0 ? "date" : "month");
-        fetchData(selectedFromDate, selectedToDate);
     };
 
     return (
@@ -219,9 +215,7 @@ const LedgerDetailsScreen = () => {
                     />
                 </View>
             )}
-
-
-            <CalendarModal isVisible={showCalendar} onConfirm={handleDateSelection} onCancel={() => setShowCalendar(false)} mode="date" />
+            <CalendarModal isVisible={showCalendar} onConfirm={handleDateSelection} onCancel={() => setShowCalendar(false)} mode="date" onClose={false} />
         </View>
     );
 };
@@ -311,6 +305,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         borderRadius: 8,
         overflow: "hidden",
+        maxHeight: 500
     },
     tableRow: {
         flexDirection: 'row',
@@ -321,11 +316,10 @@ const styles = StyleSheet.create({
         padding: 8,
         backgroundColor: Constants.COLOR.THEME_COLOR,
         textAlign: 'center',
-        fontSize: 10,
         fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
     },
     tableCell: {
-        padding: 10,
+        paddingVertical: 10,
         flex: 1,
         textAlign: 'center',
         fontSize: Constants.FONT_SIZE.SM,

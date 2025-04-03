@@ -10,6 +10,8 @@ import {
   ScrollView,
   Animated,
   FlatList,
+  Alert,
+  RefreshControl
 } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from '../util/Constants';
@@ -20,34 +22,29 @@ import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
 
-interface TransactionDetail {
-  PName: string;
-  Bill_Amount: string;
-  Bill_Date: string;
-  Due_Amount: string;
-  Ref_Code: string;
-  Branch_Desc: string;
-  Sid_No: string;
-  Sid_Date: string;
-  Amount: string;
-  Pay_Type: string;
-  Result: string;
-  Ref_Type: string;
-  Ref_Name: string;
-  Bill_Mode: string;
-  Bill_Time: string;
-  Bill_No: string;
-  Pay_Mode: string
-}
 
 interface PayMode {
   PayMode: string;
   PayDescription: string;
 }
 
+interface TransactionDetail {
+  Branch_Desc: string;
+  Sid_No: string;
+  Sid_Date: string;
+  Ref_Type: string;
+  Ref_Name: string;
+  PName: string;
+  Pay_Mode: string;
+  Bill_Time: string;
+  Bill_Date: string;
+  Bill_No: string;
+  Bill_Amount: string;
+}
+
 const CollectionScreen = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [selectedPayMode, setSelectedPayMode] = useState({
+  const [selectedPayMode, setSelectedPayMode] = useState<PayMode>({
     PayMode: '',
     PayDescription: 'Pay Mode',
   });
@@ -60,6 +57,7 @@ const CollectionScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [noDataFound, setNoDataFound] = useState(false);
   const [animatedValues, setAnimatedValues] = useState<Animated.Value[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const { userData } = useUser();
   const [collectionDetails, setCollectionDetails] = useState<TransactionDetail[]>([]);
 
@@ -68,11 +66,11 @@ const CollectionScreen = () => {
 
   const labels = settings?.Message?.[0]?.Labels || {};
 
-  const getLabel = (key: any) => {
+  const getLabel = (key: string) => {
     return labels[key]?.defaultMessage || '';
   };
 
-  const formatDate = (date: any) => {
+  const formatDate = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) {
       console.error("Invalid date object:", date);
       return "Invalid Date";
@@ -84,11 +82,12 @@ const CollectionScreen = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const formatDateForRequest = (date: any) => {
+  const formatDateForRequest = (date: string) => {
     const [day, month, year] = date.split('/');
     return `${year}/${month}/${day}`;
   };
 
+  // Initialize with current date
   useEffect(() => {
     const currentDate = new Date();
     setSelectedFromDate(formatDate(currentDate));
@@ -96,10 +95,12 @@ const CollectionScreen = () => {
     fetchPayModeList();
   }, []);
 
+  // Set up animations when collection details change
   useEffect(() => {
     setAnimatedValues(collectionDetails.map(() => new Animated.Value(0)));
   }, [collectionDetails]);
 
+  // Trigger animations
   useEffect(() => {
     Animated.stagger(100, animatedValues.map((animatedValue) => {
       return Animated.timing(animatedValue, {
@@ -109,6 +110,13 @@ const CollectionScreen = () => {
       });
     })).start();
   }, [animatedValues]);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    if (selectedFromDate && selectedToDate) {
+      fetchCollectionDetails();
+    }
+  }, [selectedPayMode.PayMode, selectedFromDate, selectedToDate]);
 
   const fetchPayModeList = async () => {
     setIsLoading(true);
@@ -133,55 +141,85 @@ const CollectionScreen = () => {
   const fetchCollectionDetails = async () => {
     setIsLoading(true);
     setNoDataFound(false);
+    setCollectionDetails([]);
+
     try {
       const requestPayload = {
         Usertype: userData?.UserType,
         Username: userData?.UserCode,
-        Firm_No: '01',
+        Firm_No: userData?.Branch_Code,
         From_Date: formatDateForRequest(selectedFromDate),
         To_Date: formatDateForRequest(selectedToDate),
         Pay_Type: selectedPayMode.PayMode,
       };
+
       const response = await collectionDetailsReq(requestPayload).unwrap();
+
       if (response.SuccessFlag === 'true') {
-        if (response.Message.length > 0) {
+        if (response.Message && response.Message.length > 0) {
           setCollectionDetails(response.Message);
         } else {
           setNoDataFound(true);
         }
       } else {
+        setNoDataFound(true);
         console.warn('Failed to fetch collection details');
       }
     } catch (error) {
       console.error('Error fetching collection details:', error);
+      setNoDataFound(true);
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCollectionDetails();
   };
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
   };
 
-  const openCalendar = (type: any) => {
+  const openCalendar = (type: string) => {
     setCalendarType(type);
     setShowCalendar(true);
   };
 
-  const handleDateSelection = (selectedDate: any) => {
+  const handleDateSelection = (selectedDate: Date) => {
     const formattedDate = formatDate(new Date(selectedDate));
+    const selectedDateObj = new Date(selectedDate);
+
     if (calendarType === 'from') {
+      const toDateObj = new Date(selectedToDate.split('/').reverse().join('-'));
+      if (selectedDateObj > toDateObj) {
+        Alert.alert('Invalid Date Range', 'The "From" date cannot be later than the "To" date.');
+        return;
+      }
       setSelectedFromDate(formattedDate);
     } else {
+      const fromDateObj = new Date(selectedFromDate.split('/').reverse().join('-'));
+      if (selectedDateObj < fromDateObj) {
+        Alert.alert('Invalid Date Range', 'The "To" date must be greater than or equal to the "From" date.');
+        return;
+      }
       setSelectedToDate(formattedDate);
     }
     setShowCalendar(false);
-    fetchCollectionDetails();
+  };
+
+  const handlePaymentModeSelect = (item: PayMode) => {
+    setSelectedPayMode(item);
+    setDropdownVisible(false);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <NavigationBar title="Collection" />
+
+      {/* Filter Controls */}
       <View style={styles.row}>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Payment</Text>
@@ -217,85 +255,102 @@ const CollectionScreen = () => {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {noDataFound ? (
+      {/* Content Area */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
+      >
+        {isLoading && collectionDetails.length === 0 ? (
+          <View style={styles.loaderContainer}>
+            <Spinner
+              isVisible={true}
+              size={40}
+              type={'Wave'}
+              color={Constants.COLOR.THEME_COLOR}
+            />
+          </View>
+        ) : noDataFound ? (
           <View style={styles.noDataContainer}>
             <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular' }}>
               {getLabel('aboutscr_5')}
             </Text>
           </View>
+        ) : collectionDetails.length > 0 ? (
+          <View style={styles.detailsContainer}>
+            {collectionDetails.map((detail, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.detailCard,
+                  {
+                    opacity: animatedValues[index],
+                  },
+                ]}
+              >
+                <View style={{ flexDirection: "row" }}>
+                  <View style={styles.Column1}>
+                    <Text style={styles.CardBookingNo}>Branch</Text>
+                    <Text style={styles.CardBookingNo}>SID No & Date</Text>
+                    <Text style={styles.CardBookingNo}>Ref Type</Text>
+                    <Text style={styles.CardBookingNo}>Ref Name</Text>
+                    <Text style={styles.CardBookingNo}>Patient</Text>
+                  </View>
+                  <View style={styles.Column2}>
+                    <View style={styles.columnContainer}>
+                      <Text style={styles.detailValue}>{detail.Branch_Desc}</Text>
+                      <Text style={styles.detailValue}>{detail.Sid_No} & {detail.Sid_Date}</Text>
+                      <Text style={styles.detailValue}>{detail.Ref_Type}</Text>
+                      <Text style={styles.detailValue}>{detail.Ref_Name}</Text>
+                      <Text style={styles.detailValue}>{detail.PName}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', }}>
+                  <View style={styles.Row1}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.BillText}>Bill Mode </Text>
+                      <Text style={styles.BillTextValue}>{detail.Pay_Mode}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
+                      <Text style={styles.BillText}>Bill Time </Text>
+                      <Text style={styles.BillTextValue}>{detail.Bill_Time}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.Row2}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.BillText}>Bill Date </Text>
+                      <Text style={styles.BillTextValue}>{detail.Bill_Date}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
+                      <Text style={styles.BillText}>Bill No </Text>
+                      <Text style={styles.BillTextValue}>{detail.Bill_No}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
+                      <Text style={styles.BillText}>Bill Amount</Text>
+                      <Text style={styles.BillTextValue}>{detail.Bill_Amount}.00</Text>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
         ) : (
-          collectionDetails && collectionDetails.length > 0 ? (
-            <View style={styles.detailsContainer}>
-              {collectionDetails.map((detail, index) => (
-                <Animated.View
-                  key={index}
-                  style={[
-                    styles.detailCard,
-                    {
-                      opacity: animatedValues[index],
-                    },
-                  ]}
-                >
-                  <View style={{ flexDirection: "row" }}>
-                    <View style={styles.Column1}>
-                      <Text style={styles.CardBookingNo}>Branch</Text>
-                      <Text style={styles.CardBookingNo}>SID No & Date</Text>
-                      <Text style={styles.CardBookingNo}>Ref Type</Text>
-                      <Text style={styles.CardBookingNo}>Ref Name</Text>
-                      <Text style={styles.CardBookingNo}>Patient</Text>
-                    </View>
-                    <View style={styles.Column2}>
-                      <View style={styles.columnContainer}>
-                        <Text style={styles.detailValue}>{detail.Branch_Desc}</Text>
-                        <Text style={styles.detailValue}>{detail.Sid_No} & {detail.Sid_Date}</Text>
-                        <Text style={styles.detailValue}>{detail.Ref_Type}</Text>
-                        <Text style={styles.detailValue}>{detail.Ref_Name}</Text>
-                        <Text style={styles.detailValue}>{detail.PName}</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <View style={{ flexDirection: 'row', }}>
-                    <View style={styles.Row1}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={styles.BillText}>Bill Mode </Text>
-                        <Text style={styles.BillTextValue}>{detail.Pay_Mode}</Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
-                        <Text style={styles.BillText}>Bill Time </Text>
-                        <Text style={styles.BillTextValue}>{detail.Bill_Time}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.Row2}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={styles.BillText}>Bill Date </Text>
-                        <Text style={styles.BillTextValue}>{detail.Bill_Date}</Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
-                        <Text style={styles.BillText}>Bill No </Text>
-                        <Text style={styles.BillTextValue}>{detail.Bill_No}</Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.3 }}>
-                        <Text style={styles.BillText}>Bill Amount</Text>
-                        <Text style={styles.BillTextValue}>{detail.Bill_Amount}.00</Text>
-                      </View>
-                    </View>
-                  </View>
-                </Animated.View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.noDataContainer}>
-              <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular' }}>
-                {getLabel('aboutscr_5')}
-              </Text>
-            </View>
-          )
+          <View style={styles.noDataContainer}>
+            <Text style={{ color: Constants.COLOR.BLACK_COLOR, fontFamily: 'Poppins-Regular' }}>
+              {getLabel('aboutscr_5')}
+            </Text>
+          </View>
         )}
       </ScrollView>
 
+      {/* Payment Mode Dropdown */}
       <Modal visible={dropdownVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.overlay} onPress={() => setDropdownVisible(false)} />
         <View style={styles.dropdownMenu}>
@@ -313,11 +368,7 @@ const CollectionScreen = () => {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.dropdownItem}
-                  onPress={() => {
-                    setSelectedPayMode(item);
-                    setDropdownVisible(false);
-                    fetchCollectionDetails();
-                  }}
+                  onPress={() => handlePaymentModeSelect(item)}
                 >
                   <Text style={styles.dropdownItemText}>{item.PayDescription}</Text>
                 </TouchableOpacity>
@@ -327,15 +378,20 @@ const CollectionScreen = () => {
         </View>
       </Modal>
 
+      {/* Calendar Modal */}
       <CalendarModal
         isVisible={showCalendar}
         onConfirm={handleDateSelection}
         onCancel={() => setShowCalendar(false)}
         mode="date"
+        onClose={false}
       />
     </SafeAreaView>
   );
 };
+export default CollectionScreen;
+
+
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -385,7 +441,6 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     resizeMode: 'contain',
-    marginLeft: 5,
   },
   detailsContainer: {
     marginTop: 20,
@@ -485,8 +540,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
-
-export default CollectionScreen;
-
 

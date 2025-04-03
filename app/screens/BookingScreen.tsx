@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
-  Platform,
   Modal,
   I18nManager,
   FlexAlignType,
@@ -25,12 +24,12 @@ import SpinnerIndicator from '../common/SpinnerIndicator';
 import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
 import { useFocusEffect } from '@react-navigation/native';
+import { updateHandleBookingDetail } from '../redux/slice/BookTestSearchSlice';
 
 const { height: deviceHeight, } = Dimensions.get('window');
-const { width, height } = Dimensions.get('window');
 
 // Define the type for the item object
 interface BookingItem {
@@ -57,6 +56,7 @@ interface Language {
 
 const BookingScreen = ({ navigation, route }: any) => {
   const { userData } = useUser();
+  const dispatch = useDispatch();
   const { labels, settings } = useAppSettings();
   const [bookingListAPIReq] = useBookingListMutation();
   const [bookingData, setBookingData] = useState<BookingItem[]>([]);
@@ -175,8 +175,15 @@ const BookingScreen = ({ navigation, route }: any) => {
   //     const response = await bookingListAPIReq(payload).unwrap();
   //     if (response?.Message?.length > 0) {
   //       let allBookings = response.Message[0].Booking_Detail || [];
+
   //       if (selectedBranch || selectedStatus || selectedDate || firmNo) {
-  //         allBookings = allBookings.filter((item: { Branch_Name: string; Booking_Status_Desc: string; Firm_No: string; Booking_Date: string; }) => {
+  //         allBookings = allBookings.filter((item: {
+  //           Branch_Name: string;
+  //           Booking_Status_Desc: string;
+  //           Firm_No: string;
+  //           Booking_Date: string;
+  //           Cancel_Remarks?: string;
+  //         }) => {
   //           const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
   //           const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
   //           const firmMatch = !firmNo || item.Firm_No === firmNo;
@@ -198,12 +205,6 @@ const BookingScreen = ({ navigation, route }: any) => {
   //   }
   // };
 
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     fetchBookingData();
-  //   }, [selectedBranch, selectedStatus, firmNo, selectedDate])
-  // );
   const fetchBookingData = async () => {
     setLoading(true);
     try {
@@ -220,14 +221,9 @@ const BookingScreen = ({ navigation, route }: any) => {
       if (response?.Message?.length > 0) {
         let allBookings = response.Message[0].Booking_Detail || [];
 
+        // Filter based on selected values
         if (selectedBranch || selectedStatus || selectedDate || firmNo) {
-          allBookings = allBookings.filter((item: {
-            Branch_Name: string;
-            Booking_Status_Desc: string;
-            Firm_No: string;
-            Booking_Date: string;
-            Cancel_Remarks?: string;
-          }) => {
+          allBookings = allBookings.filter((item: any) => {
             const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
             const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
             const firmMatch = !firmNo || item.Firm_No === firmNo;
@@ -237,6 +233,10 @@ const BookingScreen = ({ navigation, route }: any) => {
             return branchMatch && statusMatch && firmMatch && dateMatch;
           });
         }
+
+        // Sort by latest booking ID (assuming higher Booking_No is the latest)
+        allBookings.sort((a: any, b: any) => Number(b.Booking_No) - Number(a.Booking_No));
+
         setBookingData(allBookings);
       } else {
         setBookingData([]);
@@ -257,32 +257,48 @@ const BookingScreen = ({ navigation, route }: any) => {
 
   const handleBookingDetail = (item: BookingItem) => {
     if (!item.Sid_No || item.Sid_No.trim() === '') {
+      dispatch(updateHandleBookingDetail({
+        showCancel: true,
+        fromBookingScreen: true,
+        booking: item,
+      }))
       navigation.navigate('PaymentDetail', {
         showCancel: true,
         fromBookingScreen: true,
-        booking: item
+        booking: item,
       });
     } else {
+      dispatch(updateHandleBookingDetail({
+        showCancel: false,
+        fromBookingScreen: false,
+        booking: item,
+      }))
       navigation.navigate('BookingDetail', { booking: item });
     }
   };
+
+  // const handleBookingDetail = (item: BookingItem) => {
+  //   navigation.navigate('PaymentDetail', {
+  //     showCancel: true,
+  //     fromBookingScreen: true,
+  //     booking: item
+  //   });
+  // };
 
   const CardItem = ({ item }: { item: BookingItem }) => {
     const formattedBookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('MMM');
     const formattedBookingDateAndYear = moment(item.Booking_Date, 'YYYY/MM/DD').format('D, YYYY');
     const isCollectionCompleted = item.Booking_Status_Desc === 'Collection Completed';
 
-    console.log('cancelleed', item.Is_Cancelled, item.Booking_No);
 
     return (
-      <TouchableOpacity onPress={() => handleBookingDetail(item)}>
+      <TouchableOpacity onPress={() => handleBookingDetail(item)} activeOpacity={0.8}>
         <LinearGradient
           colors={['white', 'white']}
           style={[styles.CardContainer]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* <View style={styles.Column1}> */}
           <View style={getColumn1Style(selectedLanguage)}>
             <View style={styles.ServiceContainer}>
               <Text style={styles.ServiceText}>Service</Text>
@@ -324,7 +340,8 @@ const BookingScreen = ({ navigation, route }: any) => {
                 },
               ]}
                 numberOfLines={1}>
-                {item.Booking_Status_Desc}
+                {/* {item.Booking_Status_Desc} */}
+                {item?.Is_Cancelled ? 'Cancelled' : item.Booking_Status_Desc}
               </Text>
               {settings?.Enable_Paymode === 'Y' && (
                 <TouchableOpacity style={styles.ButtonPayNowView}>
@@ -411,8 +428,8 @@ const BookingScreen = ({ navigation, route }: any) => {
                 }
               }}
             />
+           
           )}
-
         </View>
       </View>
 

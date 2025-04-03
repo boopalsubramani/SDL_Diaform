@@ -14,6 +14,7 @@ import {
   Alert,
   I18nManager,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from '../util/Constants';
@@ -50,7 +51,7 @@ interface Language {
 
 const TransactionScreen = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [selectedPayMode, setSelectedPayMode] = useState({
+  const [selectedPayMode, setSelectedPayMode] = useState<PayMode>({
     PayMode: '',
     PayDescription: 'Pay Mode',
   });
@@ -61,6 +62,7 @@ const TransactionScreen = () => {
   const [calendarType, setCalendarType] = useState('');
   const [payModes, setPayModes] = useState<PayMode[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<TransactionDetail[]>([]);
   const [noDataFound, setNoDataFound] = useState(false);
   const [animatedValues, setAnimatedValues] = useState<Animated.Value[]>([]);
@@ -78,7 +80,7 @@ const TransactionScreen = () => {
     return labels[key]?.defaultMessage || '';
   };
 
-  const formatDate = (date: any) => {
+  const formatDate = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) {
       console.error("Invalid date object:", date);
       return "Invalid Date";
@@ -90,11 +92,12 @@ const TransactionScreen = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const formatDateForRequest = (date: any) => {
+  const formatDateForRequest = (date: string) => {
     const [day, month, year] = date.split('/');
     return `${year}/${month}/${day}`;
   };
 
+  // Initialize with current date
   useEffect(() => {
     const currentDate = new Date();
     setSelectedFromDate(formatDate(currentDate));
@@ -102,10 +105,12 @@ const TransactionScreen = () => {
     fetchPayModeList();
   }, []);
 
+  // Set up animations when transaction details change
   useEffect(() => {
     setAnimatedValues(transactionDetails.map(() => new Animated.Value(0)));
   }, [transactionDetails]);
 
+  // Trigger animations
   useEffect(() => {
     Animated.stagger(100, animatedValues.map((animatedValue) => {
       return Animated.timing(animatedValue, {
@@ -115,6 +120,13 @@ const TransactionScreen = () => {
       });
     })).start();
   }, [animatedValues]);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    if (selectedFromDate && selectedToDate) {
+      fetchTransactionDetails();
+    }
+  }, [selectedPayMode.PayMode, selectedFromDate, selectedToDate]);
 
   const fetchPayModeList = async () => {
     setIsLoading(true);
@@ -139,32 +151,43 @@ const TransactionScreen = () => {
   const fetchTransactionDetails = async () => {
     setIsLoading(true);
     setNoDataFound(false);
+    setTransactionDetails([]);
+
     try {
       const requestPayload = {
         Usertype: userData?.UserType,
         Username: userData?.UserCode,
-        Firm_No: '01',
+        Firm_No: userData?.Branch_Code,
         From_Date: formatDateForRequest(selectedFromDate),
         To_Date: formatDateForRequest(selectedToDate),
         Pay_Type: selectedPayMode.PayMode,
       };
+
       const response = await transactionDetailsReq(requestPayload).unwrap();
+
       if (response.SuccessFlag === 'true') {
-        if (response.Message.length > 0) {
+        if (response.Message && response.Message.length > 0) {
           setTransactionDetails(response.Message);
         } else {
           setNoDataFound(true);
         }
       } else {
-        console.warn('Failed to fetch collection details');
+        setNoDataFound(true);
+        console.warn('Failed to fetch transaction details');
       }
     } catch (error) {
-      console.error('Error fetching collection details:', error);
+      console.error('Error fetching transaction details:', error);
+      setNoDataFound(true);
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchTransactionDetails();
+  };
 
   const downloadInvoice = async (invoiceNo: string, invoiceDate: string) => {
     setIsLoading(true);
@@ -173,7 +196,7 @@ const TransactionScreen = () => {
       const response = await invoiceDownloadReq({
         Username: userData?.UserCode,
         Usertype: userData?.UserType,
-        Firm_No: '01',
+        Firm_No: userData?.Branch_Code,
         Invoice_No: invoiceNo,
         Invoice_Date: invoiceDate,
       }).unwrap();
@@ -209,37 +232,43 @@ const TransactionScreen = () => {
     setDropdownVisible(!dropdownVisible);
   };
 
-  const openCalendar = (type: any) => {
+  const openCalendar = (type: string) => {
     setCalendarType(type);
     setShowCalendar(true);
   };
 
-  const handleDateSelection = (selectedDate: any) => {
+  const handleDateSelection = (selectedDate: Date) => {
     const formattedDate = formatDate(new Date(selectedDate));
+    const selectedDateObj = new Date(selectedDate);
+
     if (calendarType === 'from') {
+      const toDateObj = new Date(selectedToDate.split('/').reverse().join('-'));
+      if (selectedDateObj > toDateObj) {
+        Alert.alert('Invalid Date Range', 'The "From" date cannot be later than the "To" date.');
+        return;
+      }
       setSelectedFromDate(formattedDate);
     } else {
+      const fromDateObj = new Date(selectedFromDate.split('/').reverse().join('-'));
+      if (selectedDateObj < fromDateObj) {
+        Alert.alert('Invalid Date Range', 'The "To" date must be greater than or equal to the "From" date.');
+        return;
+      }
       setSelectedToDate(formattedDate);
     }
     setShowCalendar(false);
-    fetchTransactionDetails();
   };
 
-  const filterTransactionsByDate = (transactions: TransactionDetail[]) => {
-    const fromDate = new Date(selectedFromDate.split('/').reverse().join('-'));
-    const toDate = new Date(selectedToDate.split('/').reverse().join('-'));
-
-    return transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.Sid_Date.split('/').reverse().join('-'));
-      return transactionDate >= fromDate && transactionDate <= toDate;
-    });
+  const handlePaymentModeSelect = (item: PayMode) => {
+    setSelectedPayMode(item);
+    setDropdownVisible(false);
   };
-
-  const filteredTransactionDetails = filterTransactionsByDate(transactionDetails);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <NavigationBar title="Transaction" />
+
+      {/* Filter Controls */}
       <View style={styles.row}>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Payment</Text>
@@ -275,88 +304,108 @@ const TransactionScreen = () => {
         </View>
       </View>
 
-
-      <ScrollView contentContainerStyle={styles.container}>
-        {noDataFound ? (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataText}>{getLabel('aboutscr_5')}</Text>
-          </View>
-        ) : (
-          filteredTransactionDetails && filteredTransactionDetails.length > 0 ? (
-            <FlatList
-              data={filteredTransactionDetails}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item, index }) => (
-                <Animated.View
-                  style={[
-                    styles.detailCard,
-                    {
-                      opacity: animatedValues[index],
-                    },
-                  ]}
-                >
-                  <View style={styles.detailHeader}>
-                    <View style={styles.detailSection}>
-                      <Text style={styles.detailLabel}>No</Text>
-                      <Text style={styles.detailColen}>:</Text>
-                      <Text style={styles.detailValue}>{item.Sid_No}</Text>
-                    </View>
-                    <View style={styles.detailSection}>
-                      <Text style={styles.detailLabel}>Date</Text>
-                      <Text style={styles.detailColen}>:</Text>
-                      <Text style={styles.detailValue}>{item.Sid_Date}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.downloadButton}
-                      onPress={() => downloadInvoice(item.Sid_No, formatDateForRequest(item.Sid_Date))}
-                    >
-                      <Image source={require('../images/download.png')} style={styles.downloadIcon} />
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.detailBody}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Firm</Text>
-                      <Text style={styles.detailColen}>:</Text>
-                      <Text style={styles.detailValue}>{item.Firm_Name}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <View style={styles.detailColumn}>
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Due</Text>
-                          <Text style={styles.detailColen}>:</Text>
-                          <Text style={styles.detailValue}>{item.Due}</Text>
-                        </View>
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Total</Text>
-                          <Text style={styles.detailColen}>:</Text>
-                          <Text style={styles.detailValue}>{item.Due}</Text>
-                        </View>
-                      </View>
-                      <View style={styles.detailColumn}>
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Paid</Text>
-                          <Text style={styles.detailColen}>:</Text>
-                          <Text style={styles.detailValuePaid}>{item.Paid}</Text>
-                        </View>
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Status</Text>
-                          <Text style={styles.detailColen}>:</Text>
-                          <Text style={styles.detailValue}>{item.Result}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                </Animated.View>
-              )}
+      {/* Content Area */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
+      >
+        {isLoading && transactionDetails.length === 0 ? (
+          <View style={styles.loaderContainer}>
+            <Spinner
+              isVisible={true}
+              size={40}
+              type={'Wave'}
+              color={Constants.COLOR.THEME_COLOR}
             />
-          ) : (
-            <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>{getLabel('aboutscr_5')}</Text>
-            </View>
-          )
+          </View>
+        ) : noDataFound ? (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>
+              {getLabel('aboutscr_5')}
+            </Text>
+          </View>
+        ) : transactionDetails.length > 0 ? (
+          <FlatList
+            data={transactionDetails}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => (
+              <Animated.View
+                style={[
+                  styles.detailCard,
+                  {
+                    opacity: animatedValues[index],
+                  },
+                ]}
+              >
+                <View style={styles.detailHeader}>
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>No</Text>
+                    <Text style={styles.detailColen}>:</Text>
+                    <Text style={styles.detailValue}>{item.Sid_No}</Text>
+                  </View>
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Date</Text>
+                    <Text style={styles.detailColen}>:</Text>
+                    <Text style={styles.detailValue}>{item.Sid_Date}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.downloadButton}
+                    onPress={() => downloadInvoice(item.Sid_No, formatDateForRequest(item.Sid_Date))}
+                  >
+                    <Image source={require('../images/download.png')} style={styles.downloadIcon} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.detailBody}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Firm</Text>
+                    <Text style={styles.detailColen}>:</Text>
+                    <Text style={styles.detailValue}>{item.Firm_Name}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailColumn}>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Due</Text>
+                        <Text style={styles.detailColen}>:</Text>
+                        <Text style={styles.detailValue}>{item.Due}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Total</Text>
+                        <Text style={styles.detailColen}>:</Text>
+                        <Text style={styles.detailValue}>{item.Due}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.detailColumn}>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Paid</Text>
+                        <Text style={styles.detailColen}>:</Text>
+                        <Text style={styles.detailValuePaid}>{item.Paid}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Status</Text>
+                        <Text style={styles.detailColen}>:</Text>
+                        <Text style={styles.detailValue}>{item.Result}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+          />
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>
+              {getLabel('aboutscr_5')}
+            </Text>
+          </View>
         )}
       </ScrollView>
 
+      {/* Payment Mode Dropdown */}
       <Modal visible={dropdownVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.overlay} onPress={() => setDropdownVisible(false)} />
         <View style={styles.dropdownMenu}>
@@ -374,11 +423,7 @@ const TransactionScreen = () => {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.dropdownItem}
-                  onPress={() => {
-                    setSelectedPayMode(item);
-                    setDropdownVisible(false);
-                    fetchTransactionDetails();
-                  }}
+                  onPress={() => handlePaymentModeSelect(item)}
                 >
                   <Text style={styles.dropdownItemText}>{item.PayDescription}</Text>
                 </TouchableOpacity>
@@ -387,18 +432,20 @@ const TransactionScreen = () => {
           )}
         </View>
       </Modal>
+
+      {/* Calendar Modal */}
       <CalendarModal
         isVisible={showCalendar}
         onConfirm={handleDateSelection}
         onCancel={() => setShowCalendar(false)}
         mode="date"
+        onClose={false}
       />
     </SafeAreaView>
   );
 };
 
 export default TransactionScreen;
-
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -444,7 +491,6 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     resizeMode: 'contain',
-    marginLeft: 5,
   },
   detailsContainer: {
     marginTop: 10,
@@ -542,5 +588,11 @@ const styles = StyleSheet.create({
     fontSize: Constants.FONT_SIZE.S,
     fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
   },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
+
 

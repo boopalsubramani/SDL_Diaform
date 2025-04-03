@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../routes/Types';
 import { addToBooking, addToCart, removeFromBooking, removeFromCart, updateBookingDetails, updateSelectedTest } from '../redux/slice/BookTestSearchSlice';
+import { useUser } from '../common/UserContext';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get('window').width;
@@ -23,6 +24,7 @@ const BookTestSearchScreen = ({ route }: any) => {
     const dispatch = useDispatch();
     const navigation = useNavigation<NavigationProp>();
     const { labels } = useAppSettings();
+    const { userData } = useUser();
     const [searchText, setSearchText] = useState('');
     const [testData, setTestData] = useState<any[]>([]);
     const [isModalVisible, setModalVisible] = useState(false);
@@ -37,22 +39,17 @@ const BookTestSearchScreen = ({ route }: any) => {
 
     console.log('patientdataBookTestSearch', patientData);
 
-
-    useEffect(() => {
-        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
-    }, [selectedLanguage]);
-
     const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
     const fetchTests = useCallback(() => {
         if (searchText.trim().length > 2) {
             const requestBody = {
                 App_Type: "R",
-                Firm_No: '01',
+                Firm_No: userData?.Branch_Code,
                 Service_Type: "T",
                 Search_Text: searchText,
-                Ref_Type: selectedPatientDetails?.Ref_Type || 'C',
-                Ref_Code: selectedPatientDetails?.Ref_Code || '01000104',
+                Ref_Type: userData?.UserType,
+                Ref_Code: userData?.UserCode,
                 Coverage_Percent: "0",
                 Offer_Amount: "1",
                 Discount_Percentage: selectedPatientDetails?.Discount_Percentage || '0',
@@ -62,6 +59,10 @@ const BookTestSearchScreen = ({ route }: any) => {
             setTestData([]);
         }
     }, [searchText, selectedPatientDetails, searchTestAPIReq]);
+
+    useEffect(() => {
+        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
+    }, [selectedLanguage]);
 
     useEffect(() => {
         fetchTests();
@@ -91,6 +92,13 @@ const BookTestSearchScreen = ({ route }: any) => {
         }
     }, [fromPaymentDetailsScreen, bookingDetails, dispatch]);
 
+
+    useEffect(() => {
+        if (bookingItems.length > 0) {
+            dispatch(addToCart(bookingItems));
+        }
+    }, [bookingItems, dispatch]);
+
     const handleToggleCart = (item: any) => {
         const isAlreadyInCart = cartItems.some((cartItem: { Service_Code: any; }) => cartItem.Service_Code === item.Service_Code);
         if (isAlreadyInCart) {
@@ -112,7 +120,6 @@ const BookTestSearchScreen = ({ route }: any) => {
     const handleProceed = () => {
         const items = fromPaymentDetailsScreen ? bookingItems : cartItems;
         const totalValue = fromPaymentDetailsScreen ? totalBookingValue : totalCartValue;
-
         if (items.length > 0) {
             const selectedTests = items.map(item => ({
                 Service_Name: item.Service_Name || "Unknown",
@@ -130,6 +137,7 @@ const BookTestSearchScreen = ({ route }: any) => {
                 testData,
                 shouldNavigateToCalender: true,
                 patientData,
+                fromPaymentDetailsScreen: true
             });
         } else {
             Alert.alert('Empty', `Please add items to the ${fromPaymentDetailsScreen ? 'booking' : 'cart'} before proceeding.`);
@@ -175,12 +183,11 @@ const BookTestSearchScreen = ({ route }: any) => {
                         renderItem={({ item }) => {
                             const isItemInList = fromPaymentDetailsScreen ? bookingItems : cartItems;
                             const isItemIn = isItemInList.some(listItem => listItem.Service_Code === item.Service_Code);
-
                             return (
                                 <View style={styles.cartItem}>
                                     <Text style={styles.testName}>{item.Service_Name}</Text>
                                     <Text style={styles.testPrice}>
-                                        {fromPaymentDetailsScreen ? item.Service_Amount : item.Amount} INR
+                                        {fromPaymentDetailsScreen ? (item.Service_Amount || item.Amount) : item.Amount} INR
                                     </Text>
                                     <TouchableOpacity
                                         style={[styles.addToCartButton, isItemIn ? styles.removeButton : styles.addButton]}
