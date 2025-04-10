@@ -1,33 +1,3 @@
-// import { createSlice } from '@reduxjs/toolkit';
-// import { otpSendService } from '../service/Otp_sendService';
-
-// const initialState = {
-//     otpSendDetails: [],
-// };
-
-// export const otpSendSlice = createSlice({
-//     name: 'otpSend',
-//     initialState,
-//     reducers: {},
-//     extraReducers: builder => {
-//         builder.addMatcher(
-//             otpSendService.endpoints.otpSend.matchFulfilled,
-//             (state, { payload }) => {
-//                 console.log("payload", payload)
-//                 if (payload.Code === 200) {
-//                     console.log('APISUCCESS--------otpSend--------------->', payload.Message);
-//                     state.otpSendDetails = payload.Message;
-//                 }
-//             },
-//         );
-//     },
-// });
-
-// export const { } = otpSendSlice.actions;
-
-// export default otpSendSlice.reducer;
-
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { otpSendService } from '../service/OtpSendService';
 

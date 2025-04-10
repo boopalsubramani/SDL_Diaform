@@ -8,8 +8,7 @@ import { useBookingDetailMutation } from '../redux/service/BookingDetailService'
 import SpinnerIndicator from '../common/SpinnerIndicator';
 import { useUser } from '../common/UserContext';
 
-const deviceHeight = Dimensions.get('window').height;
-const deviceWidth = Dimensions.get("window").width;
+const { height: deviceHeight, width: deviceWidth } = Dimensions.get('window');
 
 interface ServiceDetail {
     Service_Name: string;
@@ -35,12 +34,9 @@ interface Booking {
     Booking_Date: string;
 }
 
-type BookingDetailsScreenRouteProp = RouteProp<{
-    BookingDetails: { booking: Booking };
-}, 'BookingDetails'>;
 
-const BookingDetailsScreen = ({ navigation }: any) => {
-    const route = useRoute<BookingDetailsScreenRouteProp>();
+const BookingDetailsScreen = ({ navigation }:any) => {
+    const route = useRoute<RouteProp<{ BookingDetails: { booking: Booking } }>>();
     const { booking } = route.params;
     const { userData } = useUser();
     const [reviewText, setReviewText] = useState('');
@@ -49,27 +45,23 @@ const BookingDetailsScreen = ({ navigation }: any) => {
 
     useEffect(() => {
         const fetchBookingDetails = async () => {
-            const requestBody = {
+            const response = await bookingDetailAPIReq({
                 App_Type: "R",
                 Username: userData?.UserCode,
                 Booking_Type: "R",
                 Firm_No: userData?.Branch_Code,
                 Booking_Date: booking.Booking_Date,
                 Booking_No: booking.Booking_No
-            };
-
-            const response = await bookingDetailAPIReq(requestBody);
-            if (response.data && response.data.SuccessFlag === "true") {
+            });
+            if (response.data?.SuccessFlag === "true") {
                 setBookingDetails(response.data.Message[0]);
             }
         };
-
         fetchBookingDetails();
     }, [booking, bookingDetailAPIReq]);
 
-    const handleButtonPress = () => {
-        navigation.goBack();
-    };
+    const handleButtonPress = () => navigation.goBack();
+
     if (!bookingDetails) {
         return (
             <View style={styles.loadingContainer}>
@@ -92,30 +84,15 @@ const BookingDetailsScreen = ({ navigation }: any) => {
 
                 <View style={styles.circleContainer}>
                     <TouchableOpacity>
-                        <Image source={require('../images/profileImg.png')}
-                            style={styles.profileImageView}
-                            resizeMode="contain"
-                        />
+                        <Image source={require('../images/profileImg.png')} style={styles.profileImageView} resizeMode="contain" />
                     </TouchableOpacity>
                     <View style={styles.infoContainer}>
                         <Text style={styles.infoText}>{bookingDetails.Pt_Name}, {bookingDetails.First_Age} {bookingDetails.First_Age_Period}</Text>
                         <View style={styles.nameAddressRightAgePhoneView}>
-                            <Image
-                                style={styles.nameAddressRightAgeImage}
-                                resizeMode="contain"
-                                source={require('../images/gender.png')}
-                            />
-                            <Text style={styles.nameAddressRightAgeText}>
-                                {bookingDetails.Gender_Code}
-                            </Text>
-                            <Image
-                                style={styles.nameAddressRightMobileImage}
-                                resizeMode="contain"
-                                source={require('../images/mobile.png')}
-                            />
-                            <Text style={styles.nameAddressRightMobileText}>
-                                {bookingDetails.Pt_Mobile_No || 'N/A'}
-                            </Text>
+                            <Image style={styles.nameAddressRightAgeImage} resizeMode="contain" source={require('../images/gender.png')} />
+                            <Text style={styles.nameAddressRightAgeText}>{bookingDetails.Gender_Code}</Text>
+                            <Image style={styles.nameAddressRightMobileImage} resizeMode="contain" source={require('../images/mobile.png')} />
+                            <Text style={styles.nameAddressRightMobileText}>{bookingDetails.Pt_Mobile_No || 'N/A'}</Text>
                         </View>
                     </View>
                 </View>
@@ -132,7 +109,7 @@ const BookingDetailsScreen = ({ navigation }: any) => {
                     {bookingDetails.Service_Detail.map((service, index) => (
                         <View key={index} style={styles.detailRow}>
                             <Text style={styles.detailTitle}>{service.Service_Name}</Text>
-                            <Text style={styles.detailValue}>INR. {service.Service_Amount}</Text>
+                            <Text style={styles.detailValue}>{service.Service_Amount}</Text>
                         </View>
                     ))}
                 </View>
@@ -140,23 +117,16 @@ const BookingDetailsScreen = ({ navigation }: any) => {
                 <View style={styles.reviewContainer}>
                     <Text style={styles.subHeading}>Post your review</Text>
                     <View style={styles.commentMainView}>
-                        <TextInput
-                            style={styles.input}
-                            multiline={true}
-                            value={reviewText}
-                            onChangeText={text => setReviewText(text)}
-                        />
+                        <TextInput style={styles.input} multiline value={reviewText} onChangeText={setReviewText} />
                         <TouchableOpacity>
                             <Text style={styles.submitText}>Post</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
-            <View>
-                <TouchableOpacity onPress={handleButtonPress}>
-                    <ButtonBack />
-                </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={handleButtonPress}>
+                <ButtonBack />
+            </TouchableOpacity>
         </View>
     );
 };
@@ -164,143 +134,29 @@ const BookingDetailsScreen = ({ navigation }: any) => {
 export default BookingDetailsScreen;
 
 const styles = StyleSheet.create({
-    scrollContainer: {
-        flexGrow: 1,
-        paddingHorizontal: 10,
-    },
+    scrollContainer: { flexGrow: 1, paddingHorizontal: 10 },
     bookingIdView: { flexDirection: 'row' },
-    section: {
-        alignSelf: 'center',
-        flex: 3
-    },
-    heading: {
-        color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
-        fontSize: Constants.FONT_SIZE.M,
-        marginTop: 0,
-    },
-    subHeading: {
-        color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
-        fontSize: Constants.FONT_SIZE.M,
-    },
-    text: {
-        color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-        fontSize: Constants.FONT_SIZE.SM,
-    },
-    commentMainView: {
-        flexDirection: 'row',
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    profileImageView: {
-        width: 80,
-        height: 80,
-        borderRadius: 80 / 2,
-    },
-    circleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: deviceHeight * 0.02,
-    },
-    infoContainer: {
-        marginStart: 10
-    },
-    infoText: {
-        color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        width: '90%',
-        fontSize: Constants.FONT_SIZE.SM,
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    },
+    section: { alignSelf: 'center', flex: 3 },
+    heading: { color: Constants.COLOR.FONT_COLOR_DEFAULT, fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, fontSize: Constants.FONT_SIZE.M },
+    subHeading: { color: Constants.COLOR.FONT_COLOR_DEFAULT, fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, fontSize: Constants.FONT_SIZE.M },
+    text: { color: Constants.COLOR.FONT_COLOR_DEFAULT, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular, fontSize: Constants.FONT_SIZE.SM },
+    commentMainView: { flexDirection: 'row', borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+    profileImageView: { width: 80, height: 80, borderRadius: 40 },
+    circleContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: deviceHeight * 0.02 },
+    infoContainer: { marginStart: 10 },
+    infoText: { color: Constants.COLOR.FONT_COLOR_DEFAULT, width: '90%', fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
     nameAddressRightAgePhoneView: { flexDirection: 'row', marginTop: 10 },
-    nameAddressRightAgeImage: {
-        width: deviceHeight / 40,
-        height: deviceHeight / 40,
-        alignSelf: 'center',
-    },
-    nameAddressRightAgeText: {
-        marginLeft: 5,
-        color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        fontSize: Constants.FONT_SIZE.SM,
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    },
-    nameAddressRightMobileImage: {
-        marginLeft: 10,
-        width: deviceHeight / 40,
-        height: deviceHeight / 40,
-        alignSelf: 'center',
-    },
-    nameAddressRightMobileText: {
-        marginLeft: 5,
-        color: Constants.COLOR.FONT_COLOR_DEFAULT,
-        fontSize: Constants.FONT_SIZE.SM,
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: deviceHeight * 0.01,
-    },
-    banner: {
-        alignSelf: 'center',
-        padding: deviceWidth * 0.02,
-        borderWidth: 0.5,
-        borderRadius: deviceWidth * 0.02,
-        marginVertical: deviceHeight * 0.01,
-    },
-    bannerText: {
-        fontSize: Constants.FONT_SIZE.SM,
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-    },
-    detailRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        backgroundColor: '#ECEEF5',
-        padding: deviceWidth * 0.03,
-    },
-    detailTitle: {
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
-    },
-    detailValue: {
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
-        color: Constants.COLOR.FONT_COLOR_DEFAULT
-    },
-    submitText: {
-        fontSize: Constants.FONT_SIZE.SM,
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
-        borderRadius: 10,
-        paddingVertical: 10,
-        paddingHorizontal: 10,
-        textAlign: 'center',
-        overflow: 'hidden',
-        alignSelf: 'center',
-        marginLeft: 10,
-        color: Constants.COLOR.BLACK_COLOR,
-        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular
-    },
-    reviewContainer: {
-        marginVertical: deviceHeight * 0.02,
-        backgroundColor: '#ECEEF5',
-        marginBottom: 10,
-        padding: 10
-    },
-    input: {
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
-        flex: 0.999,
-        paddingHorizontal: 10,
-        borderRadius: 10,
-        height: deviceHeight / 8,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
-    },
+    nameAddressRightAgeImage: { width: deviceHeight / 40, height: deviceHeight / 40, alignSelf: 'center' },
+    nameAddressRightAgeText: { marginLeft: 5, color: Constants.COLOR.FONT_COLOR_DEFAULT, fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
+    nameAddressRightMobileImage: { marginLeft: 10, width: deviceHeight / 40, height: deviceHeight / 40, alignSelf: 'center' },
+    nameAddressRightMobileText: { marginLeft: 5, color: Constants.COLOR.FONT_COLOR_DEFAULT, fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
+    banner: { alignSelf: 'center', padding: deviceWidth * 0.02, borderWidth: 0.5, borderRadius: deviceWidth * 0.02, marginVertical: deviceHeight * 0.01 },
+    bannerText: { fontSize: Constants.FONT_SIZE.SM, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
+    detailRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#ECEEF5', padding: deviceWidth * 0.03 },
+    detailTitle: { fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
+    detailValue: { fontFamily: Constants.FONT_FAMILY.fontFamilyRegular, color: Constants.COLOR.FONT_COLOR_DEFAULT },
+    submitText: { fontSize: Constants.FONT_SIZE.SM, backgroundColor: Constants.COLOR.WHITE_COLOR, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 10, textAlign: 'center', overflow: 'hidden', alignSelf: 'center', marginLeft: 10, color: Constants.COLOR.BLACK_COLOR, fontFamily: Constants.FONT_FAMILY.fontFamilyRegular },
+    reviewContainer: { marginVertical: deviceHeight * 0.02, backgroundColor: '#ECEEF5', marginBottom: 10, padding: 10 },
+    input: { backgroundColor: Constants.COLOR.WHITE_COLOR, flex: 0.999, paddingHorizontal: 10, borderRadius: 10, height: deviceHeight / 8 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Constants.COLOR.WHITE_COLOR },
 });
-
-
-
-

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform, I18nManager } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform, I18nManager, Alert } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
-const deviceHeight = Dimensions.get('window').height;
+const { height: deviceHeight } = Dimensions.get('window');
 
 interface Language {
   Alignment: 'ltr' | 'rtl';
@@ -24,48 +25,92 @@ const UploadPrescriptionScreen = ({ navigation, route }: any) => {
 
   const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
-  const handleCross = () => {
-    navigation.goBack();
-  };
+  const handleCross = () => navigation.goBack();
 
-  const openCamera = async () => {
-    try {
-      const result = await launchCamera({ mediaType: 'photo', quality: 1 });
-      handleImagePickerResponse(result);
-    } catch (error) {
-      console.error('Failed to launch camera:', error);
+  const requestCameraPermission = async () => {
+    const permission = PERMISSIONS.ANDROID.CAMERA;
+    const checkPermission = await check(permission);
+    if (checkPermission === RESULTS.DENIED) {
+      const requestPermission = await request(permission);
+      return requestPermission === RESULTS.GRANTED;
     }
+    return checkPermission === RESULTS.GRANTED;
   };
 
-  const openImageLibrary = async () => {
+  const requestStoragePermission = async () => {
+    const permissions = [
+      PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
+      PERMISSIONS.ANDROID.READ_MEDIA_VISUAL_USER_SELECTED,
+    ];
+
+    for (const permission of permissions) {
+      const checkPermission = await check(permission);
+      if (checkPermission === RESULTS.DENIED) {
+        const requestPermission = await request(permission);
+        if (requestPermission !== RESULTS.GRANTED) {
+          return false;
+        }
+      } else if (checkPermission !== RESULTS.GRANTED) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleImagePicker = async (pickerFunction: (options: any) => Promise<any>) => {
     try {
-      const result = await launchImageLibrary({ mediaType: 'photo', quality: 1 });
+      const options = {
+        mediaType: 'photo',
+        quality: 1,
+      };
+      const result = await pickerFunction(options);
       handleImagePickerResponse(result);
     } catch (error) {
-      console.error('Failed to launch image library:', error);
+      console.error('Failed to launch image picker:', error);
     }
   };
 
   const handleImagePickerResponse = (response: any) => {
-    console.log('Image Picker Response:', response);
     if (response.didCancel) {
       console.log('User cancelled image picker');
       return;
-    } else if (response.errorMessage) {
-      console.log('ImagePicker Error:', response.errorMessage);
+    }
+    if (response.errorCode || response.errorMessage || !response.assets?.[0]?.uri) {
+      console.error('ImagePicker Error:', response.errorCode, response.errorMessage);
+      Alert.alert('Error', 'Failed to select image. Please try again.');
       return;
     }
-
-    const uri = response.assets?.[0]?.uri;
-    if (!uri) {
-      console.log('No URI found in response');
-      return;
-    }
-    console.log('Setting image URI:', uri);
+    const uri = response.assets[0].uri;
     setImageUri(uri);
-    console.log('Image URI state updated:', uri);
     navigation.navigate('ChooseTest', { imageUri: uri, selectedPatientDetails });
   };
+
+  const openCamera = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (hasPermission) {
+      handleImagePicker(launchCamera);
+    } else {
+      Alert.alert(
+        'Permission Required',
+        'Camera permission is required to take a photo.',
+        [{ text: 'OK', onPress: () => console.log('Camera permission denied') }]
+      );
+    }
+  };
+
+  const openImageLibrary = async () => {
+    const hasPermission = await requestStoragePermission();
+    if (hasPermission) {
+      handleImagePicker(launchImageLibrary);
+    } else {
+      Alert.alert(
+        'Permission Required',
+        'Storage permission is required to access the photo library.',
+        [{ text: 'OK', onPress: () => console.log('Storage permission denied') }]
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -89,7 +134,6 @@ const UploadPrescriptionScreen = ({ navigation, route }: any) => {
         <TouchableOpacity style={styles.uploadButton} onPress={openCamera}>
           <Text style={styles.uploadButtonText}>{getLabel("uploadpresscr_5")}</Text>
         </TouchableOpacity>
-
       </View>
     </View>
   );

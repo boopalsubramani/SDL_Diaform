@@ -26,7 +26,6 @@ import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
-import { useFocusEffect } from '@react-navigation/native';
 import { updateHandleBookingDetail } from '../redux/slice/BookTestSearchSlice';
 
 const { height: deviceHeight, } = Dimensions.get('window');
@@ -38,6 +37,7 @@ interface BookingItem {
   Booking_Date: string;
   Booking_Time: string;
   Booking_Status_Desc: string;
+  Report_Status:string;
   Branch_Name: string;
   Pt_Name: string;
   Pt_First_Age: string;
@@ -54,7 +54,7 @@ interface Language {
 }
 
 
-const BookingScreen = ({ navigation, route }: any) => {
+const BookingScreen = ({ navigation }: any) => {
   const { userData } = useUser();
   const dispatch = useDispatch();
   const { labels, settings } = useAppSettings();
@@ -72,7 +72,7 @@ const BookingScreen = ({ navigation, route }: any) => {
   const [status, setStatus] = useState<any[]>([]);
   const [firmNo, setFirmNo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings?.selectedLanguage) as Language | null;
 
   const [fetchAPIReq] = useFetchApiMutation();
   const branchCode = userData?.Branch_Code;
@@ -160,51 +160,6 @@ const BookingScreen = ({ navigation, route }: any) => {
     fetchBookingData();
   }, [selectedBranch, selectedStatus, firmNo, selectedDate]);
 
-  // const fetchBookingData = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const payload = {
-  //       App_Type: 'R',
-  //       UserType: userData?.UserType,
-  //       Username: userData?.UserCode,
-  //       Branch: selectedBranch || '',
-  //       Status: selectedStatus || '',
-  //       Firm_No: firmNo || '',
-  //     };
-
-  //     const response = await bookingListAPIReq(payload).unwrap();
-  //     if (response?.Message?.length > 0) {
-  //       let allBookings = response.Message[0].Booking_Detail || [];
-
-  //       if (selectedBranch || selectedStatus || selectedDate || firmNo) {
-  //         allBookings = allBookings.filter((item: {
-  //           Branch_Name: string;
-  //           Booking_Status_Desc: string;
-  //           Firm_No: string;
-  //           Booking_Date: string;
-  //           Cancel_Remarks?: string;
-  //         }) => {
-  //           const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
-  //           const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
-  //           const firmMatch = !firmNo || item.Firm_No === firmNo;
-  //           const bookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('YYYY/MM/DD');
-  //           const selectedDateFormatted = moment(selectedDate, 'YYYY/MM/DD').format('YYYY/MM/DD');
-  //           const dateMatch = !selectedDate || bookingDate === selectedDateFormatted;
-  //           return branchMatch && statusMatch && firmMatch && dateMatch;
-  //         });
-  //       }
-  //       setBookingData(allBookings);
-  //     } else {
-  //       setBookingData([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching booking data:', error);
-  //     setBookingData([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const fetchBookingData = async () => {
     setLoading(true);
     try {
@@ -225,7 +180,7 @@ const BookingScreen = ({ navigation, route }: any) => {
         if (selectedBranch || selectedStatus || selectedDate || firmNo) {
           allBookings = allBookings.filter((item: any) => {
             const branchMatch = !selectedBranch || item.Branch_Name.includes(selectedBranch.split('-')[1].trim());
-            const statusMatch = !selectedStatus || item.Booking_Status_Desc.trim() === selectedStatus.trim();
+            const statusMatch = !selectedStatus || item.Report_Status.trim() === selectedStatus.trim();
             const firmMatch = !firmNo || item.Firm_No === firmNo;
             const bookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('YYYY/MM/DD');
             const selectedDateFormatted = moment(selectedDate, 'YYYY/MM/DD').format('YYYY/MM/DD');
@@ -238,6 +193,7 @@ const BookingScreen = ({ navigation, route }: any) => {
         allBookings.sort((a: any, b: any) => Number(b.Booking_No) - Number(a.Booking_No));
 
         setBookingData(allBookings);
+        console.log('Booking Data:', allBookings);
       } else {
         setBookingData([]);
       }
@@ -277,19 +233,10 @@ const BookingScreen = ({ navigation, route }: any) => {
     }
   };
 
-  // const handleBookingDetail = (item: BookingItem) => {
-  //   navigation.navigate('PaymentDetail', {
-  //     showCancel: true,
-  //     fromBookingScreen: true,
-  //     booking: item
-  //   });
-  // };
-
   const CardItem = ({ item }: { item: BookingItem }) => {
     const formattedBookingDate = moment(item.Booking_Date, 'YYYY/MM/DD').format('MMM');
     const formattedBookingDateAndYear = moment(item.Booking_Date, 'YYYY/MM/DD').format('D, YYYY');
-    const isCollectionCompleted = item.Booking_Status_Desc === 'Collection Completed';
-
+    const isCollectionCompleted = item.Report_Status === 'Collection Completed';
 
     return (
       <TouchableOpacity onPress={() => handleBookingDetail(item)} activeOpacity={0.8}>
@@ -332,7 +279,8 @@ const BookingScreen = ({ navigation, route }: any) => {
             </View>
 
             <View style={styles.StatusAndPayContainer}>
-              <Text style={[
+              { (item.Report_Status || item?.Is_Cancelled ) &&
+                <Text style={[
                 styles.StatusText,
                 isCollectionCompleted && {
                   backgroundColor: item.BookingType_ColorCode,
@@ -340,9 +288,8 @@ const BookingScreen = ({ navigation, route }: any) => {
                 },
               ]}
                 numberOfLines={1}>
-                {/* {item.Booking_Status_Desc} */}
-                {item?.Is_Cancelled ? 'Cancelled' : item.Booking_Status_Desc}
-              </Text>
+                {item?.Is_Cancelled ? 'Cancelled' : item.Report_Status}
+              </Text>}
               {settings?.Enable_Paymode === 'Y' && (
                 <TouchableOpacity style={styles.ButtonPayNowView}>
                   <Text style={styles.ButtonPayNow}>{getLabel('bkrow_9')}</Text>
@@ -415,7 +362,7 @@ const BookingScreen = ({ navigation, route }: any) => {
               locale={selectedLanguage?.Code || "en"}
               selectedLanguage={selectedLanguage}
               isVisible={showCalendar}
-              onClose={() => setShowCalendar(false)}
+              onCancel={() => setShowCalendar(false)}
               onConfirm={(day: any) => {
                 const date = moment(day, "YYYY-MM-DD", true).toDate();
                 if (!isNaN(date.getTime())) {
@@ -428,7 +375,7 @@ const BookingScreen = ({ navigation, route }: any) => {
                 }
               }}
             />
-           
+
           )}
         </View>
       </View>
@@ -440,17 +387,7 @@ const BookingScreen = ({ navigation, route }: any) => {
         />
         <View style={styles.dropdownMenu}>
           {isLoading ? (
-            <Spinner
-              style={{
-                marginTop: deviceHeight / 10,
-                alignItems: 'center',
-                alignSelf: 'center',
-              }}
-              isVisible={true}
-              size={40}
-              type={'Wave'}
-              color={Constants.COLOR.THEME_COLOR}
-            />
+            <SpinnerIndicator/>
           ) : (
             <FlatList
               data={dropdownType === 'branch' ? branches : status}
@@ -721,14 +658,5 @@ const styles = StyleSheet.create({
     height: 14,
     resizeMode: 'contain',
     tintColor: Constants.COLOR.BLACK_COLOR,
-  },
-  calendarContainer: {
-    position: 'absolute',
-    marginTop: 60,
-    backgroundColor: Constants.COLOR.WHITE_COLOR,
-    borderRadius: 5,
-    elevation: 5,
-    padding: 10,
-    alignSelf: 'center',
   },
 });

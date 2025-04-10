@@ -3,16 +3,21 @@ import { Text, View, StyleSheet, Dimensions, Image, I18nManager } from 'react-na
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
 const deviceHeight = Dimensions.get('window').height;
 
+interface Language {
+    Alignment: 'ltr' | 'rtl';
+}
+
 const ButtonBack = () => {
-    const { settings, labels } = useAppSettings();
-    const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+    const { labels } = useAppSettings();
+    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
 
     useEffect(() => {
-        I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+        I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
     }, [selectedLanguage]);
 
     const getLabel = (key: string) => {

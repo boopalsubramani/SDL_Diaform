@@ -27,7 +27,7 @@ type PatientPhysician = {
 
 const { width, height } = Dimensions.get('window');
 
-const ChoosePatientScreen = ({ showHeader = true, route,}: any) => {
+const ChoosePatientScreen = ({ showHeader = true, route, }: any) => {
     const { userData } = useUser();
     const { labels, selectedLanguage } = useAppSettings();
     const navigation = useNavigation<NavigationProp>();
@@ -58,7 +58,7 @@ const ChoosePatientScreen = ({ showHeader = true, route,}: any) => {
     const [fetchAPIReq] = useFetchApiMutation();
     const branchCode = userData?.Branch_Code;
 
-   
+
     // Reusable search and fetch logic
     const fetchData = async (fetchObj: object, filterFunc: (item: any, query: string) => boolean, setFilteredData: React.Dispatch<React.SetStateAction<PatientPhysician[]>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, query: string) => {
         setIsLoading(true);
@@ -126,7 +126,7 @@ const ChoosePatientScreen = ({ showHeader = true, route,}: any) => {
                 {
                     Mode: 'O',
                     Command: 'OLXV65571F',
-                    branchNo: "08",
+                    branchNo: branchCode,
                     refType: "C",
                     refCode: selectedPhysicianDetails?.Ref_Code,
                     searchText: queryPhysician
@@ -178,7 +178,7 @@ const ChoosePatientScreen = ({ showHeader = true, route,}: any) => {
         const fetchObj = {
             Mode: 'L',
             Command: 'OLXV65571F',
-            branchNo: "08",
+            branchNo: branchCode,
             refType: "D",
             refCode: code
         };
@@ -393,19 +393,19 @@ const ChoosePatientScreen = ({ showHeader = true, route,}: any) => {
                                     <Text style={[styles.patientDetailText, {}]}>{patientData.Dob}</Text>
                                 </View>
                                 <View style={{ flexDirection: 'row', }}>
-                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Patient_Type:</Text>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Patient Type:</Text>
                                     <Text style={[styles.patientDetailText, {}]}>{patientData.Patient_Type}</Text>
                                 </View>
                                 <View style={{ flexDirection: 'row', }}>
-                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>IP_No:</Text>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>IP No:</Text>
                                     <Text style={[styles.patientDetailText, {}]}>{patientData.IP_No}</Text>
                                 </View>
                                 <View style={{ flexDirection: 'row', }}>
-                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Ward_Code:</Text>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Ward Code:</Text>
                                     <Text style={[styles.patientDetailText, {}]}>{patientData.Ward_Code}</Text>
                                 </View>
                                 <View style={{ flexDirection: 'row', }}>
-                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Ref_No:</Text>
+                                    <Text style={[styles.patientDetailText, { fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold, width: '50%' }]}>Ref No:</Text>
                                     <Text style={[styles.patientDetailText, {}]}>{patientData.Ref_No}</Text>
                                 </View>
                             </View>

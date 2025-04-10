@@ -36,6 +36,7 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     const { imageBase64, convertImageToBase64 } = useUser();
     const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
     const updatedCart = useSelector((state: RootState) => state.bookTestSearch.updatedCartData);
+    const bookingItems = useSelector((state: RootState) => state.bookTestSearch.bookingDetails);
 
     console.log('selectedpattientinchoosetestscreen', selectedPatientDetails);
 
@@ -126,16 +127,30 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
 
     const handleProceedClick = () => {
         if (updatedCart.length > 0) {
-            const selectedTests = updatedCart.map(itemName => {
-                const item = Array.isArray(testData) ? testData.find((test: { Service_Name: string; }) => test.Service_Name === itemName) : null;
+            const items = fromPaymentDetailsScreen ? bookingItems : updatedCart;
+            const selectedTests = items.map(item => {
+                const testItem = Array.isArray(testData)
+                    ? testData.find((test) => test.Service_Name === item.Service_Name)
+                    : null;
                 return {
-                    Service_Name: item?.Service_Name,
-                    Amount: item?.Amount,
+                    Service_Name: testItem?.Service_Name || "Unknown",
+                    Amount: testItem?.Amount ?? 0,
+                    Service_Code: testItem?.Service_Code || "",
+                    Discount_Amount: testItem?.Discount_Amount ?? 0,
+                    T_Bill_Amount: testItem?.T_Bill_Amount ?? 0,
+                    T_Patient_Due: testItem?.T_Patient_Due ?? 0,
                 };
             });
-            navigation.navigate('Calender', { selectedTests, selectedPatientDetails, totalCartValue, testData, patientData });
+            navigation.navigate('Calender', {
+                selectedTests,
+                selectedPatientDetails,
+                totalCartValue,
+                testData,
+                patientData,
+                fromPaymentDetailsScreen,
+            });
         } else {
-            Alert.alert('Empty Cart', 'Please add items to the cart before proceeding.');
+            Alert.alert('Empty Cart', `Please add items to the ${fromPaymentDetailsScreen ? 'booking' : 'cart'} before proceeding.`);
         }
     };
 
@@ -147,10 +162,13 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                 </View>
             );
         }
-        return updatedCart.map((item, index) => (
+
+        const itemsToDisplay = fromPaymentDetailsScreen ? bookingItems : updatedCart;
+
+        return itemsToDisplay.map((item, index) => (
             <View style={styles.testItemContainer} key={index}>
                 <Text style={styles.testName}>{item.Service_Name}</Text>
-                <Text style={styles.testPrice}>{item.Amount} INR</Text>
+                <Text style={styles.testPrice}>{item.Amount || item.Service_Amount} INR</Text>
                 <TouchableOpacity onPress={() => handleToggleCart(item.Service_Name)}>
                     <View style={styles.addToCartContainer}>
                         <Image
@@ -161,7 +179,8 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                 </TouchableOpacity>
             </View>
         ));
-    }, [cartItems, updatedCart]);
+    }, [cartItems, updatedCart, bookingItems, fromPaymentDetailsScreen]);
+
 
     return (
         <View style={styles.MainContainer}>
@@ -380,6 +399,7 @@ const styles = StyleSheet.create({
     selectedImage: {
         width: 30,
         height: 30,
+        resizeMode:'contain'
     },
     removeImageButton: {
         position: 'absolute',

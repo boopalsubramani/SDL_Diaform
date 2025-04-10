@@ -27,6 +27,7 @@ import { useInvoiceDownloadMutation } from '../redux/service/InvoiceDownloadServ
 import CalendarModal from '../common/Calender';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/Store';
+import SpinnerIndicator from '../common/SpinnerIndicator';
 
 const deviceHeight = Dimensions.get('window').height;
 
@@ -316,12 +317,7 @@ const TransactionScreen = () => {
       >
         {isLoading && transactionDetails.length === 0 ? (
           <View style={styles.loaderContainer}>
-            <Spinner
-              isVisible={true}
-              size={40}
-              type={'Wave'}
-              color={Constants.COLOR.THEME_COLOR}
-            />
+            <SpinnerIndicator />
           </View>
         ) : noDataFound ? (
           <View style={styles.noDataContainer}>
@@ -410,12 +406,7 @@ const TransactionScreen = () => {
         <TouchableOpacity style={styles.overlay} onPress={() => setDropdownVisible(false)} />
         <View style={styles.dropdownMenu}>
           {isLoading ? (
-            <Spinner
-              isVisible={true}
-              size={40}
-              type={'Wave'}
-              color={Constants.COLOR.THEME_COLOR}
-            />
+            <SpinnerIndicator />
           ) : (
             <FlatList
               data={payModes}

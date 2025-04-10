@@ -21,6 +21,7 @@ import { useCollectionDetailsMutation } from '../redux/service/CollectionDetails
 import { useUser } from '../common/UserContext';
 import { useAppSettings } from '../common/AppSettingContext';
 import CalendarModal from '../common/Calender';
+import SpinnerIndicator from '../common/SpinnerIndicator';
 
 
 interface PayMode {
@@ -267,12 +268,7 @@ const CollectionScreen = () => {
       >
         {isLoading && collectionDetails.length === 0 ? (
           <View style={styles.loaderContainer}>
-            <Spinner
-              isVisible={true}
-              size={40}
-              type={'Wave'}
-              color={Constants.COLOR.THEME_COLOR}
-            />
+            <SpinnerIndicator />
           </View>
         ) : noDataFound ? (
           <View style={styles.noDataContainer}>
@@ -355,12 +351,7 @@ const CollectionScreen = () => {
         <TouchableOpacity style={styles.overlay} onPress={() => setDropdownVisible(false)} />
         <View style={styles.dropdownMenu}>
           {isLoading ? (
-            <Spinner
-              isVisible={true}
-              size={40}
-              type={'Wave'}
-              color={Constants.COLOR.THEME_COLOR}
-            />
+            <SpinnerIndicator />
           ) : (
             <FlatList
               data={payModes}
@@ -477,9 +468,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 8,
   },
   columnContainer: {
-  },
-  rowContainer: {
-    flexDirection: "column",
   },
   detailValue: {
     fontSize: 12,

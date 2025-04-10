@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { collectionDetailsService } from '../service/CollectionDetailsService';
 import { transactionDetailsService } from '../service/TransactionDetailsService';
 
 const initialState = {

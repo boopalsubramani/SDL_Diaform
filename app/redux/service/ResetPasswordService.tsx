@@ -1,18 +1,9 @@
+import { api } from "../../util/API";
 import { RESET_PASSWORD } from '../../util/URL';
-import { api } from '../../util/API';
-
-
-interface ResetPasswordResponse {
-    Code: number;
-    Message: {
-        Message: string;
-        scode: string;
-    }[];
-}
 
 export const resetPasswordService = api.injectEndpoints({
     endpoints: build => ({
-        resetPassword: build.mutation<ResetPasswordResponse, any>({
+        resetPassword: build.mutation<any, any>({
             query: credentials => ({
                 url: RESET_PASSWORD,
                 method: 'POST',
@@ -23,4 +14,6 @@ export const resetPasswordService = api.injectEndpoints({
     overrideExisting: true,
 });
 
-export const { useResetPasswordMutation } = resetPasswordService;
+export const { useResetPasswordMutation } =
+    resetPasswordService;
+

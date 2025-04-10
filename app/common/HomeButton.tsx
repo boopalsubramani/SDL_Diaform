@@ -3,15 +3,20 @@ import { Text, View, StyleSheet, Dimensions, Image, I18nManager } from 'react-na
 import Constants from '../util/Constants';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useSelector } from 'react-redux';
+import { RootState } from '../redux/Store';
 
 const deviceHeight = Dimensions.get('window').height;
 
+interface Language {
+  Alignment: 'ltr' | 'rtl';
+}
+
 const ButtonHome = () => {
-  const { settings, labels } = useAppSettings();
-  const selectedLanguage = useSelector(state => state.appSettings.selectedLanguage);
+  const { labels } = useAppSettings();
+  const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
 
   useEffect(() => {
-    I18nManager.forceRTL(selectedLanguage.Alignment === 'rtl');
+    I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
   }, [selectedLanguage]);
 
   const getLabel = (key: string) => {
@@ -48,8 +53,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   homeText: {
-    fontSize: 16, // Replace Constants.FONT_SIZE.M with a fixed value
-    color: '#FFFFFF', // Replace Constants.COLOR.WHITE_COLOR with a hex value
+    fontSize: 16, 
+    color:Constants.COLOR.WHITE_COLOR, 
     paddingHorizontal: 8,
     alignSelf: 'center',
   },

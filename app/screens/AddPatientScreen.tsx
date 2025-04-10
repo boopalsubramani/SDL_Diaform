@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
     View,
@@ -27,12 +26,6 @@ interface TitleData {
 
 interface GenderData {
     GenderDesc: string;
-}
-
-interface Day {
-    year: number;
-    month: number;
-    day: number;
 }
 
 const AddPatientScreen = ({ navigation }: any) => {
@@ -95,7 +88,6 @@ const AddPatientScreen = ({ navigation }: any) => {
         setShowCalendar(false);
     };
 
-
     const handleTitleArrow = async () => {
         if (!dropDownVisibleTitle) {
             await fetchData('T', setTitleData);
@@ -156,7 +148,6 @@ const AddPatientScreen = ({ navigation }: any) => {
         }
     };
 
-
     const handleCross = () => {
         navigation.goBack('');
     };
@@ -181,9 +172,8 @@ const AddPatientScreen = ({ navigation }: any) => {
                         style={styles.input}
                         keyboardType="number-pad"
                         maxLength={10}
-                        // onChangeText={setPhoneNumber}
                         onChangeText={(text) => {
-                            const sanitizedText = text.replace(/[^0-9]/g, ''); // Allow only numbers
+                            const sanitizedText = text.replace(/[^0-9]/g, '');
                             setPhoneNumber(sanitizedText);
                         }}
                         value={phoneNumber}
@@ -206,7 +196,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                                         key={index}
                                         onPress={() => {
                                             setTitle(item.Title_Desc);
-                                            // setTitleCode(item.TitleCode);
                                             setDropdownVisibleTitle(false);
                                         }}
                                     >
@@ -277,7 +266,6 @@ const AddPatientScreen = ({ navigation }: any) => {
                             mode="date"
                             maximumDate={new Date()}
                         />
-
                     )}
                 </View>
 
@@ -474,3 +462,6 @@ const styles = StyleSheet.create({
         tintColor: Constants.COLOR.BOOK_ID_TEXT_COLOR,
     },
 });
+
+
+

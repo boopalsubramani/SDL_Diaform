@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, TouchableWithoutFeedback, TextInput, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, Text } from 'react-native';
+import Modal from 'react-native-modal'; // Import the modal package
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import Constants from '../util/Constants';
 
@@ -29,9 +31,7 @@ LocaleConfig.locales['ar-SA'] = {
 // Set the default locale once
 LocaleConfig.defaultLocale = 'en';
 
-const CalendarModal = ({ selectedLanguage, isVisible, onClose, onConfirm }: any) => {
-    console.log('oncloose', onClose);
-
+const CalendarModal = ({ selectedLanguage, isVisible, onCancel, onConfirm }:any) => {
     const today = new Date().toISOString().split('T')[0];
     const [selected, setSelected] = useState('');
     const [year, setYear] = useState('');
@@ -56,75 +56,77 @@ const CalendarModal = ({ selectedLanguage, isVisible, onClose, onConfirm }: any)
     };
 
     return (
-        <Modal visible={isVisible} transparent animationType="fade" >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.overlay}>
-                    <View style={styles.modalContainer}>
-                        {/* Year Input */}
-                        <View style={styles.inputContainer}>
-                            <TextInput style={styles.input}
-                                keyboardType="numeric"
-                                maxLength={4}
-                                value={year}
-                                onChangeText={setYear}
-                                placeholder={selectedLanguage?.Code === 'ar-SA' ? 'أدخل السنة' : 'Enter Year'}
-                                placeholderTextColor={Constants.COLOR.FONT_COLOR_DEFAULT}
-                            />
-                            <TouchableOpacity style={styles.goButton} onPress={handleYearChange}>
-                                <Text style={styles.goButtonText}>Go</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={{
-                            borderBottomWidth: 0.5,
-                            borderBottomColor: 'black',
-                        }}></View>
-
-                        {/* Calendar */}
-                        <Calendar
-                            key={key}
-                            style={styles.calendar}
-                            current={currentDate}
-                            theme={{
-                                backgroundColor: Constants.COLOR.THEME_COLOR,
-                                calendarBackground: Constants.COLOR.WHITE_COLOR,
-                                textSectionTitleColor: Constants.COLOR.THEME_COLOR,
-                                selectedDayTextColor: Constants.COLOR.THEME_COLOR,
-                                todayTextColor: Constants.COLOR.WHITE_COLOR,
-                                dayTextColor: Constants.COLOR.THEME_COLOR,
-                                todayBackgroundColor: Constants.COLOR.THEME_COLOR,
-                                monthTextColor: Constants.COLOR.BLACK_COLOR,
-                                arrowColor: 'black',
-                                textMonthFontWeight: Constants.FONT_FAMILY.fontFamilySemiBold,
-                                textDayHeaderFontWeight: Constants.FONT_FAMILY.fontFamilySemiBold,
-                                textDayFontSize: 16,
-                                textMonthFontSize: 16,
-                                textDayHeaderFontSize: 14
-                            }}
-                            onDayPress={day => {
-                                setSelected(day.dateString);
-                                onConfirm(day.dateString);
-                            }}
-                            markedDates={{
-                                [selected]: { selected: true, disableTouchEvent: true }
-                            }}
-                        />
-                    </View>
+        <Modal
+            isVisible={isVisible}
+            onBackdropPress={onCancel}
+            onBackButtonPress={onCancel}
+            style={styles.modal}
+            avoidKeyboard
+        >
+            <View style={styles.modalContainer}>
+                {/* Year Input */}
+                <View style={styles.inputContainer}>
+                    <TextInput style={styles.input}
+                        keyboardType="numeric"
+                        maxLength={4}
+                        value={year}
+                        onChangeText={setYear}
+                        placeholder={selectedLanguage?.Code === 'ar-SA' ? 'أدخل السنة' : 'Enter Year'}
+                        placeholderTextColor={Constants.COLOR.FONT_COLOR_DEFAULT}
+                    />
+                    <TouchableOpacity style={styles.goButton} onPress={handleYearChange}>
+                        <Text style={styles.goButtonText}>Go</Text>
+                    </TouchableOpacity>
                 </View>
-            </TouchableWithoutFeedback>
+
+                <View style={{
+                    borderBottomWidth: 0.5,
+                    borderBottomColor: 'black',
+                }}></View>
+
+                {/* Calendar */}
+                <Calendar
+                    key={key}
+                    style={styles.calendar}
+                    current={currentDate}
+                    theme={{
+                        backgroundColor: Constants.COLOR.THEME_COLOR,
+                        calendarBackground: Constants.COLOR.WHITE_COLOR,
+                        textSectionTitleColor: Constants.COLOR.THEME_COLOR,
+                        selectedDayTextColor: Constants.COLOR.THEME_COLOR,
+                        todayTextColor: Constants.COLOR.WHITE_COLOR,
+                        dayTextColor: Constants.COLOR.THEME_COLOR,
+                        todayBackgroundColor: Constants.COLOR.THEME_COLOR,
+                        monthTextColor: Constants.COLOR.BLACK_COLOR,
+                        arrowColor: 'black',
+                        textMonthFontWeight: Constants.FONT_FAMILY.fontFamilySemiBold,
+                        textDayHeaderFontWeight: Constants.FONT_FAMILY.fontFamilySemiBold,
+                        textDayFontSize: 16,
+                        textMonthFontSize: 16,
+                        textDayHeaderFontSize: 14
+                    }}
+                    onDayPress={day => {
+                        setSelected(day.dateString);
+                        onConfirm(day.dateString);
+                    }}
+                    markedDates={{
+                        [selected]: { selected: true, disableTouchEvent: true }
+                    }}
+                />
+            </View>
         </Modal>
     );
 };
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+    modal: {
         justifyContent: 'center',
         alignItems: 'center',
+        margin: 0,
     },
     modalContainer: {
         width: '90%',
+        height: '65%',
         backgroundColor: Constants.COLOR.WHITE_COLOR,
         borderRadius: 10,
         padding: 20,
@@ -139,9 +141,9 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         borderRadius: 10,
         padding: 12,
-        fontSize: 16,
-        color: 'black',
-        backgroundColor: 'white',
+        color: Constants.COLOR.BLACK_COLOR,
+        backgroundColor: Constants.COLOR.WHITE_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         marginRight: 10,
     },
     goButton: {
@@ -152,9 +154,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     goButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
+        color: Constants.COLOR.WHITE_COLOR,
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
     },
     calendar: {
         overflow: 'hidden',
@@ -162,5 +163,3 @@ const styles = StyleSheet.create({
 });
 
 export default CalendarModal;
-
-

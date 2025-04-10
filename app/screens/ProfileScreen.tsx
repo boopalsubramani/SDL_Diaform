@@ -1,23 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    TextInput,
-    Alert,
-    TouchableOpacity,
-    Dimensions,
-    I18nManager,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, Alert, TouchableOpacity, Dimensions, I18nManager } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useAppSettings } from '../common/AppSettingContext';
 import { useUser } from '../common/UserContext';
 import Constants from "../util/Constants";
 import { RootState } from '../redux/Store';
 
-const deviceHeight = Dimensions.get('window').height;
-const deviceWidth = Dimensions.get("window").width;
+const { height: deviceHeight, width: deviceWidth } = Dimensions.get('window');
 
 interface Language {
     Alignment: 'ltr' | 'rtl';
@@ -61,7 +50,6 @@ const ProfileScreen = ({ navigation }: any) => {
     const getLabel = (key: string) => labels[key]?.defaultMessage || '';
 
     const handleCross = () => navigation.goBack();
-
     const handleEditProfile = () => setIsEditMode(!isEditMode);
 
     const handleUpdate = () => {
@@ -138,10 +126,7 @@ const ProfileScreen = ({ navigation }: any) => {
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-    mainContainer: {
-        flex: 1,
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
-    },
+    mainContainer: { flex: 1, backgroundColor: Constants.COLOR.WHITE_COLOR },
     myProfileView: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -161,9 +146,7 @@ const styles = StyleSheet.create({
         tintColor: Constants.COLOR.WHITE_COLOR,
     },
     divider: {},
-    editProfileContainer: {
-        alignItems: 'center',
-    },
+    editProfileContainer: { alignItems: 'center' },
     editTextView: {
         textAlign: 'right',
         alignContent: 'flex-end',
@@ -188,9 +171,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         paddingTop: 20,
     },
-    inputContainer: {
-        marginVertical: 8,
-    },
+    inputContainer: { marginVertical: 8 },
     label: {
         fontSize: Constants.FONT_SIZE.M,
         color: Constants.COLOR.THEME_COLOR,

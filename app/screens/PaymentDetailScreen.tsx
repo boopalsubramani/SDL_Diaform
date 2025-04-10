@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -77,7 +76,7 @@ interface Language {
 }
 
 const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
-    const { userData, imageBase64 } = useUser();
+    const { userData } = useUser();
     const dispatch = useDispatch();
     const { settings, labels } = useAppSettings();
     const {
@@ -192,16 +191,27 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         formData.append("Phone", mergedPatient.Phone);
         formData.append("NationalityCode", mergedPatient.NationalityCode);
         formData.append("File_Extension1", "png");
-        formData.append("Paid_Amount", "100");
-        formData.append("Bill_Amount", "530.0");
+        formData.append("Paid_Amount", "0");
+        formData.append("Bill_Amount", "0");
         formData.append("Pay_No", "6548561564154");
         formData.append("Pay_Status", "C");
         formData.append("Pay_Mode", paymentMethod === 'online' ? "O" : "C");
-        formData.append("Zero_Payment", "1");
+        formData.append("Zero_Payment", "0");
         formData.append("Place", mergedPatient.Place);
         formData.append("City", mergedPatient.City);
         formData.append("Email", mergedPatient.Email);
-        formData.append("Prescription_File1", imageBase64);
+
+        // Append the image file directly to FormData
+        if (imageUri) {
+            const fileType = imageUri.split('.').pop(); 
+            const fileName = `prescription.${fileType}`;
+            formData.append("Prescription_File1", {
+                uri: imageUri,
+                name: fileName,
+                type: `image/${fileType}`,
+            });
+        }
+
         if (fromPaymentDetailsScreen && handleBookingDetail) {
             formData.append("Service_No", handleBookingDetail?.booking?.Booking_No);
             formData.append("Service_Date", handleBookingDetail?.booking?.Booking_Date);
@@ -333,17 +343,14 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             }, 0);
             const netAmount = subTotal - discount;
             const patientAmount = netAmount + vatAmount;
-            const vatPer = subTotal ? ((vatAmount / subTotal) * 100).toFixed(2) : 0;
             const netPayable = subTotal + vatAmount - discount;
-            return { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable, vatPer };
+            return { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable };
         } else {
-            let totalVATPer = 0;
             let totalSubTotal = 0;
             const amountDataDetails = (fromPaymentDetailsScreen ? bookingItems : updatedCart).map((test) => {
                 const vatPercentage = parseFloat(test?.Test_VAT) || 0;
                 const subTotal = parseFloat(test?.Service_Amount || test?.Amount) || 0;
                 const calculatedVAT = (subTotal * vatPercentage) / 100;
-                totalVATPer += vatPercentage * subTotal;
                 totalSubTotal += subTotal;
                 return {
                     subTotal,
@@ -351,7 +358,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                     vatAmount: calculatedVAT,
                     netAmount: subTotal - (parseFloat(test?.Service_Discount) || 0),
                     patientAmount: subTotal + calculatedVAT,
-                    vatPer: vatPercentage,
                 };
             });
             const totals = amountDataDetails.reduce((acc, item) => ({
@@ -361,12 +367,12 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                 netAmount: acc.netAmount + item.netAmount,
                 patientAmount: acc.patientAmount + item.patientAmount,
             }), { subTotal: 0, discount: 0, vatAmount: 0, netAmount: 0, patientAmount: 0 });
-            const weightedVATPer = totalSubTotal ? totalVATPer / totalSubTotal : 0;
             const netPayable = totals.subTotal + totals.vatAmount - totals.discount;
-            return { ...totals, netPayable, vatPer: weightedVATPer.toFixed(2) };
+            return { ...totals, netPayable };
         }
     };
-    const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable, vatPer } = calculateTotal();
+
+    const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable } = calculateTotal();
 
     const AmountToBePaid = ({ amount }: any) => (
         <View style={styles.container}>
@@ -386,229 +392,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
     };
 
 
-    // return (
-    //     <View style={styles.mainContainer}>
-    //         {showHeader && (
-    //             <>
-    //                 <NavigationBar title="Payment" />
-    //                 <BookTestHeader selectValue={3} />
-    //             </>
-    //         )}
-    //         {isFinalPayment ? (
-    //             <ScrollView style={{ paddingHorizontal: 10 }}>
-    //                 <View style={styles.headerContainer}>
-    //                     <Image source={tickImage} style={styles.tickImage} />
-    //                     <View style={styles.headerTextContainer}>
-    //                         <Text style={styles.headerTitle}>{getLabel('cashpaysuc_1')}</Text>
-    //                         <Text style={styles.bookingId}>Booking No : {bookingNo}</Text>
-    //                     </View>
-    //                 </View>
-    //                 <View>
-    //                     <AmountToBePaid amount={netPayable.toFixed(2)} />
-    //                 </View>
-    //                 <View style={styles.selectedTestsSection}>
-    //                     <View style={styles.cartSection}>
-    //                         <Text style={styles.cartTitle}>{getLabel('cashpaysuc_3')}</Text>
-    //                         {fromPaymentDetailsScreen
-    //                             ? bookingItems.map((test, index) => (
-    //                                 <View key={index} style={styles.cartItem}>
-    //                                     <Text style={styles.cartItemName} numberOfLines={2}>
-    //                                         {test?.Service_Name}
-    //                                     </Text>
-    //                                     <Text style={styles.cartItemPrice}>
-    //                                         {test?.Service_Amount || test.Amount || "0"}
-    //                                     </Text>
-    //                                 </View>
-    //                             ))
-    //                             : updatedCart.map((test, index) => (
-    //                                 <View key={index} style={styles.cartItem}>
-    //                                     <Text style={styles.cartItemName} numberOfLines={2}>
-    //                                         {test?.Service_Name}
-    //                                     </Text>
-    //                                     <Text style={styles.cartItemPrice}>
-    //                                         {test?.Amount}
-    //                                     </Text>
-    //                                 </View>
-    //                             ))}
-    //                         <View style={styles.cartBreakdown}>
-    //                             <View style={styles.breakdownRow}>
-    //                                 <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
-    //                                 <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
-    //                             </View>
-    //                             <View style={styles.breakdownRow}>
-    //                                 <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
-    //                                 <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
-    //                             </View>
-    //                             <View style={styles.breakdownRow}>
-    //                                 <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
-    //                                 <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)} ({vatPer}%)</Text>
-    //                             </View>
-    //                             <View style={styles.breakdownRow}>
-    //                                 <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
-    //                                 <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
-    //                             </View>
-    //                             <View style={styles.breakdownRow}>
-    //                                 <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
-    //                                 <Text style={styles.breakdownValue}>{patientAmount.toFixed(2)}</Text>
-    //                             </View>
-    //                             <View style={[styles.breakdownRow, styles.netPayableRow]}>
-    //                                 <Text style={styles.breakdownLabel}>Net Payable Amount</Text>
-    //                                 <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P)
-    //                                     {netPayable.toFixed(2)}</Text>
-    //                             </View>
-    //                         </View>
-    //                     </View>
-    //                 </View>
-    //                 <View style={styles.patientDetailsSection}>
-    //                     <View style={styles.patientDetailsRow}>
-    //                         <Text style={styles.patientDetailsLabelName}>
-    //                             Name: {selectedPatientDetails?.PtName || selectedPatientDetails?.Pt_Name || handleBookingDetail?.booking?.Pt_Name || ''}
-    //                         </Text>
-    //                     </View>
-    //                     <View style={styles.patientDetailsRow}>
-    //                         <Text style={styles.patientDetailsLabel}>
-    //                             {`${selectedPatientDetails?.State || handleBookingDetail?.booking?.Street || ''}, ${selectedPatientDetails?.Place || ''}, ${selectedPatientDetails?.Street1 || ''}`}
-    //                         </Text>
-    //                     </View>
-    //                 </View>
-    //                 <View style={styles.patientDetailsRowDateTime}>
-    //                     <Text style={styles.patientDetailsLabel}>
-    //                         Collect Date & Time: {selectedDate} {' '} {selectedTime}
-    //                     </Text>
-    //                 </View>
-    //                 <TouchableOpacity onPress={handleFinalPaymentUpdate} style={styles.HomeButton}>
-    //                     <ButtonHome />
-    //                 </TouchableOpacity>
-    //             </ScrollView>
-    //         ) : (
-    //             <ScrollView style={{ paddingHorizontal: 10 }}>
-    //                 <View style={styles.cartSection}>
-    //                     <View style={styles.headerRow}>
-    //                         <Text style={styles.cartTitle}>{getLabel('labtpaydtls_1')}</Text>
-    //                         {fromBookingScreen && !isChecked && (
-    //                             <TouchableOpacity onPress={handleAddTest}>
-    //                                 <Text style={{ color: Constants.COLOR.THEME_COLOR }}>{getLabel('labtsummary_9')}</Text>
-    //                             </TouchableOpacity>
-    //                         )}
-    //                     </View>
-    //                     {fromBookingScreen && bookingDetails?.Service_Detail
-    //                         ? bookingDetails.Service_Detail.map((service, index) => (
-    //                             <View key={index} style={styles.cartItem}>
-    //                                 <Text style={styles.cartItemName} numberOfLines={2}>
-    //                                     {service.Service_Name}
-    //                                 </Text>
-    //                                 <Text style={styles.cartItemPrice}>
-    //                                     {service.Service_Amount}
-    //                                 </Text>
-    //                             </View>
-    //                         ))
-    //                         : fromPaymentDetailsScreen
-    //                             ? bookingItems.map((test, index) => (
-    //                                 <View key={index} style={styles.cartItem}>
-    //                                     <Text style={styles.cartItemName} numberOfLines={2}>
-    //                                         {test.Service_Name}
-    //                                     </Text>
-    //                                     <Text style={styles.cartItemPrice}>
-    //                                         {test.Service_Amount || test.Amount || "0"}
-    //                                     </Text>
-    //                                 </View>
-    //                             ))
-    //                             : updatedCart.map((test, index) => (
-    //                                 <View key={index} style={styles.cartItem}>
-    //                                     <Text style={styles.cartItemName} numberOfLines={2}>
-    //                                         {test.Service_Name}
-    //                                     </Text>
-    //                                     <Text style={styles.cartItemPrice}>
-    //                                         {test.Amount}
-    //                                     </Text>
-    //                                 </View>
-    //                             ))}
-    //                     <View style={styles.cartBreakdown}>
-    //                         <View style={styles.breakdownRow}>
-    //                             <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
-    //                             <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
-    //                         </View>
-    //                         <View style={styles.breakdownRow}>
-    //                             <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
-    //                             <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
-    //                         </View>
-    //                         <View style={styles.breakdownRow}>
-    //                             <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
-    //                             <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)} ({vatPer}%)</Text>
-    //                         </View>
-    //                         <View style={styles.breakdownRow}>
-    //                             <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
-    //                             <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
-    //                         </View>
-    //                         <View style={styles.breakdownRow}>
-    //                             <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
-    //                             <Text style={styles.breakdownValue}>{patientAmount}</Text>
-    //                         </View>
-    //                         <View style={[styles.breakdownRow, styles.netPayableRow]}>
-    //                             <Text style={styles.breakdownLabel}>{getLabel('sumbtn_17')}</Text>
-    //                             <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P) {netPayable.toFixed(2)}</Text>
-    //                         </View>
-    //                     </View>
-    //                 </View>
-    //                 {showCancel && (
-    //                     <>
-    //                         <View style={styles.CancelContainer}>
-    //                             <TouchableOpacity onPress={toggleCheckbox} style={styles.CancelCheckbox}>
-    //                                 {isChecked && <View style={styles.CancelChecked} />}
-    //                             </TouchableOpacity>
-    //                             <Text style={styles.CancelText}>Cancel</Text>
-    //                         </View>
-    //                         {isChecked && (
-    //                             <TextInput
-    //                                 style={styles.remarkInput}
-    //                                 placeholder="Enter remark"
-    //                                 value={remark}
-    //                                 onChangeText={setRemark}
-    //                             />
-    //                         )}
-    //                     </>
-    //                 )}
-    //                 {settings?.Enable_Paymode === 'Y' && !showCancel && (
-    //                     <>
-    //                         <Text style={styles.paymentHeader}>Payment Mode</Text>
-    //                         <View style={styles.paymentContainer}>
-    //                             <TouchableOpacity
-    //                                 style={styles.paymentOption}
-    //                                 onPress={() => setPaymentMethod('online')}
-    //                             >
-    //                                 <View
-    //                                     style={[styles.radioButton, paymentMethod === 'online' && styles.radioSelected]}
-    //                                 />
-    //                                 <Text style={styles.paymentText}>Online Payment</Text>
-    //                             </TouchableOpacity>
-    //                             <TouchableOpacity
-    //                                 style={styles.paymentOption}
-    //                                 onPress={() => setPaymentMethod('cash')}
-    //                             >
-    //                                 <View
-    //                                     style={[styles.radioButton, paymentMethod === 'cash' && styles.radioSelected]}
-    //                                 />
-    //                                 <Text style={styles.paymentText}>Cash Payment</Text>
-    //                             </TouchableOpacity>
-    //                         </View>
-    //                     </>
-    //                 )}
-    //             </ScrollView>
-    //         )}
-    //         {!isFinalPayment && (
-    //             <View style={[styles.navigationContainer, !fromBookingScreen && { justifyContent: 'space-between' }]}>
-    //                 {!fromBookingScreen && (
-    //                     <TouchableOpacity onPress={handleBack}>
-    //                         <ButtonBack />
-    //                     </TouchableOpacity>
-    //                 )}
-    //                 <TouchableOpacity onPress={handleNext}>
-    //                     <ButtonNext />
-    //                 </TouchableOpacity>
-    //             </View>
-    //         )}
-    //     </View>
-    // );
     return (
         <View style={styles.mainContainer}>
             {showHeader && (
@@ -617,6 +400,208 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                     <BookTestHeader selectValue={3} />
                 </>
             )}
+            {/* {isFinalPayment ? (
+                <ScrollView style={{ paddingHorizontal: 10 }}>
+                    <View style={styles.headerContainer}>
+                        <Image source={tickImage} style={styles.tickImage} />
+                        <View style={styles.headerTextContainer}>
+                            <Text style={styles.headerTitle}>{getLabel('cashpaysuc_1')}</Text>
+                            <Text style={styles.bookingId}>Booking No : {bookingNo}</Text>
+                        </View>
+                    </View>
+                    <View>
+                        <AmountToBePaid amount={netPayable.toFixed(2)} />
+                    </View>
+                    <View style={styles.selectedTestsSection}>
+                        <View style={styles.cartSection}>
+                            <Text style={styles.cartTitle}>{getLabel('cashpaysuc_3')}</Text>
+                            {fromPaymentDetailsScreen
+                                ? bookingItems.map((test, index) => (
+                                    <View key={index} style={styles.cartItem}>
+                                        <Text style={styles.cartItemName} numberOfLines={2}>
+                                            {test?.Service_Name}
+                                        </Text>
+                                        <Text style={styles.cartItemPrice}>
+                                            {test?.Service_Amount || test.Amount || "0"}
+                                        </Text>
+                                    </View>
+                                ))
+                                : updatedCart.map((test, index) => (
+                                    <View key={index} style={styles.cartItem}>
+                                        <Text style={styles.cartItemName} numberOfLines={2}>
+                                            {test?.Service_Name}
+                                        </Text>
+                                        <Text style={styles.cartItemPrice}>
+                                            {test?.Amount}
+                                        </Text>
+                                    </View>
+                                ))}
+                            <View style={styles.cartBreakdown}>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
+                                    <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
+                                    <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
+                                    <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
+                                    <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
+                                    <Text style={styles.breakdownValue}>{patientAmount.toFixed(2)}</Text>
+                                </View>
+                                <View style={[styles.breakdownRow, styles.netPayableRow]}>
+                                    <Text style={styles.breakdownLabel}>Net Payable Amount</Text>
+                                    <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P)
+                                        {netPayable.toFixed(2)}</Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={styles.patientDetailsSection}>
+                        <View style={styles.patientDetailsRow}>
+                            <Text style={styles.patientDetailsLabelName}>
+                                Name: {selectedPatientDetails?.PtName || selectedPatientDetails?.Pt_Name || handleBookingDetail?.booking?.Pt_Name || ''}
+                            </Text>
+                        </View>
+                        <View style={styles.patientDetailsRow}>
+                            <Text style={styles.patientDetailsLabel}>
+                                {`${selectedPatientDetails?.State || handleBookingDetail?.booking?.Street || ''}, ${selectedPatientDetails?.Place || ''}, ${selectedPatientDetails?.Street1 || ''}`}
+                            </Text>
+                        </View>
+                    </View>
+                    <View style={styles.patientDetailsRowDateTime}>
+                        <Text style={styles.patientDetailsLabel}>
+                            Collect Date & Time: {selectedDate} {' '} {selectedTime}
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={handleFinalPaymentUpdate} style={styles.HomeButton}>
+                        <ButtonHome />
+                    </TouchableOpacity>
+                </ScrollView>
+            ) : (
+                <ScrollView style={{ paddingHorizontal: 10 }}>
+                    <View style={styles.cartSection}>
+                        <View style={styles.headerRow}>
+                            <Text style={styles.cartTitle}>{getLabel('labtpaydtls_1')}</Text>
+                            {fromBookingScreen && !isChecked && (
+                                <TouchableOpacity onPress={handleAddTest}>
+                                    <Text style={{ color: Constants.COLOR.THEME_COLOR }}>{getLabel('labtsummary_9')}</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                        {fromBookingScreen && bookingDetails?.Service_Detail
+                            ? bookingDetails.Service_Detail.map((service, index) => (
+                                <View key={index} style={styles.cartItem}>
+                                    <Text style={styles.cartItemName} numberOfLines={2}>
+                                        {service.Service_Name}
+                                    </Text>
+                                    <Text style={styles.cartItemPrice}>
+                                        {service.Service_Amount}
+                                    </Text>
+                                </View>
+                            ))
+                            : fromPaymentDetailsScreen
+                                ? bookingItems.map((test, index) => (
+                                    <View key={index} style={styles.cartItem}>
+                                        <Text style={styles.cartItemName} numberOfLines={2}>
+                                            {test.Service_Name}
+                                        </Text>
+                                        <Text style={styles.cartItemPrice}>
+                                            {test.Service_Amount || test.Amount || "0"}
+                                        </Text>
+                                    </View>
+                                ))
+                                : updatedCart.map((test, index) => (
+                                    <View key={index} style={styles.cartItem}>
+                                        <Text style={styles.cartItemName} numberOfLines={2}>
+                                            {test.Service_Name}
+                                        </Text>
+                                        <Text style={styles.cartItemPrice}>
+                                            {test.Amount}
+                                        </Text>
+                                    </View>
+                                ))}
+                        <View style={styles.cartBreakdown}>
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
+                                <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
+                            </View>
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
+                                <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
+                            </View>
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
+                                <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)}</Text>
+                            </View>
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
+                                <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
+                            </View>
+                            <View style={styles.breakdownRow}>
+                                <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
+                                <Text style={styles.breakdownValue}>{patientAmount}</Text>
+                            </View>
+                            <View style={[styles.breakdownRow, styles.netPayableRow]}>
+                                <Text style={styles.breakdownLabel}>{getLabel('sumbtn_17')}</Text>
+                                <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P) {netPayable.toFixed(2)}</Text>
+                            </View>
+                        </View>
+                    </View>
+                    {showCancel && (
+                        <>
+                            <View style={styles.CancelContainer}>
+                                <TouchableOpacity onPress={toggleCheckbox} style={styles.CancelCheckbox}>
+                                    {isChecked && <View style={styles.CancelChecked} />}
+                                </TouchableOpacity>
+                                <Text style={styles.CancelText}>Cancel</Text>
+                            </View>
+                            {isChecked && (
+                                <TextInput
+                                    style={styles.remarkInput}
+                                    placeholder="Enter remark"
+                                    value={remark}
+                                    onChangeText={setRemark}
+                                />
+                            )}
+                        </>
+                    )}
+                    {settings?.Enable_Paymode === 'Y' && !showCancel && (
+                        <>
+                            <Text style={styles.paymentHeader}>Payment Mode</Text>
+                            <View style={styles.paymentContainer}>
+                                <TouchableOpacity
+                                    style={styles.paymentOption}
+                                    onPress={() => setPaymentMethod('online')}
+                                >
+                                    <View
+                                        style={[styles.radioButton, paymentMethod === 'online' && styles.radioSelected]}
+                                    />
+                                    <Text style={styles.paymentText}>Online Payment</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.paymentOption}
+                                    onPress={() => setPaymentMethod('cash')}
+                                >
+                                    <View
+                                        style={[styles.radioButton, paymentMethod === 'cash' && styles.radioSelected]}
+                                    />
+                                    <Text style={styles.paymentText}>Cash Payment</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    )}
+                </ScrollView>
+            )} */}
+            
             {isFinalPayment ? (
                 <ScrollView style={{ paddingHorizontal: 10 }}>
                     <View style={styles.headerContainer}>
@@ -635,7 +620,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                                 <Text style={styles.cartTitle}>Patient Details</Text>
                                 <View style={styles.cartItemPatientDetails}>
                                     <View style={styles.detailRow}>
-                                        <Text style={styles.cartItemName}>{selectedPatientDetails?.PtName || selectedPatientDetails?.Pt_Name || handleBookingDetail?.booking?.Pt_Name || ''}</Text>
+                                        <Text style={styles.cartItemBookingName}>{selectedPatientDetails?.PtName || selectedPatientDetails?.Pt_Name || handleBookingDetail?.booking?.Pt_Name || ''}</Text>
                                     </View>
                                     <View style={styles.detailRow}>
                                         <Text style={styles.cartItemName}>{selectedPatientDetails?.Street || 'Not Registered'}</Text>
@@ -672,35 +657,33 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                                             </Text>
                                         </View>
                                     ))}
-                                {!fromPaymentDetailsScreen && (
-                                    <View style={styles.cartBreakdown}>
-                                        <View style={styles.breakdownRow}>
-                                            <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
-                                            <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
-                                        </View>
-                                        <View style={styles.breakdownRow}>
-                                            <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
-                                            <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
-                                        </View>
-                                        <View style={styles.breakdownRow}>
-                                            <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
-                                            <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)} ({vatPer}%)</Text>
-                                        </View>
-                                        <View style={styles.breakdownRow}>
-                                            <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
-                                            <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
-                                        </View>
-                                        <View style={styles.breakdownRow}>
-                                            <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
-                                            <Text style={styles.breakdownValue}>{patientAmount.toFixed(2)}</Text>
-                                        </View>
-                                        <View style={[styles.breakdownRow, styles.netPayableRow]}>
-                                            <Text style={styles.breakdownLabel}>Net Payable Amount</Text>
-                                            <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P)
-                                                {netPayable.toFixed(2)}</Text>
-                                        </View>
+                                <View style={styles.cartBreakdown}>
+                                    <View style={styles.breakdownRow}>
+                                        <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
+                                        <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
                                     </View>
-                                )}
+                                    <View style={styles.breakdownRow}>
+                                        <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
+                                        <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
+                                    </View>
+                                    <View style={styles.breakdownRow}>
+                                        <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
+                                        <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)}</Text>
+                                    </View>
+                                    <View style={styles.breakdownRow}>
+                                        <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
+                                        <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
+                                    </View>
+                                    <View style={styles.breakdownRow}>
+                                        <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
+                                        <Text style={styles.breakdownValue}>{patientAmount.toFixed(2)}</Text>
+                                    </View>
+                                    <View style={[styles.breakdownRow, styles.netPayableRow]}>
+                                        <Text style={styles.breakdownLabel}>Net Payable Amount</Text>
+                                        <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P)
+                                            {netPayable.toFixed(2)}</Text>
+                                    </View>
+                                </View>
                             </View>
                         )}
                     </View>
@@ -732,7 +715,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                             <Text style={styles.cartTitle}>Patient Details</Text>
                             <View style={styles.cartItemPatientDetails}>
                                 <View style={styles.detailRow}>
-                                    <Text style={styles.cartItemName}>{selectedPatientDetails?.PtName || selectedPatientDetails?.Pt_Name || handleBookingDetail?.booking?.Pt_Name || ''}</Text>
+                                    <Text style={styles.cartItemBookingName}>{selectedPatientDetails?.PtName || selectedPatientDetails?.Pt_Name || handleBookingDetail?.booking?.Pt_Name || ''}</Text>
                                 </View>
                                 <View style={styles.detailRow}>
                                     <Text style={styles.cartItemName}>{selectedPatientDetails?.Street || 'Not Registered'}</Text>
@@ -787,34 +770,32 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                                             </Text>
                                         </View>
                                     ))}
-                            {!fromPaymentDetailsScreen && (
-                                <View style={styles.cartBreakdown}>
-                                    <View style={styles.breakdownRow}>
-                                        <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
-                                        <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
-                                    </View>
-                                    <View style={styles.breakdownRow}>
-                                        <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
-                                        <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
-                                    </View>
-                                    <View style={styles.breakdownRow}>
-                                        <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
-                                        <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)} ({vatPer}%)</Text>
-                                    </View>
-                                    <View style={styles.breakdownRow}>
-                                        <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
-                                        <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
-                                    </View>
-                                    <View style={styles.breakdownRow}>
-                                        <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
-                                        <Text style={styles.breakdownValue}>{patientAmount}</Text>
-                                    </View>
-                                    <View style={[styles.breakdownRow, styles.netPayableRow]}>
-                                        <Text style={styles.breakdownLabel}>{getLabel('sumbtn_17')}</Text>
-                                        <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P) {netPayable.toFixed(2)}</Text>
-                                    </View>
+                            <View style={styles.cartBreakdown}>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('labtsummary_6')}</Text>
+                                    <Text style={styles.breakdownValue}>{subTotal.toFixed(2)}</Text>
                                 </View>
-                            )}
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('bksumcol_3')}</Text>
+                                    <Text style={styles.breakdownValue}>{discount.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('bksumcol_7')}</Text>
+                                    <Text style={styles.breakdownValue}>{vatAmount.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('bksumcol_5')}</Text>
+                                    <Text style={styles.breakdownValue}>{netAmount.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.breakdownRow}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('sumbtn_11')}</Text>
+                                    <Text style={styles.breakdownValue}>{patientAmount}</Text>
+                                </View>
+                                <View style={[styles.breakdownRow, styles.netPayableRow]}>
+                                    <Text style={styles.breakdownLabel}>{getLabel('sumbtn_17')}</Text>
+                                    <Text style={[styles.breakdownValue, styles.netPayableValue]}>(P) {netPayable.toFixed(2)}</Text>
+                                </View>
+                            </View>
                         </View>
                     )}
                     {showCancel && (
@@ -911,6 +892,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#ECEEF5',
         padding: 10,
     },
+    cartItemBookingName: {
+        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
+      },
     cartItemName: {
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         flex: 1,
@@ -1104,5 +1088,4 @@ const styles = StyleSheet.create({
         padding: 10,
     },
 });
-
 

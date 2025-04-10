@@ -3,6 +3,7 @@ import { api } from '../../util/API';
 
 
 interface OtpSendResponse {
+    OTP_Code(OTP_Code: any): unknown;
     Code: number;
     Message: {
         Otp_Message: string;

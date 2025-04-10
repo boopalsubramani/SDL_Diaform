@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, Dimensions, FlatList, RefreshControl } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from "../util/Constants";
 import { WebView } from "react-native-webview";
@@ -70,6 +70,7 @@ const PaymentScreen = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedPayments, setSelectedPayments] = useState<{ [key: string]: string }>({});
   const [canGoBack, setCanGoBack] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleWebViewNavigationStateChange = (newNavState: any) => {
     const { url, canGoBack } = newNavState;
@@ -87,6 +88,7 @@ const PaymentScreen = () => {
   }, [selectedOption]);
 
   const fetchPaymentData = async () => {
+    setRefreshing(true);
     try {
       const response = await paymentDetailsReq({
         UserType: userData?.UserType,
@@ -97,6 +99,9 @@ const PaymentScreen = () => {
         setPaymentData(response.data.Message);
       }
     } catch (error) {
+      console.error("Error fetching payment data:", error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -190,11 +195,119 @@ const PaymentScreen = () => {
     }
   };
 
+  // const handlePayAll = () => {
+  //   if (Array.isArray(paymentData)) {
+  //     const totalDue = paymentData.reduce((total, item) => {
+  //       if (selectedInvoices.includes(item.Inv_No)) {
+  //         const amount = selectedPayments[item.Inv_No] ? parseFloat(selectedPayments[item.Inv_No]) : parseFloat(item.Pat_Due);
+  //         return total + amount;
+  //       }
+  //       return total;
+  //     }, 0);
+  //     setPayAmount(totalDue.toString());
+  //     handlePayment();
+  //   }
+  // };
+
+  // const handlePayment = async () => {
+  //   setLoading(true);
+  //   const invoiceDetails = selectedOption === 'With invoice'
+  //     ? selectedInvoices.map((invoiceNo) => {
+  //       const item = paymentData.find((item: { Inv_No: string; }) => item.Inv_No === invoiceNo);
+  //       const amount = selectedPayments[invoiceNo] ? parseFloat(selectedPayments[invoiceNo]) : parseFloat(item.Pat_Due ?? '0');
+  //       return {
+  //         invoiceNo: item?.Inv_No,
+  //         date: item?.Inv_Date,
+  //         amount: amount,
+  //         firmNo: item?.Billing_Firm_No,
+  //       };
+  //     })
+  //     : [];
+
+  //   const totalAmount = selectedOption === 'With invoice'
+  //     ? invoiceDetails.reduce((total, invoice) => total + invoice.amount, 0)
+  //     : selectedOption === 'Without invoice'
+  //       ? parseFloat(payAmountWithoutInvoice)
+  //       : parseFloat(payAmountDeposit);
+  //   const requestBody = {
+  //     userType: userData?.UserType,
+  //     userCode: userData?.UserCode,
+  //     firmNo: userData?.Branch_Code,
+  //     name: userData?.Names,
+  //     phone: userData?.Mobile,
+  //     email: userData?.Email,
+  //     product:
+  //       selectedOption === "With invoice"
+  //         ? "Due Payment"
+  //         : selectedOption === "Without invoice"
+  //           ? "WOI Payment"
+  //           : "Deposit Payment",
+  //     amount: totalAmount,
+  //     paymentType:
+  //       selectedOption === "With invoice"
+  //         ? "WI"
+  //         : selectedOption === "Without invoice"
+  //           ? "WOI"
+  //           : "DP",
+  //     invoices: invoiceDetails,
+  //   };
+
+  //   console.log("🔵 Sending Payment API Request:", JSON.stringify(requestBody));
+  //   Alert.alert(
+  //     "Confirm Payment",
+  //     "Are you sure you want to proceed with the payment?",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel",
+  //         onPress: () => setLoading(false),
+  //       },
+  //       {
+  //         text: "Yes",
+  //         onPress: async () => {
+  //           try {
+  //             const response = await paymentGatewayReq(requestBody);
+  //             if (response?.data?.SuccessFlag === "true") {
+  //               const paymentUrl = response?.data?.Message?.paymentUrlList?.[0]?.redirectUrl;
+  //               if (paymentUrl) {
+  //                 console.log("🔗 Redirecting to Payment URL:", paymentUrl);
+  //                 setPaymentUrl(paymentUrl);
+  //                 // Linking.openURL(paymentUrl);
+  //                 if (selectedOption === 'With invoice') {
+  //                   setPaymentData(response.data.Message.updatedPaymentData);
+  //                   setSelectedPayments({});
+  //                 }
+  //                 setPayAmountInvoice('0.00');
+  //                 setPayAmountWithoutInvoice('');
+  //                 setPayAmountDeposit('');
+  //                 setSelectedInvoices([]);
+  //                 setSelectAll(false);
+  //               } else {
+  //                 navigation.navigate('PaymentFailure');
+  //               }
+  //             }
+  //             else {
+  //               navigation.navigate('PaymentFailure');
+  //             }
+  //           } catch (error) {
+  //             navigation.navigate('PaymentFailure');
+  //           } finally {
+  //             setLoading(false);
+  //             fetchPaymentData();
+  //           }
+  //         },
+  //       },
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
   const handlePayAll = () => {
     if (Array.isArray(paymentData)) {
       const totalDue = paymentData.reduce((total, item) => {
         if (selectedInvoices.includes(item.Inv_No)) {
-          const amount = selectedPayments[item.Inv_No] ? parseFloat(selectedPayments[item.Inv_No]) : parseFloat(item.Pat_Due);
+          const amount = selectedPayments[item.Inv_No]
+            ? parseFloat(selectedPayments[item.Inv_No])
+            : parseFloat(item.Pat_Due);
           return total + amount;
         }
         return total;
@@ -208,8 +321,8 @@ const PaymentScreen = () => {
     setLoading(true);
     const invoiceDetails = selectedOption === 'With invoice'
       ? selectedInvoices.map((invoiceNo) => {
-        const item = paymentData.find((item: { Inv_No: string; }) => item.Inv_No === invoiceNo);
-        const amount = selectedPayments[invoiceNo] ? parseFloat(selectedPayments[invoiceNo]) : parseFloat(item.Pat_Due);
+        const item = paymentData.find((item: { Inv_No: string }) => item.Inv_No === invoiceNo);
+        const amount = selectedPayments[invoiceNo] ? parseFloat(selectedPayments[invoiceNo]) : parseFloat(item?.Pat_Due ?? '0');
         return {
           invoiceNo: item?.Inv_No,
           date: item?.Inv_Date,
@@ -224,6 +337,7 @@ const PaymentScreen = () => {
       : selectedOption === 'Without invoice'
         ? parseFloat(payAmountWithoutInvoice)
         : parseFloat(payAmountDeposit);
+
     const requestBody = {
       userType: userData?.UserType,
       userCode: userData?.UserCode,
@@ -267,7 +381,6 @@ const PaymentScreen = () => {
                 if (paymentUrl) {
                   console.log("🔗 Redirecting to Payment URL:", paymentUrl);
                   setPaymentUrl(paymentUrl);
-                  // Linking.openURL(paymentUrl);
                   if (selectedOption === 'With invoice') {
                     setPaymentData(response.data.Message.updatedPaymentData);
                     setSelectedPayments({});
@@ -280,14 +393,14 @@ const PaymentScreen = () => {
                 } else {
                   navigation.navigate('PaymentFailure');
                 }
-              }
-              else {
+              } else {
                 navigation.navigate('PaymentFailure');
               }
             } catch (error) {
               navigation.navigate('PaymentFailure');
             } finally {
               setLoading(false);
+              fetchPaymentData();
             }
           },
         },
@@ -295,6 +408,7 @@ const PaymentScreen = () => {
       { cancelable: false }
     );
   };
+
 
   if (paymentUrl) {
     return (
@@ -418,7 +532,14 @@ const PaymentScreen = () => {
             renderItem={renderInvoiceItem}
             keyExtractor={(item, index) => index.toString()}
             contentContainerStyle={styles.invoiceContainer}
-            ListEmptyComponent={loading ? <SpinnerIndicator /> : null} />
+            ListEmptyComponent={loading ? <SpinnerIndicator /> : null}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={fetchPaymentData}
+              />
+            }
+          />
         )}
 
         {/* Without Invoice Section */}
@@ -429,7 +550,6 @@ const PaymentScreen = () => {
               <Text style={styles.invoiceLabel}>Total Due</Text>
               <TouchableOpacity style={{ flex: 1 }}>
                 <Text style={[styles.invoiceLabel, styles.totalDue]}>
-                  {/* {(paymentData as WithoutInvoice).DueAmount || '0.00'} */}
                   {paymentData?.DueAmount != null ? paymentData.DueAmount : '0.00'}
                 </Text>
               </TouchableOpacity>
@@ -441,7 +561,7 @@ const PaymentScreen = () => {
                 placeholder="Enter amount"
                 keyboardType="numeric"
                 value={payAmountWithoutInvoice}
-                onChangeText={setPayAmountWithoutInvoice} // Separate state
+                onChangeText={setPayAmountWithoutInvoice}
               />
             </View>
             <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
@@ -467,7 +587,7 @@ const PaymentScreen = () => {
                 placeholder="Enter amount"
                 keyboardType="numeric"
                 value={payAmountDeposit}
-                onChangeText={setPayAmountDeposit} // Separate state
+                onChangeText={setPayAmountDeposit}
               />
             </View>
             <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
@@ -481,6 +601,7 @@ const PaymentScreen = () => {
 };
 
 export default PaymentScreen;
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Constants.COLOR.WHITE_COLOR },
   container: {

@@ -22,7 +22,6 @@ import PaymentDetailScreen from '../screens/PaymentDetailScreen';
 import LedgerDetailsScreen from '../screens/LedgerDetailsScreen';
 import BookTestScreen from '../screens/BookTestScreen';
 import PaymentFailureScreen from '../screens/PaymentFailureScreen';
-import PaymentScreen from '../screens/PaymentScreen';
 
 const Stack = createStackNavigator();
 const ApplicationNavigation = () => {

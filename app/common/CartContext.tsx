@@ -6,8 +6,8 @@ interface CartContextType {
     setCartItems: React.Dispatch<React.SetStateAction<string[]>>;
     totalCartValue: number;
     setTotalCartValue: React.Dispatch<React.SetStateAction<number>>;
-    isModalVisible: boolean;  // Add isModalVisible to the context
-    setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;  // Add setModalVisible to the context
+    isModalVisible: boolean;  
+    setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;  
 }
 
 // Create context
@@ -17,7 +17,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [cartItems, setCartItems] = useState<string[]>([]);
     const [totalCartValue, setTotalCartValue] = useState<number>(0);
-    const [isModalVisible, setModalVisible] = useState<boolean>(false);  // Modal visibility state
+    const [isModalVisible, setModalVisible] = useState<boolean>(false);  
 
     return (
         <CartContext.Provider value={{ 
