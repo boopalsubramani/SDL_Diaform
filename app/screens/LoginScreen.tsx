@@ -121,15 +121,79 @@ const LoginScreen = ({ navigation }: any) => {
     }, []);
 
 
+    // const validateInputs = async () => {
+    //     setUserNameError('');
+    //     setPasswordError('');
+    //     setIsError(false);
+    //     if (isOtpLogin) {
+    //         if (!otpRequested) {
+    //             if (!phoneNumber) {
+    //                 setUserNameError('Phone Number is required');
+    //                 return;
+    //             }
+    //             try {
+    //                 const response = await otpSendAPIReq({
+    //                     UserCode: userData?.UserCode || '',
+    //                     UserType: userData?.UserType || '',
+    //                     Send_Type: 'M',
+    //                     Mobile_No: phoneNumber,
+    //                     Email_Id: userData?.Email || '',
+    //                 }).unwrap();
+    //                 console.log("console1", response);
+    //                 if (response?.Code === 200) {
+    //                     console.log("console2");
+    //                     setOtpRequested(true);
+    //                     Alert.alert('OTP Sent', 'OTP has been sent to your phone number.');
+    //                 }
+    //             } catch (error) {
+    //                 console.log("console3", error);
+    //                 showAlert('Error', 'An error occurred while sending OTP');
+    //             }
+    //         } else {
+    //             if (!otp) {
+    //                 setUserNameError('OTP is required');
+    //                 return;
+    //             }
+    //             else {
+    //                 let loginReqObj = {
+    //                     PhoneNumber: phoneNumber,
+    //                     OTP: otp,
+    //                 };
+    //                 const response = await loginAPIReq(loginReqObj).unwrap();
+    //                 console.log("Login API RequestOTP:", loginReqObj);
+    //                 console.log("Login API ResponseOTP:", response);
+    //             }
+    //         }
+    //     } else {
+    //         let hasError = false;
+    //         if (!userName) {
+    //             setUserNameError('UserName is required');
+    //             hasError = true;
+    //         }
+    //         if (!password) {
+    //             setPasswordError('Password is required');
+    //             hasError = true;
+    //         }
+    //         if (hasError) return;
+    //         let loginReqObj = {
+    //             UserName: userName,
+    //             Password: password,
+    //         };
+    //         const response = await loginAPIReq(loginReqObj);
+    //         console.log("Login API RequestUSERNAME:", loginReqObj);
+    //         console.log("Login API ResponsePASSWORD:", response);
+    //     }
+    // };
+
     const validateInputs = async () => {
         setUserNameError('');
         setPasswordError('');
         setIsError(false);
         if (isOtpLogin) {
             if (!otpRequested) {
-                if (!phoneNumber) {
+               if (!phoneNumber) {
                     setUserNameError('Phone Number is required');
-                    return;
+                   return;
                 }
                 try {
                     const response = await otpSendAPIReq({
@@ -139,14 +203,14 @@ const LoginScreen = ({ navigation }: any) => {
                         Mobile_No: phoneNumber,
                         Email_Id: userData?.Email || '',
                     }).unwrap();
-                    console.log("console1", response);
                     if (response?.Code === 200) {
-                        console.log("console2");
                         setOtpRequested(true);
                         Alert.alert('OTP Sent', 'OTP has been sent to your phone number.');
+                    } else {
+                        showAlert('Error', response?.Message?.[0]?.Message || 'Failed to send OTP');
                     }
                 } catch (error) {
-                    console.log("console3", error);
+                    console.error("OTP send error", error);
                     showAlert('Error', 'An error occurred while sending OTP');
                 }
             } else {
@@ -154,14 +218,21 @@ const LoginScreen = ({ navigation }: any) => {
                     setUserNameError('OTP is required');
                     return;
                 }
-                else {
-                    let loginReqObj = {
-                        PhoneNumber: phoneNumber,
-                        OTP: otp,
-                    };
+                const loginReqObj = {
+                    PhoneNumber: phoneNumber,
+                    OTP: otp,
+                };
+                try {
                     const response = await loginAPIReq(loginReqObj).unwrap();
-                    console.log("Login API RequestOTP:", loginReqObj);
-                    console.log("Login API ResponseOTP:", response);
+                    console.log("Login API Response (OTP):", response);
+                    if (response?.SuccessFlag === "true" && response?.Code === 200) {
+                        // This will be handled in the useEffect
+                    } else {
+                        showAlert('Error', response?.Message?.[0]?.Message || 'OTP login failed');
+                    }
+                } catch (error) {
+                    console.error("OTP login error", error);
+                    showAlert('Error', 'An error occurred during OTP login');
                 }
             }
         } else {
@@ -175,15 +246,24 @@ const LoginScreen = ({ navigation }: any) => {
                 hasError = true;
             }
             if (hasError) return;
-            let loginReqObj = {
+            const loginReqObj = {
                 UserName: userName,
                 Password: password,
             };
-            const response = await loginAPIReq(loginReqObj);
-            console.log("Login API RequestUSERNAME:", loginReqObj);
-            console.log("Login API ResponsePASSWORD:", response);
+            try {
+                const response = await loginAPIReq(loginReqObj).unwrap();
+                console.log("Login API Response (Username/Password):", response);
+                if (response?.SuccessFlag !== "true" || response?.Code !== 200) {
+                    showAlert('Error', response?.Message?.[0]?.Message || 'Login failed');
+                }
+                // Successful case is handled in the useEffect
+            } catch (error) {
+                console.error("Password login error", error);
+                showAlert('Error', 'An error occurred during login');
+            }
         }
     };
+
 
     const handleForgotPasswordOrResendOtp = () => {
         if (isOtpLogin && otpRequested) {
@@ -223,7 +303,7 @@ const LoginScreen = ({ navigation }: any) => {
 
     const handleSelectLanguage = (language: any) => {
         console.log("🌍 Selected Language:", language);
-        AsyncStorage.setItem("selectedLanguage", language)
+        AsyncStorage.setItem("selectedLanguage", JSON.stringify(language))
         if (!language || !language.Code) {
             console.error("❌ Error: Language Code is missing!");
             return;

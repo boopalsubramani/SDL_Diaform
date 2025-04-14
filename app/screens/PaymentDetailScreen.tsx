@@ -203,7 +203,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
 
         // Append the image file directly to FormData
         if (imageUri) {
-            const fileType = imageUri.split('.').pop(); 
+            const fileType = imageUri.split('.').pop();
             const fileName = `prescription.${fileType}`;
             formData.append("Prescription_File1", {
                 uri: imageUri,
@@ -217,7 +217,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             formData.append("Service_Date", handleBookingDetail?.booking?.Booking_Date);
         }
         const newTests = (fromPaymentDetailsScreen ? bookingItems : updatedCart).map(test => ({
-            TESTTYPE: 'T',
+            TESTTYPE: test?.Service_Type,
             TESTCODE: test?.Service_Code,
             SERVICE_AMOUNT: test?.Service_Amount || test?.Amount,
             SERVICE_DISCOUNT: test?.Discount_Amount,
@@ -332,8 +332,54 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
         });
     };
 
+
+    // const calculateTotal = () => {
+    //     if (fromBookingScreen && bookingDetails) {
+    //         const serviceDetails = bookingDetails.Service_Detail;
+    //         const subTotal = serviceDetails.reduce((sum, service) => sum + parseFloat(service.Service_Amount || 0), 0);
+    //         const discount = parseFloat(bookingDetails.Discount_Amount) || 0;
+    //         const vatAmount = serviceDetails.reduce((sum, service) => {
+    //             const vat = parseFloat(service.Test_VAT) || 0;
+    //             return sum + (parseFloat(service.Service_Amount) * vat) / 100;
+    //         }, 0);
+    //         const netAmount = subTotal - discount;
+    //         const patientAmount = netAmount + vatAmount;
+    //         const netPayable = subTotal + vatAmount - discount;
+    //         return { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable };
+    //     } else {
+    //         let totalSubTotal = 0;
+    //         const amountDataDetails = (fromPaymentDetailsScreen ? bookingItems : updatedCart).map((test) => {
+    //             const vatPercentage = parseFloat(test?.Test_VAT) || 0;
+    //             const subTotal = parseFloat(test?.Service_Amount || test?.Amount) || 0;
+    //             const calculatedVAT = (subTotal * vatPercentage) / 100;
+    //             totalSubTotal += subTotal;
+    //             return {
+    //                 subTotal,
+    //                 discount: parseFloat(test?.Service_Discount) || 0,
+    //                 vatAmount: calculatedVAT,
+    //                 netAmount: subTotal - (parseFloat(test?.Service_Discount) || 0),
+    //                 patientAmount: subTotal + calculatedVAT,
+    //             };
+    //         });
+    //         const totals = amountDataDetails.reduce((acc, item) => ({
+    //             subTotal: acc.subTotal + item.subTotal,
+    //             discount: acc.discount + item.discount,
+    //             vatAmount: acc.vatAmount + item.vatAmount,
+    //             netAmount: acc.netAmount + item.netAmount,
+    //             patientAmount: acc.patientAmount + item.patientAmount,
+    //         }), { subTotal: 0, discount: 0, vatAmount: 0, netAmount: 0, patientAmount: 0 });
+    //         const netPayable = totals.subTotal + totals.vatAmount - totals.discount;
+    //         return { ...totals, netPayable };
+    //     }
+    // };
+
+    // const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable } = calculateTotal();
     const calculateTotal = () => {
-        if (fromBookingScreen && bookingDetails) {
+        if (imageUri) {
+            return { subTotal: 0, discount: 0, vatAmount: 0, netAmount: 0, patientAmount: 0, netPayable: 0 };
+        }
+
+        if (fromBookingScreen && bookingDetails && Array.isArray(bookingDetails.Service_Detail)) {
             const serviceDetails = bookingDetails.Service_Detail;
             const subTotal = serviceDetails.reduce((sum, service) => sum + parseFloat(service.Service_Amount || 0), 0);
             const discount = parseFloat(bookingDetails.Discount_Amount) || 0;
@@ -371,7 +417,6 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
             return { ...totals, netPayable };
         }
     };
-
     const { subTotal, discount, vatAmount, netAmount, patientAmount, netPayable } = calculateTotal();
 
     const AmountToBePaid = ({ amount }: any) => (
@@ -601,7 +646,7 @@ const PaymentDetailScreen = ({ navigation, route, showHeader = true }: any) => {
                     )}
                 </ScrollView>
             )} */}
-            
+
             {isFinalPayment ? (
                 <ScrollView style={{ paddingHorizontal: 10 }}>
                     <View style={styles.headerContainer}>
@@ -894,7 +939,7 @@ const styles = StyleSheet.create({
     },
     cartItemBookingName: {
         fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
-      },
+    },
     cartItemName: {
         fontFamily: Constants.FONT_FAMILY.fontFamilyRegular,
         flex: 1,

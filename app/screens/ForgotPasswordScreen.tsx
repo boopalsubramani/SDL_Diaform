@@ -31,296 +31,6 @@ interface Language {
     Alignment: 'ltr' | 'rtl';
 }
 
-// const ForgetPasswordScreen = ({ navigation }: any) => {
-//     const [userName, setUserName] = useState('');
-//     const [mobileNumber, setMobileNumber] = useState('');
-//     const [otp, setOtp] = useState('');
-//     const [newPassword, setNewPassword] = useState('');
-//     const [receivedOtp, setReceivedOtp] = useState('');
-//     const { userData, setUserData } = useUser();
-//     const [isUsernameValidated, setIsUsernameValidated] = useState(false);
-//     const [isOtpSent, setIsOtpSent] = useState(false);
-//     const [isOtpValidated, setIsOtpValidated] = useState(false);
-//     const [isResendOtpVisible, setIsResendOtpVisible] = useState(false);
-//     const { settings, labels } = useAppSettings();
-//     const [forgotPasswordAPIReq] = useForgotPasswordMutation();
-//     const [otpSendAPIReq] = useOtpSendMutation();
-//     const [resetPasswordAPIReq] = useResetPasswordMutation();
-//     const [isMounted, setIsMounted] = useState(true);
-//     const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
-
-//     useEffect(() => {
-//         setIsMounted(true);
-//         return () => {
-//             setIsMounted(false);
-//         };
-//     }, []);
-
-//     useEffect(() => {
-//         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
-//     }, [selectedLanguage]);
-
-//     const getLabel = (key: string) => {
-//         return labels[key]?.defaultMessage || '';
-//     };
-
-//     const showToast = (message: string) => {
-//         if (isMounted) {
-//             ToastAndroid.showWithGravity(message, ToastAndroid.LONG, ToastAndroid.TOP);
-//         }
-//     };
-
-//     const handleMobileNumberChange = (text: string) => {
-//         const numericRegex = /^[0-9]*$/;
-//         if (numericRegex.test(text) && text.length <= 15) {
-//             setMobileNumber(text);
-//         }
-//     };
-
-//     const handleValidateUser = async () => {
-//         if (!userName.trim()) {
-//             Alert.alert('Error', 'Username cannot be empty');
-//             return;
-//         }
-//         try {
-//             const response = await forgotPasswordAPIReq({ Username: userName.trim() }).unwrap();
-//             if (response.Code === 200) {
-//                 setUserData(response.Message[0]);
-//                 setIsUsernameValidated(true);
-//                 Alert.alert('Success', 'User validated successfully');
-//             } else {
-//                 Alert.alert('Error', 'User validation failed');
-//             }
-//         } catch (error) {
-//             Alert.alert('Error', 'User validation failed');
-//         }
-//     };
-
-//     const handleSendOTP = async () => {
-//         if (!userData) {
-//             Alert.alert('Error', 'Please validate the user first');
-//             return;
-//         }
-//         try {
-//             const response = await otpSendAPIReq({
-//                 UserCode: userData.UserCode,
-//                 UserType: userData.UserType,
-//                 Send_Type: 'M',
-//                 Mobile_No: mobileNumber,
-//                 Email_Id: userData.Email,
-//             }).unwrap();
-
-//             if (response.Code === 200 && response.Message && response.Message.length > 0) {
-//                 const otpData = response.Message[0];
-//                 setReceivedOtp(otpData.OTP_Code);
-//                 setIsOtpSent(true);
-//                 setIsResendOtpVisible(true);
-//                 Alert.alert('OTP Sent', otpData.Otp_Message || 'OTP sent successfully');
-//             } else {
-//                 Alert.alert('Error', 'Failed to send OTP. Please try again.');
-//             }
-//         } catch (error) {
-//             Alert.alert('Error', 'Something went wrong. Please try again.');
-//         }
-//     };
-
-
-//     const handleResendOTP = async () => {
-//         if (!userData) {
-//             Alert.alert('Error', 'Please validate the user first');
-//             return;
-//         }
-
-//         try {
-//             const response = await otpSendAPIReq({
-//                 UserCode: userData.UserCode,
-//                 UserType: userData.UserType,
-//                 Send_Type: 'M',
-//                 Mobile_No: mobileNumber,
-//                 Email_Id: userData.Email,
-//             }).unwrap();
-
-//             if (response.Code === 200 && response.Message && response.Message.length > 0) {
-//                 const otpData = response.Message[0];
-//                 setReceivedOtp(response.Message[0].OTP_Code);
-//                 setIsOtpSent(true);
-//                 setIsResendOtpVisible(true);
-//                 Alert.alert('OTP Sent', otpData.Otp_Message || 'OTP Resend successfully');
-//             } else {
-//                 Alert.alert('Error', 'Failed to Resend OTP. Please try again.');
-//             }
-//         } catch (error) {
-//             Alert.alert('Error', 'Failed to resend OTP');
-//         }
-//     };
-
-
-//     const handleValidateOTP = async () => {
-//         if (!otp.trim()) {
-//             Alert.alert('Error', 'Please enter the OTP');
-//             return;
-//         }
-//         if (otp.trim() === receivedOtp.trim()) {
-//             Alert.alert('Success', 'OTP verified successfully');
-//             setTimeout(() => {
-//                 setIsOtpValidated(true);
-//             }, 1000);
-//         } else {
-//             Alert.alert('Error', 'Invalid OTP');
-//         }
-//     };
-
-//     const handleResetPassword = async () => {
-//         if (!userData || !newPassword) {
-//             Alert.alert('Error', 'Please enter all required fields');
-//             return;
-//         }
-//         try {
-//             const response = await resetPasswordAPIReq({
-//                 UserCode: userData.UserCode,
-//                 UserType: userData.UserType,
-//                 Send_Type: 'M',
-//                 Otp_Code: otp,
-//                 Password: newPassword,
-//             }).unwrap();
-
-//             const apiMessage = response?.Message?.[0]?.Message || 'Something went wrong';
-
-//             if (response.Code === 200) {
-//                 Alert.alert('Success', apiMessage);
-//                 navigation.navigate('Login');
-//             } else {
-//                 Alert.alert('Error', apiMessage);
-//             }
-//         } catch (error: any) {
-//             const errorMsg = error?.data?.Message?.[0]?.Message || 'Password reset failed';
-//             Alert.alert('Error', errorMsg);
-//             console.error('Password reset error:', error);
-//         }
-//     };
-
-//     const handleBack = () => {
-//         navigation.goBack();
-//     };
-
-//     return (
-//         <SafeAreaView style={styles.mainContainer}>
-//             <KeyboardAvoidingView
-//                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-//                 style={styles.keyboardAvoidingView}
-//             >
-//                 <KeyboardAwareScrollView
-//                     contentContainerStyle={styles.scrollViewContainer}
-//                     enableOnAndroid={true}
-//                     enableAutomaticScroll={Platform.OS === 'ios'}
-//                 >
-//                     <View style={styles.bodyContainerTop}>
-//                         <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginVertical: 20 }}>
-//                             <TouchableOpacity onPress={handleBack}>
-//                                 <Image
-//                                     source={require('../images/black_cross.png')}
-//                                     style={styles.ChevronImage}
-//                                     resizeMode="contain"
-//                                 />
-//                             </TouchableOpacity>
-//                             <Text style={[styles.text, { marginLeft: 50 }]}>{getLabel('verifysrc_2')}</Text>
-//                         </View>
-//                     </View>
-
-//                     <View style={styles.bodyContainerBottom}>
-//                         <View style={styles.registerContainer}>
-//                             <View style={styles.registerInnerView}>
-//                                 {settings?.Message?.[0]?.Flash_Logo && (
-//                                     <Image
-//                                         source={{ uri: settings.Message[0].Flash_Logo }}
-//                                         style={styles.cardImage}
-//                                         resizeMode="contain"
-//                                     />
-//                                 )}
-
-//                                 {!isUsernameValidated && (
-//                                     <>
-//                                         <Text style={styles.inputLabel}>{getLabel('loginsrc_2')}</Text>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder={getLabel('loginsrc_2')}
-//                                             onChangeText={setUserName}
-//                                             value={userName}
-//                                         />
-//                                         <TouchableOpacity style={styles.loginButton} onPress={handleValidateUser}>
-//                                             <Text style={styles.loginButtonText}>Validate User</Text>
-//                                         </TouchableOpacity>
-//                                     </>
-//                                 )}
-
-//                                 {isUsernameValidated && !isOtpSent && (
-//                                     <>
-//                                         <Text style={styles.inputLabel}>{getLabel('verifysrc_1')}</Text>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder={getLabel('verifysrc_1')}
-//                                             onChangeText={handleMobileNumberChange}
-//                                             keyboardType="numeric"
-//                                             value={mobileNumber}
-//                                             maxLength={15}
-//                                         />
-//                                         <TouchableOpacity style={styles.loginButton} onPress={handleSendOTP}>
-//                                             <Text style={styles.loginButtonText}>{getLabel('verifysrc_7')}</Text>
-//                                         </TouchableOpacity>
-//                                     </>
-//                                 )}
-
-//                                 {isOtpSent && !isOtpValidated && (
-//                                     <>
-//                                         <Text style={styles.inputLabel}>OTP</Text>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Enter the OTP"
-//                                             onChangeText={setOtp}
-//                                             keyboardType="numeric"
-//                                             value={otp}
-//                                             maxLength={4}
-//                                         />
-//                                         <TouchableOpacity style={styles.loginButton} onPress={handleValidateOTP}>
-//                                             <Text style={styles.loginButtonText}>Validate OTP</Text>
-//                                         </TouchableOpacity>
-//                                         {isResendOtpVisible && (
-//                                             <TouchableOpacity style={styles.resendButton} onPress={handleResendOTP}>
-//                                                 <Text style={styles.resendButtonText}>Resend OTP</Text>
-//                                             </TouchableOpacity>
-//                                         )}
-//                                     </>
-//                                 )}
-
-//                                 {isOtpValidated && (
-//                                     <>
-//                                         <Text style={styles.inputLabel}>New Password</Text>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Enter new password"
-//                                             onChangeText={setNewPassword}
-//                                             secureTextEntry
-//                                             value={newPassword}
-//                                         />
-//                                         <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword}>
-//                                             <Text style={styles.loginButtonText}>Reset Password</Text>
-//                                         </TouchableOpacity>
-//                                     </>
-//                                 )}
-
-//                                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-//                                     <Text style={styles.BackToText}>{getLabel('verifysrc_9')}</Text>
-//                                 </TouchableOpacity>
-//                             </View>
-//                         </View>
-//                     </View>
-//                 </KeyboardAwareScrollView>
-//             </KeyboardAvoidingView>
-//         </SafeAreaView>
-//     );
-// };
-// export default ForgetPasswordScreen;
-
 const ForgetPasswordScreen = ({ navigation }: any) => {
     const [userName, setUserName] = useState('');
     const [mobileNumber, setMobileNumber] = useState('');
@@ -328,50 +38,30 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [receivedOtp, setReceivedOtp] = useState('');
-    const { userData, setUserData } = useUser();
     const [isUsernameValidated, setIsUsernameValidated] = useState(false);
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isOtpValidated, setIsOtpValidated] = useState(false);
     const [isResendOtpVisible, setIsResendOtpVisible] = useState(false);
-    const [sendOtpTo, setSendOtpTo] = useState('mobile'); // New state for OTP medium
+    const [sendOtpTo, setSendOtpTo] = useState<'mobile' | 'email'>('mobile');
+
+    const { userData, setUserData } = useUser();
     const { settings, labels } = useAppSettings();
+    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
+
     const [forgotPasswordAPIReq] = useForgotPasswordMutation();
     const [otpSendAPIReq] = useOtpSendMutation();
     const [resetPasswordAPIReq] = useResetPasswordMutation();
-    const [isMounted, setIsMounted] = useState(true);
-    const selectedLanguage = useSelector((state: RootState) => state.appSettings.selectedLanguage) as Language | null;
-
-    useEffect(() => {
-        setIsMounted(true);
-        return () => {
-            setIsMounted(false);
-        };
-    }, []);
 
     useEffect(() => {
         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
     }, [selectedLanguage]);
 
-    const getLabel = (key: string) => {
-        return labels[key]?.defaultMessage || '';
-    };
+    const getLabel = (key: string): string => labels[key]?.defaultMessage || '';
 
-    const showToast = (message: string) => {
-        if (isMounted) {
-            ToastAndroid.showWithGravity(message, ToastAndroid.LONG, ToastAndroid.TOP);
-        }
-    };
-
-    const handleMobileNumberChange = (text: string) => {
-        const numericRegex = /^[0-9]*$/;
-        if (numericRegex.test(text) && text.length <= 15) {
-            setMobileNumber(text);
-        }
-    };
-
-    const handleEmailChange = (text: string) => {
-        setEmail(text);
-    };
+    const handleInputChange =
+        (setState: React.Dispatch<React.SetStateAction<string>>) => (text: string) => {
+            setState(text);
+        };
 
     const handleValidateUser = async () => {
         if (!userName.trim()) {
@@ -392,11 +82,12 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
         }
     };
 
-    const handleSendOTP = async () => {
+    const handleSendOTP = async (isResend = false) => {
         if (!userData) {
             Alert.alert('Error', 'Please validate the user first');
             return;
         }
+
         try {
             const response = await otpSendAPIReq({
                 UserCode: userData.UserCode,
@@ -410,46 +101,29 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
                 const otpData = response.Message[0];
                 setReceivedOtp(otpData.OTP_Code);
                 setIsOtpSent(true);
-                setIsResendOtpVisible(true);
-                Alert.alert('OTP Sent', otpData.Otp_Message || 'OTP sent successfully');
+                setIsResendOtpVisible(false);
+                Alert.alert('OTP Sent', otpData.Otp_Message || (isResend ? 'OTP Resent successfully' : 'OTP sent successfully'));
+
+                const [datePart, timePart] = otpData.Valid_Time.split(' ');
+                const [year, month, day] = datePart.split('/').map(Number);
+                const [hours, minutes] = timePart.split(':').map(Number);
+                const validTime = new Date(year, month - 1, day, hours, minutes);
+                const timeDifference = validTime.getTime() - new Date().getTime();
+
+                if (!isNaN(timeDifference) && timeDifference > 0) {
+                    setTimeout(() => {
+                        setIsResendOtpVisible(true);
+                    }, timeDifference);
+                }
             } else {
-                Alert.alert('Error', 'Failed to send OTP. Please try again.');
+                Alert.alert('Error', `Failed to ${isResend ? 'resend' : 'send'} OTP. Please try again.`);
             }
         } catch (error) {
-            Alert.alert('Error', 'Something went wrong. Please try again.');
+            Alert.alert('Error', `Something went wrong. Please try again.`);
         }
     };
 
-    const handleResendOTP = async () => {
-        if (!userData) {
-            Alert.alert('Error', 'Please validate the user first');
-            return;
-        }
-
-        try {
-            const response = await otpSendAPIReq({
-                UserCode: userData.UserCode,
-                UserType: userData.UserType,
-                Send_Type: sendOtpTo === 'mobile' ? 'M' : 'E',
-                Mobile_No: sendOtpTo === 'mobile' ? mobileNumber : '',
-                Email_Id: sendOtpTo === 'email' ? email : '',
-            }).unwrap();
-
-            if (response.Code === 200 && response.Message && response.Message.length > 0) {
-                const otpData = response.Message[0];
-                setReceivedOtp(response.Message[0].OTP_Code);
-                setIsOtpSent(true);
-                setIsResendOtpVisible(true);
-                Alert.alert('OTP Sent', otpData.Otp_Message || 'OTP Resend successfully');
-            } else {
-                Alert.alert('Error', 'Failed to Resend OTP. Please try again.');
-            }
-        } catch (error) {
-            Alert.alert('Error', 'Failed to resend OTP');
-        }
-    };
-
-    const handleValidateOTP = async () => {
+    const handleValidateOTP = () => {
         if (!otp.trim()) {
             Alert.alert('Error', 'Please enter the OTP');
             return;
@@ -466,9 +140,10 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
 
     const handleResetPassword = async () => {
         if (!userData || !newPassword) {
-            Alert.alert('Error', 'Please enter all required fields');
+            Alert.alert('Error', 'Enter New Password');
             return;
         }
+
         try {
             const response = await resetPasswordAPIReq({
                 UserCode: userData.UserCode,
@@ -478,44 +153,53 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
                 Password: newPassword,
             }).unwrap();
 
-            const apiMessage = response?.Message?.[0]?.Message || 'Something went wrong';
-
             if (response.Code === 200) {
-                Alert.alert('Success', apiMessage);
+                Alert.alert('Success', response.Message[0].Message);
                 navigation.navigate('Login');
             } else {
-                Alert.alert('Error', apiMessage);
+                Alert.alert('Error', response.Message[0].Message || 'Password reset failed');
             }
         } catch (error: any) {
-            const errorMsg = error?.data?.Message?.[0]?.Message || 'Password reset failed';
-            Alert.alert('Error', errorMsg);
-            console.error('Password reset error:', error);
+            Alert.alert('Error', error?.data?.Message?.[0]?.Message || 'Password reset failed');
         }
     };
 
-    const handleBack = () => {
-        navigation.goBack();
-    };
+    const renderInputField = (
+        label: string,
+        value: string,
+        onChangeText: (text: string) => void,
+        keyboardType: 'default' | 'numeric' | 'email-address' = 'default',
+        maxLength?: number
+    ) => (
+        <>
+            <Text style={styles.inputLabel}>{label}</Text>
+            <TextInput
+                style={styles.input}
+                placeholder={label}
+                placeholderTextColor={Constants.COLOR.FONT_HINT}
+                onChangeText={onChangeText}
+                keyboardType={keyboardType}
+                value={value}
+                maxLength={maxLength}
+                secureTextEntry={label.toLowerCase().includes('password')}
+            />
+        </>
+    );
+
+    const renderToggleButton = (label: string, onPress: () => void) => (
+        <TouchableOpacity style={styles.toggleButton} onPress={onPress}>
+            <Text style={styles.toggleButtonText}>{label}</Text>
+        </TouchableOpacity>
+    );
 
     return (
         <SafeAreaView style={styles.mainContainer}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardAvoidingView}
-            >
-                <KeyboardAwareScrollView
-                    contentContainerStyle={styles.scrollViewContainer}
-                    enableOnAndroid={true}
-                    enableAutomaticScroll={Platform.OS === 'ios'}
-                >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingView}>
+                <KeyboardAwareScrollView contentContainerStyle={styles.scrollViewContainer} enableOnAndroid enableAutomaticScroll={Platform.OS === 'ios'}>
                     <View style={styles.bodyContainerTop}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginVertical: 20 }}>
-                            <TouchableOpacity onPress={handleBack}>
-                                <Image
-                                    source={require('../images/black_cross.png')}
-                                    style={styles.ChevronImage}
-                                    resizeMode="contain"
-                                />
+                            <TouchableOpacity onPress={() => navigation.goBack()}>
+                                <Image source={require('../images/black_cross.png')} style={styles.ChevronImage} resizeMode="contain" />
                             </TouchableOpacity>
                             <Text style={[styles.text, { marginLeft: 50 }]}>{getLabel('verifysrc_2')}</Text>
                         </View>
@@ -525,66 +209,23 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
                         <View style={styles.registerContainer}>
                             <View style={styles.registerInnerView}>
                                 {settings?.Message?.[0]?.Flash_Logo && (
-                                    <Image
-                                        source={{ uri: settings.Message[0].Flash_Logo }}
-                                        style={styles.cardImage}
-                                        resizeMode="contain"
-                                    />
+                                    <Image source={{ uri: settings.Message[0].Flash_Logo }} style={styles.cardImage} resizeMode="contain" />
                                 )}
 
+                                {!isUsernameValidated && renderInputField(getLabel('loginsrc_2'), userName, handleInputChange(setUserName))}
                                 {!isUsernameValidated && (
-                                    <>
-                                        <Text style={styles.inputLabel}>{getLabel('loginsrc_2')}</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder={getLabel('loginsrc_2')}
-                                            onChangeText={setUserName}
-                                            value={userName}
-                                        />
-                                        <TouchableOpacity style={styles.loginButton} onPress={handleValidateUser}>
-                                            <Text style={styles.loginButtonText}>Validate User</Text>
-                                        </TouchableOpacity>
-                                    </>
+                                    <TouchableOpacity style={styles.loginButton} onPress={handleValidateUser}>
+                                        <Text style={styles.loginButtonText}>Validate User</Text>
+                                    </TouchableOpacity>
                                 )}
 
                                 {isUsernameValidated && !isOtpSent && (
                                     <>
-                                        <Text style={styles.inputLabel}>{getLabel('verifysrc_1')}</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder={getLabel('verifysrc_1')}
-                                            onChangeText={handleMobileNumberChange}
-                                            keyboardType="numeric"
-                                            value={mobileNumber}
-                                            maxLength={15}
-                                        />
-                                        <Text style={styles.inputLabel}>Email</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Enter your email"
-                                            onChangeText={handleEmailChange}
-                                            keyboardType="email-address"
-                                            value={email}
-                                        />
-                                        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                                            <TouchableOpacity
-                                                style={[styles.toggleButton, sendOtpTo === 'mobile' ? styles.toggleButtonActive : styles.toggleButtonInactive]}
-                                                onPress={() => setSendOtpTo('mobile')}
-                                            >
-                                                <Text style={sendOtpTo === 'mobile' ? styles.toggleButtonText : styles.toggleButtonTextInactive}>
-                                                    Send to Mobile
-                                                </Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.toggleButton, sendOtpTo === 'email' ? styles.toggleButtonActive : styles.toggleButtonInactive]}
-                                                onPress={() => setSendOtpTo('email')}
-                                            >
-                                                <Text style={sendOtpTo === 'email' ? styles.toggleButtonText : styles.toggleButtonTextInactive}>
-                                                    Send to Email
-                                                </Text>
-                                            </TouchableOpacity>
-                                        </View>
-
+                                        {sendOtpTo === 'mobile' && renderInputField(getLabel('verifysrc_1'), mobileNumber, handleInputChange(setMobileNumber), 'numeric', 15)}
+                                        {sendOtpTo === 'email' && renderInputField('Email', email, handleInputChange(setEmail), 'email-address')}
+                                        <Text style={styles.orText}>or</Text>
+                                        {sendOtpTo === 'mobile' && renderToggleButton('Send to Email', () => setSendOtpTo('email'))}
+                                        {sendOtpTo === 'email' && renderToggleButton('Send to Mobile', () => setSendOtpTo('mobile'))}
                                         <TouchableOpacity style={styles.loginButton} onPress={handleSendOTP}>
                                             <Text style={styles.loginButtonText}>{getLabel('verifysrc_7')}</Text>
                                         </TouchableOpacity>
@@ -593,40 +234,23 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
 
                                 {isOtpSent && !isOtpValidated && (
                                     <>
-                                        <Text style={styles.inputLabel}>OTP</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Enter the OTP"
-                                            onChangeText={setOtp}
-                                            keyboardType="numeric"
-                                            value={otp}
-                                            maxLength={4}
-                                        />
+                                        {renderInputField('OTP', otp, handleInputChange(setOtp), 'numeric', 4)}
                                         <TouchableOpacity style={styles.loginButton} onPress={handleValidateOTP}>
                                             <Text style={styles.loginButtonText}>Validate OTP</Text>
                                         </TouchableOpacity>
                                         {isResendOtpVisible && (
-                                            <TouchableOpacity style={styles.resendButton} onPress={handleResendOTP}>
+                                            <TouchableOpacity style={styles.resendButton} onPress={() => handleSendOTP(true)}>
                                                 <Text style={styles.resendButtonText}>Resend OTP</Text>
                                             </TouchableOpacity>
                                         )}
                                     </>
                                 )}
 
+                                {isOtpValidated && renderInputField('New Password', newPassword, handleInputChange(setNewPassword))}
                                 {isOtpValidated && (
-                                    <>
-                                        <Text style={styles.inputLabel}>New Password</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Enter new password"
-                                            onChangeText={setNewPassword}
-                                            secureTextEntry
-                                            value={newPassword}
-                                        />
-                                        <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword}>
-                                            <Text style={styles.loginButtonText}>Reset Password</Text>
-                                        </TouchableOpacity>
-                                    </>
+                                    <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword}>
+                                        <Text style={styles.loginButtonText}>Reset Password</Text>
+                                    </TouchableOpacity>
                                 )}
 
                                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -640,7 +264,10 @@ const ForgetPasswordScreen = ({ navigation }: any) => {
         </SafeAreaView>
     );
 };
+
 export default ForgetPasswordScreen;
+
+
 
 const styles = StyleSheet.create({
     mainContainer: {
@@ -781,21 +408,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ccc',
         marginHorizontal: 5,
-    },
-    toggleButtonActive: {
         backgroundColor: Constants.COLOR.THEME_COLOR,
-    },
-    toggleButtonInactive: {
-        backgroundColor: Constants.COLOR.WHITE_COLOR,
-        borderColor: Constants.COLOR.THEME_COLOR,
+        color: Constants.COLOR.WHITE_COLOR
     },
     toggleButtonText: {
         color: Constants.COLOR.WHITE_COLOR,
         fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
-    },
-    toggleButtonTextInactive: {
-        color: Constants.COLOR.BLACK_COLOR,
-        fontFamily: Constants.FONT_FAMILY.fontFamilySemiBold,
+        textAlign: 'center'
     },
 });
 

@@ -35,7 +35,7 @@ interface Booking {
 }
 
 
-const BookingDetailsScreen = ({ navigation }:any) => {
+const BookingDetailsScreen = ({ navigation }: any) => {
     const route = useRoute<RouteProp<{ BookingDetails: { booking: Booking } }>>();
     const { booking } = route.params;
     const { userData } = useUser();
@@ -101,9 +101,11 @@ const BookingDetailsScreen = ({ navigation }:any) => {
                     <Text style={styles.bannerText}>{bookingDetails.Report_Status_Desc}</Text>
                 </View>
 
-                <View style={styles.banner}>
-                    <Text style={styles.bannerText}>{bookingDetails.Booking_Status_Desc}</Text>
-                </View>
+                {bookingDetails.Booking_Status_Desc && (
+                    <View style={styles.banner}>
+                        <Text style={styles.bannerText}>{bookingDetails.Booking_Status_Desc}</Text>
+                    </View>
+                )}
 
                 <View>
                     {bookingDetails.Service_Detail.map((service, index) => (

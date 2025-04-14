@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import NavigationBar from '../common/NavigationBar';
 import Constants from '../util/Constants';
 import { useSelector } from 'react-redux';
@@ -31,8 +31,27 @@ const OthersScreen = ({ navigation }: any) => {
 
   const handleSettingItemPress = (item: any) => {
     const route = navigationRoutes[item.Sub_Menu_Code];
-    if (route) navigation.navigate(route);
+
+    if (item.Sub_Menu_Code === 'LO') {
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Yes',
+            onPress: () => {
+              if (route) navigation.navigate(route);
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    } else if (route) {
+      navigation.navigate(route);
+    }
   };
+
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() => handleSettingItemPress(item)}>

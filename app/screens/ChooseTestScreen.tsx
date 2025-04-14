@@ -38,7 +38,6 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
     const updatedCart = useSelector((state: RootState) => state.bookTestSearch.updatedCartData);
     const bookingItems = useSelector((state: RootState) => state.bookTestSearch.bookingDetails);
 
-    console.log('selectedpattientinchoosetestscreen', selectedPatientDetails);
 
     useEffect(() => {
         I18nManager.forceRTL(selectedLanguage?.Alignment === 'rtl');
@@ -199,19 +198,23 @@ const ChooseTestScreen = ({ route, showHeader = true }: any) => {
                             <Text style={styles.cartValue}>{totalCartValue} INR</Text>
                         </View>
                     </View>
+
                     <View style={styles.searchCartView}>
-                        <TouchableOpacity onPress={handleSearchTest}>
+                        {/* Left side: Search input area */}
+                        <TouchableOpacity style={styles.searchInputArea} onPress={handleSearchTest}>
                             <Image source={require('../images/search.png')} style={styles.searchIcon} />
+                            <Text style={styles.searchLabel}>{getLabel('labtscr_8')}</Text>
                         </TouchableOpacity>
-                        <Text style={styles.searchLabel}>{getLabel('labtscr_8')}</Text>
-                        <TouchableOpacity onPress={handleCartClick} style={styles.searchCartRightView}>
+
+                        {/* Right side: Cart icon */}
+                        <TouchableOpacity style={styles.searchCartRightView} onPress={handleCartClick}>
                             <Image source={require('../images/addCart.png')} style={styles.CartIconTop} />
+                            {cartItems.length > 0 && (
+                                <View style={styles.notificationBadge}>
+                                    <Text style={styles.notificationBadgeText}>{cartItems.length}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
-                        {cartItems.length > 0 && (
-                            <View style={styles.notificationBadge}>
-                                <Text style={styles.notificationBadgeText}>{cartItems.length}</Text>
-                            </View>
-                        )}
                     </View>
 
                     {imageUri && (
@@ -314,19 +317,26 @@ const styles = StyleSheet.create({
     searchCartView: {
         marginTop: 10,
         marginHorizontal: 10,
-        flexDirection: 'row',
-        borderRadius: 4,
-        borderWidth: 0.5,
         borderColor: Constants.COLOR.THEME_COLOR,
-        paddingLeft: 20,
-        paddingRight: 10,
-        paddingTop: 15,
-        paddingBottom: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 12,
+        borderWidth: 0.5,
+        borderRadius: 4,
+        marginVertical: 10,
+        backgroundColor: '#fff',
+    },
+    searchInputArea: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     searchIcon: {
         width: deviceHeight / 35,
         height: deviceHeight / 35,
         alignSelf: 'center',
+        marginRight: 10
     },
     CartIconTop: { marginVertical: 16, marginHorizontal: 10, width: deviceHeight / 50, height: deviceHeight / 50, alignSelf: 'center' },
     CartIcon: { marginLeft: 10, marginRight: 15, width: deviceHeight / 35, height: deviceHeight / 35, alignSelf: 'center', tintColor: Constants.COLOR.WHITE_COLOR },
@@ -345,8 +355,7 @@ const styles = StyleSheet.create({
         marginEnd: 10,
     },
     notificationBadge: {
-        position: 'absolute',
-        right: 5,
+        right: 15,
         top: 5,
         width: 20,
         height: 20,
@@ -399,7 +408,7 @@ const styles = StyleSheet.create({
     selectedImage: {
         width: 30,
         height: 30,
-        resizeMode:'contain'
+        resizeMode: 'contain'
     },
     removeImageButton: {
         position: 'absolute',

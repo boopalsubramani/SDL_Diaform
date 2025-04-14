@@ -9,6 +9,7 @@ import {
     TextInput,
     Alert,
     Dimensions,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import Constants from '../util/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -83,7 +84,7 @@ const AddPatientScreen = ({ navigation }: any) => {
             Alert.alert('Invalid Date', 'You cannot select a future date.');
             return;
         }
-        const formattedDate = `${date.getFullYear()}/${padZero(date.getMonth() + 1)}/${padZero(date.getDate())}`;
+        const formattedDate = `${padZero(date.getDate())}/${padZero(date.getMonth() + 1)}/${date.getFullYear()}`;
         setSelectedDate(formattedDate);
         setShowCalendar(false);
     };
@@ -103,10 +104,7 @@ const AddPatientScreen = ({ navigation }: any) => {
     };
 
     const handleSubmit = async () => {
-        if (phoneNumber.length !== 10) {
-            Alert.alert('Error', 'Phone Number must be exactly 10 digits.');
-            return;
-        }
+      
         if (!title) {
             Alert.alert('Error', 'Title is required.');
             return;
@@ -117,6 +115,14 @@ const AddPatientScreen = ({ navigation }: any) => {
         }
         if (!surName) {
             Alert.alert('Error', 'Sur Name is required.');
+            return;
+        }
+        if (!phoneNumber) {
+            Alert.alert('Error', 'Phone Number is Required');
+            return;
+        }
+        if (phoneNumber.length < 7) {
+            Alert.alert('Error', 'Invalid Phone Number');
             return;
         }
         if (!selectedDate) {
@@ -156,191 +162,196 @@ const AddPatientScreen = ({ navigation }: any) => {
         return num < 10 ? `0${num}` : `${num}`;
     };
 
+    const handleOutsideClick = () => {
+        setDropdownVisible(false);
+        setDropdownVisibleTitle(false);
+        setDropdownVisibleType(false);
+    };
+
     return (
-        <View style={styles.MainContainer}>
-            <View style={styles.AddMemberView}>
-                <Text style={styles.headerText}>Add Patient</Text>
-                <TouchableOpacity onPress={handleCross}>
-                    <Image source={require('../images/black_cross.png')} />
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView scrollEnabled={!dropDownVisible && !dropDownVisibleTitle && !dropDownVisibleRelation}>
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Phone Number *</Text>
-                    <TextInput
-                        style={styles.input}
-                        keyboardType="number-pad"
-                        maxLength={10}
-                        onChangeText={(text) => {
-                            const sanitizedText = text.replace(/[^0-9]/g, '');
-                            setPhoneNumber(sanitizedText);
-                        }}
-                        value={phoneNumber}
-                    />
-                    <TouchableOpacity style={styles.touchableContainer}>
-                        <Image source={require('../images/search.png')} style={styles.SearchImg} />
+        <TouchableWithoutFeedback onPress={handleOutsideClick}>
+            <View style={styles.MainContainer}>
+                <View style={styles.AddMemberView}>
+                    <Text style={styles.headerText}>Add Patient</Text>
+                    <TouchableOpacity onPress={handleCross}>
+                        <Image source={require('../images/black_cross.png')} />
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.dropdownContainer}>
-                    <TouchableOpacity style={styles.touchableContainer} onPress={handleTitleArrow}>
-                        <Text style={styles.input}>{title || 'Title *'}</Text>
-                        <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
-                    </TouchableOpacity>
-                    {dropDownVisibleTitle && (
-                        <View style={styles.dropdownCard}>
-                            <ScrollView style={styles.dropdownScrollView}>
-                                {titleData.map((item, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        onPress={() => {
-                                            setTitle(item.Title_Desc);
-                                            setDropdownVisibleTitle(false);
-                                        }}
-                                    >
-                                        <Text style={styles.dropdownItem}>{item.Title_Desc}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>First Name *</Text>
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setFirstName}
-                        value={firstName}
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Middle Name</Text>
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setMiddleName}
-                        value={middleName}
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Sur Name *</Text>
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setSurName}
-                        value={surName}
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>National ID Card</Text>
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setNationalId}
-                        value={nationalId}
-                    />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Passport Number</Text>
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setPassport}
-                        value={passport}
-                    />
-                </View>
-
-                <View style={styles.inputContainerDob}>
-                    <Text style={styles.placeholder}>Select DOB *</Text>
-                    <TouchableOpacity style={styles.touchableContainer} onPress={() => setShowCalendar(true)}>
-                        <Text style={styles.input}>{selectedDate || ''}</Text>
-                        <Image source={require('../images/calendar.png')} style={styles.CalenderImg} />
-                    </TouchableOpacity>
-                    {showCalendar && (
-                        <CalendarModal
-                            isVisible={showCalendar}
-                            onConfirm={handleDateSelect}
-                            onCancel={() => setShowCalendar(false)}
-                            mode="date"
-                            maximumDate={new Date()}
-                        />
-                    )}
-                </View>
-
-                <View style={styles.dropdownContainer}>
-                    <TouchableOpacity style={styles.touchableContainer} onPress={handleGenderArrow}>
-                        <Text style={styles.input}>{sex || 'Sex *'}</Text>
-                        <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
-                    </TouchableOpacity>
-                    {dropDownVisible && (
-                        <View style={styles.dropdownCard}>
-                            <ScrollView>
-                                {genderData.map((item, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        onPress={() => {
-                                            setSex(item.GenderDesc);
-                                            setDropdownVisible(false);
-                                        }}
-                                    >
-                                        <Text style={styles.dropdownItem}>{item.GenderDesc}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.dropdownContainer}>
-                    <TouchableOpacity style={styles.touchableContainer} onPress={() => setDropdownVisibleType(!dropDownVisibleType)}>
-                        <Text style={styles.input}>{patientType || 'Patient Type *'}</Text>
-                        <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
-                    </TouchableOpacity>
-                    {dropDownVisibleType && (
-                        <View style={styles.dropdownCard}>
-                            <ScrollView>
-                                {['OP', 'IP'].map((type, index) => (
-                                    <TouchableOpacity key={index} onPress={() => {
-                                        setPatientType(type);
-                                        setDropdownVisibleType(false);
-                                    }}>
-                                        <Text style={styles.dropdownItem}>{type}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>IP No.</Text>
-                    <TextInput style={styles.input} onChangeText={setIPNo} value={IP_No} />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Ward Code</Text>
-                    <TextInput style={styles.input} onChangeText={setWardCode} value={Ward_Code} />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Bed No.</Text>
-                    <TextInput style={styles.input} onChangeText={setBedNo} value={Bed_No} />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Text style={styles.placeholder}>Ref No.</Text>
-                    <TextInput style={styles.input} onChangeText={setRefNo} value={Ref_No} />
-                </View>
-
-                <TouchableOpacity onPress={handleSubmit}>
-                    <View style={styles.SubmitButtonView}>
-                        <Text style={styles.ButtonText}>Submit</Text>
+                <ScrollView scrollEnabled={!dropDownVisible && !dropDownVisibleTitle && !dropDownVisibleRelation}>
+                    <View style={styles.dropdownContainer}>
+                        <TouchableOpacity style={styles.touchableContainer} onPress={handleTitleArrow}>
+                            <Text style={styles.input}>{title || 'Title *'}</Text>
+                            <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
+                        </TouchableOpacity>
+                        {dropDownVisibleTitle && (
+                            <View style={styles.dropdownCard}>
+                                <ScrollView style={styles.dropdownScrollView}>
+                                    {titleData.map((item, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            onPress={() => {
+                                                setTitle(item.Title_Desc);
+                                                setDropdownVisibleTitle(false);
+                                            }}
+                                        >
+                                            <Text style={styles.dropdownItem}>{item.Title_Desc}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
                     </View>
-                </TouchableOpacity>
-            </ScrollView>
-        </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>First Name *</Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setFirstName}
+                            value={firstName}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Middle Name</Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setMiddleName}
+                            value={middleName}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Sur Name *</Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setSurName}
+                            value={surName}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Phone Number *</Text>
+                        <TextInput
+                            style={styles.input}
+                            keyboardType="number-pad"
+                            maxLength={10}
+                            onChangeText={(text) => {
+                                const sanitizedText = text.replace(/[^0-9]/g, '');
+                                setPhoneNumber(sanitizedText);
+                            }}
+                            value={phoneNumber}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>National ID Card</Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setNationalId}
+                            value={nationalId}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Passport Number</Text>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={setPassport}
+                            value={passport}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainerDob}>
+                        <Text style={styles.placeholder}>Select DOB *</Text>
+                        <TouchableOpacity style={styles.touchableContainer} onPress={() => setShowCalendar(true)}>
+                            <Text style={styles.input}>{selectedDate || ''}</Text>
+                            <Image source={require('../images/calendar.png')} style={styles.CalenderImg} />
+                        </TouchableOpacity>
+                        {showCalendar && (
+                            <CalendarModal
+                                isVisible={showCalendar}
+                                onConfirm={handleDateSelect}
+                                onCancel={() => setShowCalendar(false)}
+                                mode="date"
+                                maximumDate={new Date()}
+                            />
+                        )}
+                    </View>
+
+                    <View style={styles.dropdownContainer}>
+                        <TouchableOpacity style={styles.touchableContainer} onPress={handleGenderArrow}>
+                            <Text style={styles.input}>{sex || 'Sex *'}</Text>
+                            <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
+                        </TouchableOpacity>
+                        {dropDownVisible && (
+                            <View style={styles.dropdownCard}>
+                                <ScrollView>
+                                    {genderData.map((item, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            onPress={() => {
+                                                setSex(item.GenderDesc);
+                                                setDropdownVisible(false);
+                                            }}
+                                        >
+                                            <Text style={styles.dropdownItem}>{item.GenderDesc}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.dropdownContainer}>
+                        <TouchableOpacity style={styles.touchableContainer} onPress={() => setDropdownVisibleType(!dropDownVisibleType)}>
+                            <Text style={styles.input}>{patientType || 'Patient Type *'}</Text>
+                            <Image source={require('../images/downArrow.png')} style={styles.downArrow} />
+                        </TouchableOpacity>
+                        {dropDownVisibleType && (
+                            <View style={styles.dropdownCard}>
+                                <ScrollView>
+                                    {['OP', 'IP'].map((type, index) => (
+                                        <TouchableOpacity key={index} onPress={() => {
+                                            setPatientType(type);
+                                            setDropdownVisibleType(false);
+                                        }}>
+                                            <Text style={styles.dropdownItem}>{type}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>IP No.</Text>
+                        <TextInput style={styles.input} onChangeText={setIPNo} value={IP_No} />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Ward Code</Text>
+                        <TextInput style={styles.input} onChangeText={setWardCode} value={Ward_Code} />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Bed No.</Text>
+                        <TextInput style={styles.input} onChangeText={setBedNo} value={Bed_No} />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.placeholder}>Ref No.</Text>
+                        <TextInput style={styles.input} onChangeText={setRefNo} value={Ref_No} />
+                    </View>
+
+                    <TouchableOpacity onPress={handleSubmit}>
+                        <View style={styles.SubmitButtonView}>
+                            <Text style={styles.ButtonText}>Submit</Text>
+                        </View>
+                    </TouchableOpacity>
+                </ScrollView>
+            </View>
+        </TouchableWithoutFeedback>
     );
 };
 
@@ -462,6 +473,3 @@ const styles = StyleSheet.create({
         tintColor: Constants.COLOR.BOOK_ID_TEXT_COLOR,
     },
 });
-
-
-
